@@ -22,8 +22,8 @@ grant web_admin_role to j_admin with admin option;
 
 prompt 6. comprobando privilegios para j_admin
 connect j_admin/j_admin
-accept v_accept prompt '¿Fue posible entrar a sesion con j_admin?'
 
+accept v_accept prompt '¿Fue posible entrar a sesion con j_admin?'
 prompt Respuesta obtenida: &v_accept
 
 prompt 7. Creando usuario j_os_admin

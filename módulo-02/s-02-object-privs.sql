@@ -52,7 +52,7 @@ grant insert on user01.test01 to guest01;
 
 prompt 14 comprobando inserciones a test01
 conn guest01/guest01
-insert into user01.test01(2);
+insert into user01.test01 values (2);
 
 
 pause  Actividades de limpieza [Enter] para continuar
