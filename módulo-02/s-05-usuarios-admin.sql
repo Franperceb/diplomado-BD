@@ -9,7 +9,7 @@ prompt Conectando como usuario sysdba
 conn sys/system1 as sysdba
 
 prompt 2. Creando user01
-create user user01 identified by user01
+create user user01 identified by user01;
 grant create session , create table to user01;
 
 prompt 3. Asignando privilegios de administración a user01
@@ -35,6 +35,8 @@ create table prueba(id number);
 insert into prueba values(1);
 
 commit;
+
+set linesize window
 -- cualquiera puede consultar la tabla ahora
 grant select on prueba to public;
 
@@ -47,8 +49,8 @@ from dual;
 --valor esperado sys por sysdba
 show user;
 
-prompt Consultado tabla user01.test
-select * from user01.test;
+prompt Consultado tabla user01.prueba
+select * from user01.prueba;
 -- no debe marcar error es publica y sys puede ver todos
 
 prompt 7. Autenticando como sysoper desde user01
@@ -61,16 +63,16 @@ from dual;
 show user;
 
 --funciona la siguiente? no porque no esta buscando en el schema que esta
-prompt Consultando datos en tabla user01.test pero como alias test
-select * from test;
+prompt Consultando datos en tabla user01.prueba pero como alias prueba
+select * from prueba;
 
 prompt 8. Comprobando consulta de datos por estar en esquema public con user02 y user03 
-prompt en tabla user01.test
+prompt en tabla user01.prueba
 conn user02/user02
-select * from user01.test;
+select * from user01.prueba;
 
 conn user03/user03
-select * from user01.test;
+select * from user01.prueba;
 
 pause 9. Actividades de limpieza [Enter] para continuar
 conn sys/system1 as sysdba
