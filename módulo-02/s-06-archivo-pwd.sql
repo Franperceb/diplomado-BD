@@ -1,5 +1,3 @@
---@Autor: Jorge Francisco Pereda Ceballos
---@Fecha creación: 13/11/2023
 --@Descripción: Ejercicio 07 -módulo 02 .Archivo de passwords.Ejecutar como administrador consulta y 
 -- creación de usuarios con privilegios de administración.
 

@@ -10,12 +10,12 @@ create user jorge01 identified by jorge01 quota unlimited on users;
 
 --otorgar permisos al user
 prompt asignando privilegios de sistema a jorge01
-grant create session, create table to jorge01
+grant create session, create table to jorge01;
 
 prompt entrando sesion con jorge01
 conn jorge01/jorge01 
 
-prompot creando una tabla de prueba
+prompt creando una tabla de prueba
 create table prueba(id number);
 
 prompt conectando como sysdba
