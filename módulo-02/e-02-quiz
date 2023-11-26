@@ -1,0 +1,24 @@
+
+conn sys as sysdba
+
+create user u01 identified by u01 quota 10G on users;
+
+grant create session, create table, select on admin.t01 to u01;
+
+CREATE TABLE admin.test (id NUMBER, name VARCHAR2(50));
+
+grant sysdba to  admin;
+
+select * from dba_role_privs 
+where grantee = 'ADMIN';
+
+--a nivel sesión
+alter session set nls_date_format = 'dd-mm-yyy hh24:mi:ss';
+--a nivel spfile: para los demas usuarios al reiniciar instancia
+alter system set nls_date_format = 'dd-mm-yyy hh24:mi:ss' scope=spfile;
+
+pause Limpieza , cerrar sesion en las terminales, despues presionar [Enter]...
+drop user u01 CASCADE;
+
+-- Deshacer los cambios en la sesión de sys
+alter system reset nls_date_format scope=spfile;
