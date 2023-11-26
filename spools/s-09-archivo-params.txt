@@ -1,0 +1,56 @@
+sys@jpcdip01> start s-09-archivo-params.sql
+Conectando como sysdba
+Connected.
+
+                                                                                
+
+Creando pfile a partir del spfile
+
+File created.
+
+Creando pfile sobre valores configurados en la instancia
+
+File created.
+
+Cambiando permisos a pfile-memory.ora
+
+Consultando valor de undo_retention
+
+NAME                                 TYPE        VALUE                          
+------------------------------------ ----------- ------------------------------ 
+undo_retention                       integer     900                           
+Anexando a pfile-memory.ora  nuevo valor de undo_retention
+
+reiniciando BD, [ Enter ] para continuar...
+
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes                                       
+Fixed Size                  8901696 bytes                                       
+Variable Size             289406976 bytes                                       
+Database Buffers          499122176 bytes                                       
+Redo Buffers                7872512 bytes                                       
+Database mounted.
+Database opened.
+Conectando como sysdba
+Connected.
+
+                                                                                
+
+
+NAME                                 TYPE        VALUE                          
+------------------------------------ ----------- ------------------------------ 
+undo_retention                       integer     1000                           
+alterando parámetro a nivel spfile undo_retention
+alter system undo_retention=1500 scope=spfile
+             *
+ERROR at line 1:
+ORA-02065: illegal option for ALTER SYSTEM 
+
+
+¿Que pasó al ejecutar la instrucción?No se puede alterar el parámetro ya que se inicio con el pfile y no sobre el spfile(binario) 
+Respuesta: No se puede alterar el parámetro ya que se inicio con el pfile y no sobre el spfile(binario) 
+sys@jpcdip01> spool off

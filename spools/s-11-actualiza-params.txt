@@ -1,0 +1,134 @@
+sys@jpcdip01> start s-11-actualiza-params.sql
+Conectando como sysdba
+Connected.
+
+                                                                                                                
+
+Consultando valores de los parámetros: nls_date_format, db_domain, deferred_segment_creation
+
+NAME                           VALUE                          ISSES ISSYS_MOD                                   
+------------------------------ ------------------------------ ----- ---------                                   
+nls_date_format                DD-MON-RR                      TRUE  FALSE                                       
+db_domain                      fi.unam                        FALSE FALSE                                       
+deferred_segment_creation      TRUE                           TRUE  IMMEDIATE                                   
+
+Creación de respaldo de SPFILE a traves de PFILE
+
+File created.
+
+Aplicando cambio a parametro: nls_date_format
+nivel sesión. Valor esperado: OK. [Enter] para comprobar..
+
+
+Session altered.
+
+Aplicando cambio a parametro: nls_date_format
+nivel memoria. Valor esperado: ERROR. [Enter] para comprobar..
+
+alter system set nls_date_format='dd/mm/yyyy hh24:mi:ss' scope=memory
+                 *
+ERROR at line 1:
+ORA-02096: specified initialization parameter is not modifiable with this option 
+
+
+Aplicando cambio a parametro: nls_date_format
+nivel BOTH. Valor esperado: ERROR. [Enter] para comprobar..
+
+alter system set nls_date_format='dd/mm/yyyy hh24:mi:ss' scope=both
+                 *
+ERROR at line 1:
+ORA-02096: specified initialization parameter is not modifiable with this option 
+
+
+Aplicando cambio a parametro: nls_date_format
+nivel SPFILE. Valor esperado: OK. [Enter] para comprobar..
+
+
+System altered.
+
+Aplicando cambio a parametro: db_domain
+nivel sesión. Valor esperado: ERROR. [Enter] para comprobar..
+
+alter session set db_domain='fi.unam2'
+                  *
+ERROR at line 1:
+ORA-02095: specified initialization parameter cannot be modified 
+
+
+Aplicando cambio a parametro: db_domain
+nivel memoria. Valor esperado: ERROR. [Enter] para comprobar..
+
+alter system set db_domain='fi.unam2' scope=memory
+                 *
+ERROR at line 1:
+ORA-02095: specified initialization parameter cannot be modified 
+
+
+Aplicando cambio a parametro: db_domain
+nivel BOTH. Valor esperado: ERROR. [Enter] para comprobar..
+
+alter system set  db_domain='fi.unam2' scope=both
+                  *
+ERROR at line 1:
+ORA-02095: specified initialization parameter cannot be modified 
+
+
+Aplicando cambio a parametro: db_domain
+nivel SPFILE. Valor esperado: OK. [Enter] para comprobar..
+
+
+System altered.
+
+Aplicando cambio a parametro: deferred_segment_creation
+nivel sesión. Valor esperado: OK. [Enter] para comprobar..
+
+
+Session altered.
+
+Aplicando cambio a parametro: deferred_segment_creation
+nivel memoria. Valor esperado: OK. [Enter] para comprobar..
+
+
+System altered.
+
+Aplicando cambio a parametro: deferred_segment_creation
+nivel BOTH. Valor esperado: OK. [Enter] para comprobar..
+
+
+System altered.
+
+Aplicando cambio a parametro: deferred_segment_creation
+nivel SPFILE. Valor esperado: OK. [Enter] para comprobar..
+
+
+System altered.
+
+restaurando parametro: nls_date_format
+
+System altered.
+
+restaurando parametro: db_domain
+
+System altered.
+
+restaurando parametro: deferred_segment_creation
+
+System altered.
+
+Verificando valores de los 3 parametros confirmando resultados a nivel sesión
+
+NAME                           VALUE                                                                            
+------------------------------ --------------------------------------------------                               
+nls_date_format                dd/mm/yyyy hh24:mi:ss                                                            
+db_domain                      fi.unam                                                                          
+deferred_segment_creation      TRUE                                                                             
+
+Verificando valores de los 3 parametros confirmando resultados a nivel spfile
+
+NAME                           VALUE                                                                            
+------------------------------ --------------------------------------------------                               
+nls_date_format                                                                                                 
+db_domain                                                                                                       
+deferred_segment_creation                                                                                       
+
+sys@jpcdip01> spool off

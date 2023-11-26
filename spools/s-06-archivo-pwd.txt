@@ -1,0 +1,36 @@
+sys@jpcdip01> start s-06-archivo-pwd.sql
+conectando como sysdba
+Connected.
+
+                                                                                
+
+creando usuarios user01 , user02, user03
+
+User created.
+
+
+User created.
+
+
+User created.
+
+asignando privilegios de administración a usuarios creados.
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+mostrando datos de privilegios de administración asignado a usuarios.
+
+USERNAME             SYSDB SYSBA SYSOP ACCOUNT_STATUS                           
+-------------------- ----- ----- ----- ------------------------------           
+SYS                  TRUE  FALSE TRUE  OPEN                                     
+USER01               TRUE  TRUE  TRUE  OPEN                                     
+USER02               TRUE  TRUE  TRUE  OPEN                                     
+USER03               TRUE  TRUE  TRUE  OPEN                                     
+
+

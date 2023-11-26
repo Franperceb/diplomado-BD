@@ -1,0 +1,113 @@
+create or replace procedure spv_valida_datos_instancia wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+b10 56b
+pmFUvFtrU3ZLS83KXZd97N+ZJmswg+2NVUiMV47G/kWuUtFgwMIYJaDsCp8J+vvEAQdwPBsm
+IwJahjFlZsj70yaDuWqKgorvR23Nr3UUGpE9kG366aaGToFOtXbPr2LJcjbW4O2yxMzTloy4
+iI2T89TezGApXnY373Km2FjIccOcUAZBbr77Ow+mWotl1abGt/uBVm8j9Zc5/nE5gVVuvSm4
+ZL5AxIKxpBGEIbJN58k/BFdT83NASgC0OljAE7J1zTaNDX+4Oh227dqcrk0KVf438lcw3/hI
+RE8V5ISG9rhLhqvER4QpmnvR1q2UPACUnO3QjLNND53CzkeZ3RMuSVlxTy60kIbukmIrlkuF
+3+Gcx51Aj3KED1eHL5tyAJtulGwas/KvS4aAhw+VuFtagACfqYpOwAO5IYBb6JexsakHXPkA
+f35rFNlDOicy+awkMD+85DANGGQYrNLaC1VsMWby3GMKtwA2GUMGPgyoh0GFYZ/MT0iwDffs
+rFxhzxOsYUj0Uev0o9QBX97kgJ5gDBFKM9ofw/IbrIeUNdInEKTb62zvcjAARRTWba/pLEhw
+d4X3zxjrBBIUzJXwMcCR2sqHYaNdnkvCEAyVKTP4mrR+iCnYld6p9UGh/YW5WXUX9q3fPVhh
+dye5c4OAKTnPsLmC62Z3MoQiOrJ4lyfN7kHuVk0foBcEtgUtxSfDeivCjAQCJDBZXzeFgL66
+5S6sgE/w+mg4KKKwUt3+4dQu9du0aKikFo5NjpTDi5q1++xnYc7ll3TLBvySg+NTMY4kXLAc
+Q5bw0E1Ag+B8sLlfKqZZwRO97l43ATlZdYMus5WSDG4WwFXiOBeKWqUwKu+4ifcoqsA1YpwC
+/s+X+XsP0RhOg+S3k5xKEIJHm+PDwqgpG6GFpuP9pOdm14/ZYDVRYcyjYNnn5UqDGmnG/axp
+DVDAWstHoPWHysacY+aYNG2Jxw5FlwJSSMU1fypcgZpjdtfXQWlfcLykm1RXjZ7Ia647ctJK
+pKEaOV8GNTqDw7QgiB5XeIz7r2DvEmPOs8TwxZQhQJQDM1i/9hrdPAxwEH7teGLiJ5573LLu
+sC9LSV6ICZq/pG0r8iiku6e1IHaQhz9fLsQK6w6gVBnpCquC+5BTWxrSjMl/G5u/sb8XwuEn
+csgvh9U1YcEuKkjh3wA59X8/xsOv6D6MRPmxaivaq0HjezajTSTfQokfIyckgJmN1pLlQd+0
+WIUqNwY+0LEBzX7tk5bxQ0vOp6mjO7aUY4FBLi30m1f2rFhYdyJGZ8HDNI5jo5DyF3IkZSIZ
++gVfgZeP11SA3rlRV8ehM3VrQR6yfSwL7fBSXaBUxBVzohXHkPSoaPIGddU/ImSqOh/Y9iyG
+
+
+/
+show errors
+create or replace procedure spv_elimina_usuario wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+12f 144
+Rgcz9NtWZDqmN6goJG41Suft740wgy7QNa5GfC8CAE7VGbI8tiOgk7cJyWP0YlegCkHnMUNn
+Ubk5rEk/NAIE0iGWgkK7EF5SJhb+WQRkmi7+s6ozD3mC8F7a0pwaJ8/NbB7TgPrlyM+d1uLv
+j7Q0MAb+eZBoYync2FtcIx5w7frj6Ymzt2G1dCgS28HuwJUhnx0GQhnFi63UJqSuzb5tnBrs
+QaGt2FL6eX0N4mgGUo8lynKRuLaxMGIWNEsR1bI4KA9c26rk1RMifvmAGrhEYpGm7febSg7w
+a3HZDj/eRBWQfhxuZp5eaOSmdWsJ6w==
+
+/
+show errors
+create or replace procedure spv_crea_usuario_prueba wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+10e 124
+aje9rBrvuP2m+fPVh4Kew/6rXSgwgzLQAJkVfI7pkPjVuaefMs3DBQ41kjUn22Kg3+Zn/Xm2
+zKXGE+XjbbgH/o+4U8QGAfKCrz7UTly5Wz1aeEXJUGBBW7CDG9gaTekVk/R5FetcFcHzVKRW
+ffGU+2e/IZT9nqfBIQv0nYWRLZ5Iwx3jgKnGhvY65DZFXu09Wzt7oL8v5ESW/7Q54iT8t2FB
+33MMAPG07yIyDY2UF5Vgpx7I478S9Z67+8okJZy4/LGIiu1aVaAqFBjWqW+TehLh42rM/A==
+
+
+/
+show errors
+Prompt realizando limpieza
+exec spv_elimina_usuario('&&p_nombre'||'0201');
+set serveroutput on
+whenever sqlerror exit rollback
+exec spv_print_header
+host sha256sum &&p_script_validador
+exec spv_valida_datos_instancia
+exec spv_crea_usuario_prueba('&&p_nombre'||'0201')
+exec spv_elimina_usuario('&&p_nombre'||'0201');
+exec spv_print_ok('Usuario de prueba &&p_nombre eliminado');
+exec spv_print_ok('Validación concluida')
+exec spv_remove_procedures
+whenever sqlerror continue none
+exit

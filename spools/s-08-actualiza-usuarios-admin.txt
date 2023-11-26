@@ -1,0 +1,37 @@
+idle> !./s-07-crea-archivo-pwd-oracle.sh
+
+idle> start s-08-actualiza-usuarios-admin.sql
+Conectando como sysdba
+Connected.
+
+                                                                                
+
+mostrando datos de privilegios de administración asignado a usuarios.
+
+USERNAME             SYSDB SYSBA SYSOP ACCOUNT_STATUS                           
+-------------------- ----- ----- ----- ------------------------------           
+SYS                  TRUE  FALSE TRUE  OPEN                                     
+
+asignando privilegios de administración a usuarios creados.
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+mostrando datos de privilegios de administración asignado a usuarios.
+
+USERNAME             SYSDB SYSBA SYSOP ACCOUNT_STATUS                           
+-------------------- ----- ----- ----- ------------------------------           
+SYS                  TRUE  FALSE TRUE  OPEN                                     
+USER01               TRUE  TRUE  TRUE  OPEN                                     
+USER02               TRUE  TRUE  TRUE  OPEN                                     
+USER03               TRUE  TRUE  TRUE  OPEN                                     
+
+
+User altered.
+
+sys@jpcdip01> spool off

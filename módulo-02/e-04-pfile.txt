@@ -1,0 +1,18 @@
+processes = 300
+nls_language = "AMERICAN"
+nls_territory = "AMERICA"
+sga_target = 805306368
+control_files = /u01/app/oracle/oradata/JPCDIP01/control01.ctl, /u01/app/oracle/oradata/JPCDIP01/control02.ctl
+db_block_size = 8192
+compatible = "19.0.0"
+undo_tablespace = "UNDOTBS1"
+remote_login_passwordfile = "EXCLUSIVE"
+db_domain = "fi.unam"
+dispatchers = "(PROTOCOL=TCP) (SERVICE=jpcdip01XDB)"
+local_listener = "LISTENER_JPCDIP01"
+audit_file_dest = "/u01/app/oracle/admin/jpcdip01/adump"
+audit_trail = "db"
+db_name = "jpcdip01"
+open_cursors = 300
+pga_aggregate_target = 268435456
+diagnostic_dest = "/u01/app/oracle"
