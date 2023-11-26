@@ -1,0 +1,21 @@
+  processes                = 300
+  nls_language             = "AMERICAN"
+  nls_territory            = "AMERICA"
+  sga_target               = 768M
+  control_files            = "/u01/app/oracle/cfgtoollogs/dbca/jpcdip01/tempControl.ctl"
+  db_block_size            = 8192
+  compatible               = "19.0.0"
+  undo_tablespace          = "UNDOTBS1"
+  remote_login_passwordfile= "EXCLUSIVE"
+  db_domain                = "fi.unam"
+  dispatchers              = "(PROTOCOL=TCP) (SERVICE=jpcdip01XDB)"
+  local_listener           = "LISTENER_JPCDIP01"
+  audit_file_dest          = "/u01/app/oracle/admin/jpcdip01/adump"
+  audit_trail              = "DB"
+  db_name                  = "seeddata"
+  db_unique_name           = "jpcdip01"
+  open_cursors             = 300
+  pga_aggregate_target     = 256M
+  _diag_hm_rc_enabled      = FALSE
+  diagnostic_dest          = "/u01/app/oracle"
+  enable_pluggable_database= TRUE

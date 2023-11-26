@@ -1,0 +1,151 @@
+idle> start t-01-admin-user-privs.sql
+Connected.
+
+                                                                                
+
+1. Creando usuario jfpc01
+
+User created.
+
+Asignando quota
+
+User altered.
+
+Creando role app_rol
+
+Role created.
+
+Asignando privilegios a app_rol y asignando rol a jfpc01
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+1.2 reseteando pwd a jfpc01 cuando inicie sesión por primera vez
+
+User altered.
+
+1.3 Entrando a sesión como jfpc01
+ERROR:
+ORA-28001: the password has expired 
+
+
+Changing password for jfpc01
+Password changed
+Connected.
+
+                                                                                
+
+1.4  Creando tabla amigo
+
+Table created.
+
+Insertando registro en tabla amigo
+
+1 row created.
+
+
+Commit complete.
+
+2. Creando user jfpc_worker01
+Connected.
+
+                                                                                
+
+
+User created.
+
+2.1 Asignando priv de crear sesiones.
+
+Grant succeeded.
+
+Asignando privilegio de insert a jfpc_worker01
+
+Grant succeeded.
+
+4. Insertando 3 registros en tabla jfpc01.amigo como jfpc_worker01
+Connected.
+
+                                                                                
+
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+5. esperando 70 segundos
+
+PL/SQL procedure successfully completed.
+
+5.1 Insertando registro nuevamente a tabla amigo por jfpc_worker01
+Connected.
+
+                                                                                
+
+
+1 row created.
+
+¿Se insertó el 4to registro a la tabla? si
+Respuesta: si
+6. Creando usuario jfpc_slave
+Connected.
+
+                                                                                
+
+
+User created.
+
+6.1 Asignando privilegios necesarios a jfpc_slave
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+
+Grant succeeded.
+
+6.2 Iniciando sesion como jfpc_worker01
+Connected.
+
+                                                                                
+
+Eliminando todos los registros en jfpc01.amigo
+
+5 rows deleted.
+
+
+TOTAL_REGISTROS                                                                 
+---------------                                                                 
+              0                                                                 
+
+¿Se eliminaron los registros de la tabla? si
+Respuesta: si
+7. Actividades de limpieza [Enter] para continuar
+
+Connected.
+
+                                                                                
+
+
+User dropped.
+
+
+User dropped.
+
+
+User dropped.
+
+
+Role dropped.
+
+Listo!
+sys@jpcdip01> spool off

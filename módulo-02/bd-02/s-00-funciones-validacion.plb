@@ -1,0 +1,320 @@
+
+create or replace function  fv_hash wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+8
+12d 117
+psK+AxbtJHutB9IBMma3GprBXqwwgzLILZ4VfC9ATLp92pEMHZBxomVjKT02g5kU3rM+U1q/
+ryYoIPHl5+BAuP4QtbK/c0Yl9tZdM+fZgbzDATivrm/6VtjDFbn0n/P/r0L4OIE3COV+7hp/
+e1sdWq5flDW9sPzjGOTt1ysPccg5AG4QLklbb7joslzUQpdhhUVgpeX52/CZJmuKF6kUSuA2
+JQ2tt0Ig13UuYN63rCrG5ASzfbIx321mgJihdOQe56GbEfvavBLhBS7pCg==
+
+/
+show errors
+
+create or replace procedure spv_crea_secuencia wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+142 144
+GrFe5r7vGjgAmfTY3mNcVbVg05cwgxDI2dxqfC/pk4CXJEfReZWswvAYiXt4dwl51ix5vyuJ
+MPO9gZR9/gtbjbLTmNpkxxeLLtVAg95QMLw6uaujJEC51XaYa2wGG3KbXxHBWMAl8fXgsgAS
+P8/snEJh1NWcJn5LRAMhgUdvxwYl5fhZ5XijvcA5g/002lo5tyX4slG7AEMBbGcKZtQ/6nlC
+TH/ikcz5ft0TmmyHKwxmmK+RLkYddQPK0TYnh+lc0rHrWNS4oRdGFOQ7cwSSYf3cxjZfhMJK
+haHc7g9gI5UXztDxF/cJIs8d5FsrPA==
+
+/
+show errors
+
+exec spv_crea_secuencia 
+
+create or replace procedure spv_print_ok wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+9c1 402
+GZdiJvfvmgcu1QzYZkDp8z6BOvEwg40rs0gTfI5V1bczKD+CWsvgKXveJgn0qaFpr/9LOFW2
+lhARKgEKp94lGs/k4vvay3VZCqMqCO3+zm4SKN/4GEkhO9UYSmSdBbFPlpqqDSS8OvhhGubb
+uhjsU/KfUg10adEZ7YHsK4WXVpLZFp65RUP16zyso2sF0axp68DudDXMFZPZBvF75trRXVkW
+Fz4QIf3CRWhQl52oyZ0i4r/tXxPAA4FZaIok9Op/DEImsZzBENX5AYntawVuNfPknqNQomYI
+XE07bBCJIivkFvZ8r+yyy4VxGGZGHTZph/8UgMG58/VIH0YDnrRjMnGm+87sFyvFdPMWb0Tx
+2uXjMYJUO/PJpWw3/4tZhXVsjtX6iWMWciOgNUBRPYaBw0A4fVU9wUg19VznTOokX553srgj
+n5wJ/3zSxwXb6UHUof+ThabLvPzgKkDMKNRB+yZMQesv4g5S1pRuo9c27UiLRToYUADFFgWX
+kCAjlFSCdUvVQvy/ApEJPJjX0mZjva4mJBXKs6DIX8CJnI5QUGEMy58deR1nRYQlUKZioWt7
+I4YvY5lkbavCfsxFyF/AblFxn+aFYQ0Mid/b9WlhXHZRWe4yXIsI8HZjNvDrbpd0tv40NIje
+g/9e3mGzpCVZ7jLee9enyfL6V9kmRy9Y6skP2mfqFa9WGFQJnRm77nRvgTm55U4dfDMkQiw2
+NsRtL9wOFhi4fAQ0LQDameUArTNNtvX1R/+sqwxZegapgTTZbZurS4iFkebHzwe6y2fVhwN3
+rnhjBG+EV372/Ko0bE9R3Y5N/uHpN8T8RTPuTZytNKKFU2i25Fs/bwdqBim9ACSWJNjLlgqG
+f0fC/XZnCClGH1P4T/s9VIrRPNHRxOs+MT41ALdn15llhGiqfAspZSqNGWpX1do3Hei5fp2N
+OQQ3tZnbcRJAAv4kBEyUo2S786pnHR1Oi2MbaCqQscAP2S/5g2YX/KjWKwphamq4/ouWxqAj
+pA==
+
+/
+show errors
+
+create or replace procedure spv_throw_error wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+9b db
+sp4WQ3XyU4PRqU429iQywMPc3jEwgwDwLZ4VfI6mkJk6B8QNAp4t9ial7Hr2Di4VDAUqt48r
+9FEMJIfDuHpXuXra6SPJrPjNiCyxoLwGbGMqlCJKjuEzNpnCe++xjYWmz8PctrRCiuM1673B
+OKwQYmN6iXCshXv88HNNXxtportbjLhl/2Dgn3Hk01z5bBEF710FM5qN8IWF/Mn+OfYfPhk=
+
+
+/
+show errors
+
+
+create or replace procedure spv_assert wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+17d 158
+eApwTJDzL9X7CfuBDuNfyD83fukwgwHIryfhfy9AEm/PB747FZ660JQCfmUnyhs48VogOG0S
+FoniivKuIs+/8HnqI+dHz1jQ5IgMQIznRlCQneA9MjISWDGF8G8lDIxrIWCo6zr14XDvvKNd
+HER2iAgAjAEZhNQQcPz7pFCtYWrzDCJ44TUHhPQ24cRWFihtAcyOcsfISHs+UkmBfHt2vgJS
+053GBZSmayga6oTWl+6kZSl8ZfaNXX4vZtOI7GOAToo8ryPtN1a9prEeICUkia8tkhGjTZjH
+VSuwi0NS+Rcd76id/dcFY/nPtRcagUdecWKSIIEBD9hBvPuDLg8h
+
+/
+show errors
+
+create or replace procedure spv_assert_columns wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+3ff 295
+zy+7GJbl68youzueXJ8muGHZpVswg2PxckrrfC/Ure8Iy8cMwsUW6W5F9WMhCNMM8LcNkAnc
+K4Wr44kkChRMzaiWah2l4XH+lUvrGlPdZhTLLYCCmhdyloZG1CKeCRgOmJgfk7H6YR9CXhzl
+RQO2r+Qv6UGPGcltcMHMJNJ9HpVtwab0pYZ5q/MtlV+1VvA6ibjzOOEU8N/j5qni7fXZ7kOb
+XXaUGfm/Ah113rPcaBrjP1ekfp1STLG+eqdgtV1cJrIjB/Teozuv/JE+Thybi2n+MwId6VV4
+S0X4wkaueV43O4Gmt5erQIJBOEtKwi1w+UY4UGDZLXfte3tVsqkzha6t4XbpFt1BGIs/fO4I
+aDPjqTMi8ldKScH4L/PjQuMWHQ3ck6lwtn/zsHqhOtWBJjznwmKi3lmo1Srx2PjYAvjYVkg9
+h8nKmLwAXXNr148r/KJPEMMKKiy9pdX3ky2poRARh5HdSGEKghMsCRIpe8kn4Xr/RKkjdWvv
+yr3UpA9PAOMKKlM5qAyfFQt0zEhyhFyeakt8hqHCdf1LhYb+8mHwOXlDweb3eKTD0Jr8USdn
+PKoOqhhMtx8yGaA7I7LX2L/JjgJ/8AVdzHL+J3O/bsT2Xrx8hqpjOpKlTyGur33zAPj7qOzT
+tg==
+
+/
+show errors
+
+
+create or replace procedure spv_print_header wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+51f 295
+KNs/gkUSU9ivv1AWsDXg2I5DE/Uwg5C32RgFfI5AmMtdpP/cy3WhukXeFVbPzCeEZkT6y83y
+57ppNyC0QTc+TvJMgfOLlcXGnx6ggkF8W1/1SvlOoWCS0F8jtNCIQOhFH1w7bSvP6mVcKkbP
+vqal4NQ+HjnzcMbGfk0duDTGhzbzlIePfG2qhry2OP1jKXtysSgbyuciP4NdI+shEQHSbgeJ
+4xZ6cJiAporcZrgwpssHdYLuzA82eks4cXjDXhTz+auTFot1OMDm354W0HTC/YrqGolt0X/8
+ODOwawzjx92PmJyZXaDEhw5Y8X0jUJdgkc0E/FQpE79fHP+PgvcgnG1DFZUP5iVi+Lk3mauA
+xldFf0+0Bza6fTMuNysFiBTkLLziwmWc3r2W2wpaSdcyaxNhp/Q/kly0yJG/Lgonc4yW3R2F
+5smuJLqQWlqUU/mUw+eZkBGTddZcMlhN6IqjuwHo6/v4rp6xNdfu9bLlpo01O+XCSJRaTZFV
+7MI1xcf1TbkYYTSLu5o/gKT1F3aRX4To34NeI4qaRwO6SiDzLnkDNQs6CLOZdYFCgXgXeF5D
+Y7lq+PQvsmDamBdBVy1ddrh8PHr2L9dScbWe/3A8rf8R+kJQY1L4BcbbJA9foUf1+Ll43Q3y
+IQ==
+
+/
+show errors
+
+
+create or replace procedure spv_remove_procedures wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+370 213
+6bsIApwKwn4uJ8S6gCctovhCtc0wg/AJzK4VfC8zWEa1uJboBtYIpKiIVddcxJ9hBXfbGqgL
+GxSXuOeu5DAFeUf7+xAnu7keEP5VsVqeGEhm8yvZ8NFOcuC3HgGTkTp+TIvVcOWaHQ70w+aD
+hICYW5d33W/7jjlaCy+3W8cRuUZUwQA+5lqOnw89jRcssgHB+zaK8zdNFj2cNmnMSWXu/Sbu
+y7/+3b+Gq8V/jj6fRSyGhurrEaKj54ijhTcWlu4hyawKYLuqFD1jtyNgZzTD+EqbE1h0PT35
+WdorJdgIVMH0Y3SjsiboZu5/pRRuDiEpPyCs/l8F7BcEbHw/EbrKond8BpklFGBwOOPRx0fw
+R5fgvc1bpsJVlxP/WpSC7H95nMVXkZJVYwJuwUIPlsK7Qi3Ot+ioJ3EmIQ9MKHQBVoOkw+y6
+Eo4ibIU+PKqgMxec9nZmGzwmtnyxazxAGIlCeWoIYtsim07TKzqxew+Rvu1919ILIhPJYPPe
+lHxkUtk2am0stBUZ9Q==
+
+/
+show errors
+
+create or replace procedure spv_drop_table wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+24f 1ce
+VkIsh6M868iQQiGzyn48N4uwc1gwg3kJ+idqfC/NrciqdROK0xi6I+WhNS1JDTWnpGKT3GYu
+sgD1vTHc+c7yK4oUUAVHNLBCIMnD9GWvw5lGczORIp+dusdUnao9NQGOkHwhbm/nx8XxXxiw
+83Rbpo0+H3bpDwKOsMOCRHGCb+bRpN5I8QnH6tUbFuAP7N6OCoJQ7ctBjBaeIOcmFgq1UliR
+VFCZM31rvbxDz1e4bs+D+NkBHufDQGg1ptOIG55d8qO2ce4JRGdK+CPqtW6F54WLUwPur4p4
+T4H+7KmkQAqbUdqUAfsm6NgN1llRuwW2h9SQRReld6sY7QMDMNoQuJrESMcHxNc+Cz8I02+I
+gwNxTDh0ReVpaG4b9ZYmjQjvv4n/aQT+uinLm56zPWC49PQr50LMcOxe/fP+vQ5zNmfs6B53
+IV2v6LGDxO+Dyrz4HbI1nMw=
+
+/
+show errors
+
+create or replace procedure spv_drop_user wrapped 
+a000000
+369
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+abcd
+7
+108 117
+KUXSN+LZYkFx0vxBRTorxmzGBAYwgy7QACisfARGkC7kKMRr3NSNEQnZbSFrYykHRfMdR9Pj
+3OQwujn1mF25QdneXlKXNKhfc7BIB+oPncZItPyDumUYoRXwiId8x2g1VH483TuLjerLl9mZ
+WPUDvFBcTX1UxfTaRzOfLJ6XXAx6eI021dlYfgvkh2kEh0DcpaO3OgUZRDB0GM9rblKp1RFB
+HX01aNqsyPFlr6zyBlvbKFroKQfs6DbXx35BeZwaLVnFmWjK1lrqD0Pm6dQ=
+
+/
+show errors
+
+set serveroutput on
+set linesize 200

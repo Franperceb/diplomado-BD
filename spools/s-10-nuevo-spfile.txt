@@ -1,0 +1,55 @@
+sys@jpcdip01> start s-10-nuevo-spfile.sql
+Conectando como sysdba
+Connected.
+
+                                                                                
+
+iniciando instancia pfile a través de e-04-pfile.txt
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes                                       
+Fixed Size                  8901696 bytes                                       
+Variable Size             230686720 bytes                                       
+Database Buffers          557842432 bytes                                       
+Redo Buffers                7872512 bytes                                       
+Database mounted.
+Database opened.
+verificando que la instancia fue iniciada con PFILE y no spfile
+
+NAME                                 TYPE        VALUE                                                          
+------------------------------------ ----------- ------------------------------                                 
+spfile                               string                                                                     
+¿Que significa ese valor obtenido del parámetro spfile? Que inició con el PFILE
+Respuesta:  Que inició con el PFILE
+Creando nuevo spfile e-05-spfile.ora
+
+File created.
+
+Creando nuevo pfile para insertar el valor de ruta spfile y poder iniciar la instancia con el spfile
+previamente creado
+
+Reiniciando instancia
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes                                                                       
+Fixed Size                  8901696 bytes                                                                       
+Variable Size             230686720 bytes                                                                       
+Database Buffers          557842432 bytes                                                                       
+Redo Buffers                7872512 bytes                                                                       
+Database mounted.
+Database opened.
+Verificando que se inició con spfile
+
+NAME                                 TYPE        VALUE                                                          
+------------------------------------ ----------- ------------------------------                                 
+spfile                               string      /unam-diplomado-bd/diplomado-B                                 
+                                                 D/e-05-spfile.ora                                              
+¿Que significa ese valor obtenido del parámetro spfile? Que inició con el SPFILE
+Respuesta:  Que inició con el SPFILE
+sys@jpcdip01> spool off

@@ -1,4 +1,6 @@
---@Descripción: Ejercicio 07 -módulo 02 .Archivo de passwords.Ejecutar como administrador consulta y 
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 24/11/2023
+--@Descripción: Ejercicio 06 -módulo 02 .Archivo de passwords.Ejecutar como administrador consulta y 
 -- creación de usuarios con privilegios de administración.
 
 prompt conectando como sysdba
@@ -20,4 +22,5 @@ col username format a20
 prompt mostrando datos de privilegios de administración asignado a usuarios.
 select username, sysdba, sysbackup, sysoper, account_status
 from  v$pwfile_users;
+
 

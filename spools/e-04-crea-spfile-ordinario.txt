@@ -1,0 +1,17 @@
+idle> start e-04-crea-spfile-ordinario.sql
+Autenticando como sys
+Connected to an idle instance.
+select lower(sys_context('userenv','current_user')
+*
+ERROR at line 1:
+ORA-01034: ORACLE not available
+Process ID: 0
+Session ID: 0 Serial number: 0 
+
+
+
+File created.
+
+validando existencia de spfile
+
+idle> spool off
