@@ -1,0 +1,367 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 26/01/2024
+##@Descripción: Ejercicio 05 -Flashback drop.
+-------------------------------------------
+
+##SCRIPTS
+------------------------------------------------
+**********************e-06-flashback-drop.sql*****************************
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Ejercicio 05- Módulo 06. Flashback dropa.
+
+set linesize window
+set verify off
+
+define syslogon='sys/system2 as sysdba'
+define userlogon='user06/user06'
+
+Prompt 1. Conectando como sys
+conn &userlogon
+
+Prompt Activando la papelera de reciclaje
+alter session set recyclebin=on;
+
+
+Prompt Verificando su contenido
+col object_name format a30
+col original_name format a15
+select object_name, original_name, createtime
+from recyclebin;
+
+
+Prompt 2. Conectando con user06 y creando tabla fb_drop
+conn &userlogon
+create table fb_drop(id number(2), datos varchar2(20));
+
+
+Prompt Ingresando registros a fb_drop
+insert into fb_drop values(1,'dato1');
+insert into fb_drop values(2,'dato2');
+insert into fb_drop values(3,'dato3');
+insert into fb_drop values(4,'dato4');
+
+commit;
+
+Prompt Mostrando contenido de la tabla fb_drop
+select *  from fb_drop;
+
+Prompt 3. Eliminando tabla fb_drop
+drop table fb_drop;
+
+Prompt Verificando que se haya eliminado
+select * from fb_drop;
+
+
+Prompt 4. Mostrando contenido de la papelera de reciclaje
+select object_name ,original_name, createtime
+from recyclebin;
+
+Prompt 5. Consultando el contenido de object_name
+select * from "&object_name";
+
+
+Prompt 6. Recuperando la tabla eliminandola
+flashback table fb_drop to before drop;
+
+Prompt Mostrando tabla recuperada
+select * fb_drop;
+
+Prompt 7. Eliminando la tabla nuevamente y Verificando
+drop table fb_drop;
+select * from fb_drop;
+
+
+Prompt 8. Creando nuevamente la tabla e insertando datos distintos.
+create table fb_drop(id number(2), datos varchar2(20));
+
+insert into fb_drop values(5,'dato5');
+insert into fb_drop values(6,'dato6');
+insert into fb_drop values(7,'dato7');
+insert into fb_drop values(8,'dato8');
+
+commit;
+
+Prompt Consultando la tabla creada nuevamente
+select * from fb_drop;
+
+Prompt 9. Consultando la papelera de reciclaje
+select object_name, original_name, createtime
+from recyclebin;
+
+Prompt 10. Eliminando nuevamente la tabla y Verificando
+drop table fb_drop;
+select * from fb_drop;
+
+Prompt 11. Consultando el contenido de la papelera de reciclaje
+select object_name,original_name,createtime
+from recyclebin;
+
+Prompt 12. Recuperando las tablas eliminadas y renombrandolas
+Prompt fb_drop1
+flashback table "&object_name" to before drop rename to fb_drop1;
+
+Prompt Consultando fb_drop1 (Tabla recuperada)
+select * from fb_drop1;
+
+Prompt fb_drop2;
+flashback table "&object_name" to before drop rename to fb_drop2;
+
+Prompt Mostrando datos de fb_drop2(Tabla 2 recuperada)
+select * from fb_drop2;
+
+
+Prompt 13. Desactivando la papelera de reciclaje
+alter session set recyclebin=off;
+
+Prompt 14. Borrando las tablas creadas y Verificando
+drop table fb_drop1;
+
+Prompt Mostrando contenido de la papelera de reciclaje
+select object_name ,original_name, createtime
+from recyclebin;
+
+drop table fb_drop2;
+
+Prompt Mostrando contenido de la papelera de reciclaje
+select object_name ,original_name, createtime
+from recyclebin;
+
+exit
+
+
+-----------------------------------------------------
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+**********************e-06-flashback-drop.sql*****************************
+sys@jpcdip02> start e-06-flashback-drop.sql     
+1. Conectando como sys
+Connected.
+Activando la papelera de reciclaje
+
+Session altered.
+
+Verificando su contenido
+
+OBJECT_NAME		       ORIGINAL_NAME   CREATETIME
+------------------------------ --------------- -------------------
+BIN$D/CEJKqxK7DgYwEAAH9HTA==$0 FB_DROP	       2024-01-27:10:00:45
+
+2. Conectando con user06 y creando tabla fb_drop
+Connected.
+create table fb_drop(id number(2), datos varchar2(20))
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object
+
+
+Ingresando registros a fb_drop
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+Commit complete.
+
+Mostrando contenido de la tabla fb_drop
+
+	ID DATOS
+---------- --------------------
+	 1 dato1
+	 2 dato2
+	 3 dato3
+	 4 dato4
+	 5 dato5
+	 6 dato6
+	 7 dato7
+	 8 dato8
+	 1 dato1
+	 2 dato2
+	 3 dato3
+	 4 dato4
+
+12 rows selected.
+
+3. Eliminando tabla fb_drop
+
+Table dropped.
+
+Verificando que se haya eliminado
+select * from fb_drop
+              *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+4. Mostrando contenido de la papelera de reciclaje
+
+OBJECT_NAME		       ORIGINAL_NAME   CREATETIME
+------------------------------ --------------- -------------------
+BIN$D/CEJKqxK7DgYwEAAH9HTA==$0 FB_DROP	       2024-01-27:10:00:45
+BIN$D/CnKVJ3L7HgYwEAAH/9mA==$0 FB_DROP	       2024-01-27:10:05:40
+
+5. Consultando el contenido de object_name
+Enter value for object_name: BIN$D/CEJKqxK7DgYwEAAH9HTA==$0 
+
+	ID DATOS
+---------- --------------------
+	 1 dato1
+	 2 dato2
+	 3 dato3
+	 4 dato4
+
+6. Recuperando la tabla eliminandola
+
+Flashback complete.
+
+Mostrando tabla recuperada
+select * fb_drop
+         *
+ERROR at line 1:
+ORA-00923: FROM keyword not found where expected
+
+
+7. Eliminando la tabla nuevamente y Verificando
+
+Table dropped.
+
+select * from fb_drop
+              *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+8. Creando nuevamente la tabla e insertando datos distintos.
+
+Table created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+Commit complete.
+
+Consultando la tabla creada nuevamente
+
+	ID DATOS
+---------- --------------------
+	 5 dato5
+	 6 dato6
+	 7 dato7
+	 8 dato8
+
+9. Consultando la papelera de reciclaje
+
+OBJECT_NAME		       ORIGINAL_NAME   CREATETIME
+------------------------------ --------------- -------------------
+BIN$D/CnKVJ4L7HgYwEAAH/9mA==$0 FB_DROP	       2024-01-27:10:05:40
+BIN$D/CEJKqxK7DgYwEAAH9HTA==$0 FB_DROP	       2024-01-27:10:00:45
+
+10. Eliminando nuevamente la tabla y Verificando
+
+Table dropped.
+
+select * from fb_drop
+              *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+11. Consultando el contenido de la papelera de reciclaje
+
+OBJECT_NAME		       ORIGINAL_NAME   CREATETIME
+------------------------------ --------------- -------------------
+BIN$D/CnKVJ4L7HgYwEAAH/9mA==$0 FB_DROP	       2024-01-27:10:05:40
+BIN$D/CEJKqxK7DgYwEAAH9HTA==$0 FB_DROP	       2024-01-27:10:00:45
+BIN$D/CnKVJ5L7HgYwEAAH/9mA==$0 FB_DROP	       2024-01-27:10:11:09
+
+12. Recuperando las tablas eliminadas y renombrandolas
+fb_drop1
+Enter value for object_name: BIN$D/CEJKqxK7DgYwEAAH9HTA==$0
+
+Flashback complete.
+
+Consultando fb_drop1 (Tabla recuperada)
+
+	ID DATOS
+---------- --------------------
+	 1 dato1
+	 2 dato2
+	 3 dato3
+	 4 dato4
+
+fb_drop2
+Enter value for object_name: BIN$D/CnKVJ5L7HgYwEAAH/9mA==$0
+
+Flashback complete.
+
+Mostrando datos de fb_drop2(Tabla 2 recuperada)
+
+	ID DATOS
+---------- --------------------
+	 5 dato5
+	 6 dato6
+	 7 dato7
+	 8 dato8
+
+13. Desactivando la papelera de reciclaje
+
+Session altered.
+
+14. Borrando las tablas creadas y Verificando
+drop table fb_drop1
+           *
+ERROR at line 1:
+ORA-00604: error occurred at recursive SQL level 1
+ORA-04031: unable to allocate 4008 bytes of shared memory ("shared
+pool","delete lob$ where obj#=:1","sga heap(1,0)","kglsim heap")
+
+
+Mostrando contenido de la papelera de reciclaje
+from recyclebin
+     *
+ERROR at line 2:
+ORA-00604: error occurred at recursive SQL level 1
+ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","select
+val","KGLH0^500deaca","kglHeapInitialize:temp")
+
+
+drop table fb_drop2
+           *
+ERROR at line 1:
+ORA-00604: error occurred at recursive SQL level 1
+ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","unknown object","KGLH0^5e6d8df5","kglHeapInitialize:temp")
+
+
+Mostrando contenido de la papelera de reciclaje
+from recyclebin
+     *
+ERROR at line 2:
+ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","unknown object","KGLH0^adfbba17","kglHeapInitialize:temp")
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+##Comentarios y conclusiones

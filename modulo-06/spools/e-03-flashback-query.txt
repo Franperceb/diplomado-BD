@@ -1,0 +1,240 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 26/01/2024
+##@Descripción: Ejercicio 02 - FRA Query.
+-------------------------------------------
+
+##SCRIPTS
+------------------------------------------------
+**********************e-03-flashback-query.sql*****************************
+
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Ejercicio 02 - Módulo 06. Flashback query.
+
+set linesize window
+set verify off
+
+define syslogon='sys/system2 as sysdba'
+define userlogon='user06/user06'
+
+Prompt Conectado como sys
+conn &syslogon 
+
+Prompt 1. Creando el usuario user06
+create user user06 identified by user06
+default tablespace users
+quota unlimited on users;
+
+grant dba to user06;
+
+Prompt 2. Conectandose con el user06
+conn &userlogon
+
+Prompt 2.1 Creando tabla fb_query
+create table fb_query(id number(2), name varchar2(10));
+
+Prompt 3 Insertando 3 registros a la tabla fb_query
+insert into fb_query values(1,'dato1');
+insert into fb_query values(2,'dato2');
+insert into fb_query values(3,'dato3');
+
+commit; 
+
+Prompt mostrando datos de la tabla fb_query
+select * from fb_query;
+
+exec dbms_lock.sleep(5);
+
+Prompt 4. Obteniendo el SCN actual y marca de tiempo.
+
+select current_scn scn1 , 
+(select to_char(sysdate, 'dd-mm-yyyy hh24:mi:ss')  from dual) fecha_hora_1
+from v$database; 
+
+Prompt 5. Modificando un dato en la tabla
+update fb_query set name='cambio1' where id=1;
+commit;
+
+select * from fb_query;
+
+exec dbms_lock.sleep(5);
+
+Prompt 6. Obeniendo nuevamente el SCN actual y marca de tiempo
+select current_scn scn2 , 
+(select to_char(sysdate, 'dd-mm-yyyy hh24:mi:ss')  from dual) fecha_hora_2
+from v$database; 
+
+Prompt 7. Eliminando un registro de la tabla
+delete from fb_query where id = 1;
+commit;
+
+
+Prompt Mostrando cambios
+select * from fb_query;
+
+exec dbms_lock.sleep(5);
+
+Prompt 8. Obeniendo nuevamente el SCN actual y marca de tiempo
+select current_scn scn3 , 
+(select to_char(sysdate, 'dd-mm-yyyy hh24:mi:ss')  from dual) fecha_hora_3
+from v$database; 
+
+Prompt 9. Mostrando información de fb_query en diferentes momentos del tiempo.
+select * from fb_query as of
+timestamp to_timestamp('&fecha_hora_1','dd-mm-yyyy hh24:mi:ss');
+
+select * from fb_query as of scn &scn3;
+
+
+Prompt 10. Ingresando el valor eliminado de nuevo y verificando.
+insert into fb_query 
+select * from fb_query as of scn &scn2 where id=1;
+
+
+Prompt Mostrando información recuperada
+select * from fb_query;
+
+Pause Actividades de limpieza [Enter] para continuar
+
+conn &syslogon
+drop user user06 cascade;
+
+exit
+
+
+
+-------------------------------------------------
+##Salida de ejecución
+**********************e-03-flashback-query.sql*****************************
+sys@jpcdip02> start e-03-flashback-query.sql
+Conectado como sys
+Connected.
+1. Creando el usuario user06
+
+User created.
+
+
+Grant succeeded.
+
+2. Conectandose con el user06
+Connected.
+2.1 Creando tabla fb_query
+
+Table created.
+
+3 Insertando 3 registros a la tabla fb_query
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+Commit complete.
+
+mostrando datos de la tabla fb_query
+
+	ID NAME
+---------- ----------
+	 1 dato1
+	 2 dato2
+	 3 dato3
+
+
+PL/SQL procedure successfully completed.
+
+4. Obteniendo el SCN actual y marca de tiempo.
+
+      SCN1 FECHA_HORA_1
+---------- -------------------
+   2774890 26-01-2024 19:09:56
+
+5. Modificando un dato en la tabla
+
+1 row updated.
+
+
+Commit complete.
+
+
+	ID NAME
+---------- ----------
+	 1 cambio1
+	 2 dato2
+	 3 dato3
+
+
+PL/SQL procedure successfully completed.
+
+6. Obeniendo nuevamente el SCN actual y marca de tiempo
+
+      SCN2 FECHA_HORA_2
+---------- -------------------
+   2774894 26-01-2024 19:10:01
+
+7. Eliminando un registro de la tabla
+
+1 row deleted.
+
+
+Commit complete.
+
+Mostrando cambios
+
+	ID NAME
+---------- ----------
+	 2 dato2
+	 3 dato3
+
+
+PL/SQL procedure successfully completed.
+
+8. Obeniendo nuevamente el SCN actual y marca de tiempo
+
+      SCN3 FECHA_HORA_3
+---------- -------------------
+   2774899 26-01-2024 19:10:06
+
+9. Mostrando información de fb_query en diferentes momentos del tiempo.
+Enter value for fecha_hora_1: 26-01-2024 19:09:56
+
+	ID NAME
+---------- ----------
+	 1 dato1
+	 2 dato2
+	 3 dato3
+
+Enter value for scn3: 2774899
+
+	ID NAME
+---------- ----------
+	 2 dato2
+	 3 dato3
+
+10. Ingresando el valor eliminado de nuevo y verificando.
+Enter value for scn2: 2774894
+
+1 row created.
+
+Mostrando información recuperada
+
+	ID NAME
+---------- ----------
+	 2 dato2
+	 3 dato3
+	 1 cambio1
+
+Actividades de limpieza [Enter] para continuar
+
+Connected.
+
+User dropped.
+
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+-----------------------------------------------------------------------------------------------------------------------------------
+##Comentarios y conclusiones

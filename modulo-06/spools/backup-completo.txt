@@ -1,0 +1,324 @@
+
+[oracle@pc-jpc dbhome_1]$ tree /unam-diplomado-bd/fast-recovery-area/
+/unam-diplomado-bd/fast-recovery-area/
+└── JPCDIP02
+    ├── autobackup
+    │   ├── 2024_01_26
+    │   │   └── o1_mf_s_1159295681_lv8mx16j_.bkp
+    │   └── 2024_01_27
+    │       └── o1_mf_s_1159354144_lvbf014t_.bkp
+    └── flashback
+        ├── o1_mf_lv8mmmg4_.flb
+        ├── o1_mf_lv8mmnyx_.flb
+        └── o1_mf_lvbk5j4t_.flb
+
+5 directories, 5 files
+[oracle@pc-jpc dbhome_1]$ lsnrctl start
+
+LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 27-JAN-2024 13:04:20
+
+Copyright (c) 1991, 2019, Oracle.  All rights reserved.
+
+Starting /u01/app/oracle/product/19.3.0/dbhome_1/bin/tnslsnr: please wait...
+
+TNSLSNR for Linux: Version 19.0.0.0.0 - Production
+System parameter file is /u01/app/oracle/product/19.3.0/dbhome_1/network/admin/listener.ora
+Log messages written to /u01/app/oracle/diag/tnslsnr/pc-jpc/listener/alert/log.xml
+Listening on: (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=1521)))
+Listening on: (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1521)))
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521)))
+STATUS of the LISTENER
+------------------------
+Alias                     LISTENER
+Version                   TNSLSNR for Linux: Version 19.0.0.0.0 - Production
+Start Date                27-JAN-2024 13:04:21
+Uptime                    0 days 0 hr. 0 min. 0 sec
+Trace Level               off
+Security                  ON: Local OS Authentication
+SNMP                      OFF
+Listener Parameter File   /u01/app/oracle/product/19.3.0/dbhome_1/network/admin/listener.ora
+Listener Log File         /u01/app/oracle/diag/tnslsnr/pc-jpc/listener/alert/log.xml
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=1521)))
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1521)))
+The listener supports no services
+The command completed successfully
+[oracle@pc-jpc dbhome_1]$ lsnrctl status
+
+LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 27-JAN-2024 13:04:33
+
+Copyright (c) 1991, 2019, Oracle.  All rights reserved.
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521)))
+STATUS of the LISTENER
+------------------------
+Alias                     LISTENER
+Version                   TNSLSNR for Linux: Version 19.0.0.0.0 - Production
+Start Date                27-JAN-2024 13:04:21
+Uptime                    0 days 0 hr. 0 min. 11 sec
+Trace Level               off
+Security                  ON: Local OS Authentication
+SNMP                      OFF
+Listener Parameter File   /u01/app/oracle/product/19.3.0/dbhome_1/network/admin/listener.ora
+Listener Log File         /u01/app/oracle/diag/tnslsnr/pc-jpc/listener/alert/log.xml
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=1521)))
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1521)))
+Services Summary...
+Service "jpcdip02.fi.unam" has 1 instance(s).
+  Instance "jpcdip02", status READY, has 4 handler(s) for this service...
+The command completed successfully
+[oracle@pc-jpc dbhome_1]$ rman target /
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Sat Jan 27 13:06:24 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: JPCDIP02 (DBID=3728965376)
+
+RMAN> show all;
+
+using target database control file instead of recovery catalog
+RMAN configuration parameters for database with db_unique_name JPCDIP02 are:
+CONFIGURE RETENTION POLICY TO REDUNDANCY 1; # default
+CONFIGURE BACKUP OPTIMIZATION OFF; # default
+CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+CONFIGURE CONTROLFILE AUTOBACKUP ON; # default
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+CONFIGURE DEVICE TYPE DISK PARALLELISM 1 BACKUP TYPE TO BACKUPSET; # default
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE ; # default
+CONFIGURE RMAN OUTPUT TO KEEP FOR 7 DAYS; # default
+CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; # default
+CONFIGURE SNAPSHOT CONTROLFILE NAME TO '/u01/app/oracle/product/19.3.0/dbhome_1/dbs/snapcf_jpcdip02.f'; # default
+
+RMAN> list backup;
+
+
+List of Backup Sets
+===================
+
+
+BS Key  Type LV Size       Device Type Elapsed Time Completion Time
+------- ---- -- ---------- ----------- ------------ ---------------
+1       Full    17.83M     DISK        00:00:00     26-JAN-24      
+        BP Key: 1   Status: AVAILABLE  Compressed: NO  Tag: TAG20240126T183440
+        Piece Name: /unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_26/o1_mf_s_1159295681_lv8mx16j_.bkp
+  SPFILE Included: Modification time: 26-JAN-24
+  SPFILE db_unique_name: JPCDIP02
+  Control File Included: Ckp SCN: 2771720      Ckp time: 26-JAN-24
+
+BS Key  Type LV Size       Device Type Elapsed Time Completion Time
+------- ---- -- ---------- ----------- ------------ ---------------
+2       Full    17.83M     DISK        00:00:01     27-JAN-24      
+        BP Key: 2   Status: AVAILABLE  Compressed: NO  Tag: TAG20240127T104904
+        Piece Name: /unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_27/o1_mf_s_1159354144_lvbf014t_.bkp
+  SPFILE Included: Modification time: 27-JAN-24
+  SPFILE db_unique_name: JPCDIP02
+  Control File Included: Ckp SCN: 2894841      Ckp time: 27-JAN-24
+
+BS Key  Type LV Size       Device Type Elapsed Time Completion Time
+------- ---- -- ---------- ----------- ------------ ---------------
+3       Full    17.83M     DISK        00:00:00     27-JAN-24      
+        BP Key: 3   Status: AVAILABLE  Compressed: NO  Tag: TAG20240127T130425
+        Piece Name: /unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_27/o1_mf_s_1159362265_lvbnxso5_.bkp
+  SPFILE Included: Modification time: 27-JAN-24
+  SPFILE db_unique_name: JPCDIP02
+  Control File Included: Ckp SCN: 2904606      Ckp time: 27-JAN-24
+
+RMAN> list backup summary;
+
+
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time #Pieces #Copies Compressed Tag
+------- -- -- - ----------- --------------- ------- ------- ---------- ---
+1       B  F  A DISK        26-JAN-24       1       1       NO         TAG20240126T183440
+2       B  F  A DISK        27-JAN-24       1       1       NO         TAG20240127T104904
+3       B  F  A DISK        27-JAN-24       1       1       NO         TAG20240127T130425
+
+RMAN> list backup by file;
+
+
+List of Control File Backups
+============================
+
+CF Ckp SCN Ckp Time  BS Key  S #Pieces #Copies Compressed Tag
+---------- --------- ------- - ------- ------- ---------- ---
+2904606    27-JAN-24 3       A 1       1       NO         TAG20240127T130425
+2894841    27-JAN-24 2       A 1       1       NO         TAG20240127T104904
+2771720    26-JAN-24 1       A 1       1       NO         TAG20240126T183440
+List of SPFILE Backups
+======================
+
+Modification Time BS Key  S #Pieces #Copies Compressed Tag
+----------------- ------- - ------- ------- ---------- ---
+27-JAN-24         3       A 1       1       NO         TAG20240127T130425
+27-JAN-24         2       A 1       1       NO         TAG20240127T104904
+26-JAN-24         1       A 1       1       NO         TAG20240126T183440
+
+RMAN> report obsolete;
+
+RMAN retention policy will be applied to the command
+RMAN retention policy is set to redundancy 1
+Report of obsolete backups and copies
+Type                 Key    Completion Time    Filename/Handle
+-------------------- ------ ------------------ --------------------
+Backup Set           1      26-JAN-24         
+  Backup Piece       1      26-JAN-24          /unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_26/o1_mf_s_1159295681_lv8mx16j_.bkp
+Backup Set           2      27-JAN-24         
+  Backup Piece       2      27-JAN-24          /unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_27/o1_mf_s_1159354144_lvbf014t_.bkp
+
+RMAN> delete obsolete;
+
+RMAN retention policy will be applied to the command
+RMAN retention policy is set to redundancy 1
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=154 device type=DISK
+Deleting the following obsolete backups and copies:
+Type                 Key    Completion Time    Filename/Handle
+-------------------- ------ ------------------ --------------------
+Backup Set           1      26-JAN-24         
+  Backup Piece       1      26-JAN-24          /unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_26/o1_mf_s_1159295681_lv8mx16j_.bkp
+Backup Set           2      27-JAN-24         
+  Backup Piece       2      27-JAN-24          /unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_27/o1_mf_s_1159354144_lvbf014t_.bkp
+
+Do you really want to delete the above objects (enter YES or NO)? YES
+deleted backup piece
+backup piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_26/o1_mf_s_1159295681_lv8mx16j_.bkp RECID=1 STAMP=1159295681
+deleted backup piece
+backup piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_27/o1_mf_s_1159354144_lvbf014t_.bkp RECID=2 STAMP=1159354145
+Deleted 2 objects
+
+
+RMAN> report obsolete;
+
+RMAN retention policy will be applied to the command
+RMAN retention policy is set to redundancy 1
+no obsolete backups found
+
+RMAN> list backup;
+
+
+List of Backup Sets
+===================
+
+
+BS Key  Type LV Size       Device Type Elapsed Time Completion Time
+------- ---- -- ---------- ----------- ------------ ---------------
+3       Full    17.83M     DISK        00:00:00     27-JAN-24      
+        BP Key: 3   Status: AVAILABLE  Compressed: NO  Tag: TAG20240127T130425
+        Piece Name: /unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_27/o1_mf_s_1159362265_lvbnxso5_.bkp
+  SPFILE Included: Modification time: 27-JAN-24
+  SPFILE db_unique_name: JPCDIP02
+  Control File Included: Ckp SCN: 2904606      Ckp time: 27-JAN-24
+
+RMAN> list backup summary;
+
+
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time #Pieces #Copies Compressed Tag
+------- -- -- - ----------- --------------- ------- ------- ---------- ---
+3       B  F  A DISK        27-JAN-24       1       1       NO         TAG20240127T130425
+
+RMAN> backup database plus archivelog tag inicial_full_bk1;  
+
+
+Starting backup at 27-JAN-24
+current log archived
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting archived log backup set
+channel ORA_DISK_1: specifying archived log(s) in backup set
+input archived log thread=1 sequence=129 RECID=5 STAMP=1159354140
+input archived log thread=1 sequence=130 RECID=6 STAMP=1159354140
+input archived log thread=1 sequence=131 RECID=8 STAMP=1159354140
+channel ORA_DISK_1: starting piece 1 at 27-JAN-24
+channel ORA_DISK_1: finished piece 1 at 27-JAN-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_01_27/o1_mf_annnn_INICIAL_FULL_BK1_lvbowl9q_.bkp tag=INICIAL_FULL_BK1 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+channel ORA_DISK_1: starting archived log backup set
+channel ORA_DISK_1: specifying archived log(s) in backup set
+input archived log thread=1 sequence=1 RECID=11 STAMP=1159363249
+channel ORA_DISK_1: starting piece 1 at 27-JAN-24
+channel ORA_DISK_1: finished piece 1 at 27-JAN-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_01_27/o1_mf_annnn_INICIAL_FULL_BK1_lvbowmdf_.bkp tag=INICIAL_FULL_BK1 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 27-JAN-24
+
+Starting backup at 27-JAN-24
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00004 name=/u01/app/oracle/oradata/JPCDIP02/users01.dbf
+input datafile file number=00001 name=/u01/app/oracle/oradata/JPCDIP02/system01.dbf
+input datafile file number=00002 name=/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+input datafile file number=00003 name=/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+channel ORA_DISK_1: starting piece 1 at 27-JAN-24
+channel ORA_DISK_1: finished piece 1 at 27-JAN-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_01_27/o1_mf_nnndf_TAG20240127T132052_lvbownpz_.bkp tag=TAG20240127T132052 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:15
+Finished backup at 27-JAN-24
+
+Starting backup at 27-JAN-24
+current log archived
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting archived log backup set
+channel ORA_DISK_1: specifying archived log(s) in backup set
+input archived log thread=1 sequence=2 RECID=13 STAMP=1159363267
+channel ORA_DISK_1: starting piece 1 at 27-JAN-24
+channel ORA_DISK_1: finished piece 1 at 27-JAN-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_01_27/o1_mf_annnn_INICIAL_FULL_BK1_lvbox477_.bkp tag=INICIAL_FULL_BK1 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 27-JAN-24
+
+Starting Control File and SPFILE Autobackup at 27-JAN-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_27/o1_mf_s_1159363269_lvbox5yc_.bkp comment=NONE
+Finished Control File and SPFILE Autobackup at 27-JAN-24
+
+RMAN> list backup by file; 
+
+
+List of Datafile Backups
+========================
+
+File Key     TY LV S Ckp SCN    Ckp Time  #Pieces #Copies Compressed Tag
+---- ------- -  -- - ---------- --------- ------- ------- ---------- ---
+1    6       B  F  A 2906361    27-JAN-24 1       1       NO         TAG20240127T132052
+2    6       B  F  A 2906361    27-JAN-24 1       1       NO         TAG20240127T132052
+3    6       B  F  A 2906361    27-JAN-24 1       1       NO         TAG20240127T132052
+4    6       B  F  A 2906361    27-JAN-24 1       1       NO         TAG20240127T132052
+
+List of Archived Log Backups
+============================
+
+Thrd Seq     Low SCN    Low Time  BS Key  S #Pieces #Copies Compressed Tag
+---- ------- ---------- --------- ------- - ------- ------- ---------- ---
+1    129     2651540    26-JAN-24 4       A 1       1       NO         INICIAL_FULL_BK1
+1    130     2757163    26-JAN-24 4       A 1       1       NO         INICIAL_FULL_BK1
+1    131     2886645    27-JAN-24 4       A 1       1       NO         INICIAL_FULL_BK1
+1    1       2894699    27-JAN-24 5       A 1       1       NO         INICIAL_FULL_BK1
+1    2       2906349    27-JAN-24 7       A 1       1       NO         INICIAL_FULL_BK1
+
+List of Control File Backups
+============================
+
+CF Ckp SCN Ckp Time  BS Key  S #Pieces #Copies Compressed Tag
+---------- --------- ------- - ------- ------- ---------- ---
+2906385    27-JAN-24 8       A 1       1       NO         TAG20240127T132109
+2904606    27-JAN-24 3       A 1       1       NO         TAG20240127T130425
+List of SPFILE Backups
+======================
+
+Modification Time BS Key  S #Pieces #Copies Compressed Tag
+----------------- ------- - ------- ------- ---------- ---
+27-JAN-24         8       A 1       1       NO         TAG20240127T132109
+27-JAN-24         3       A 1       1       NO         TAG20240127T130425
+
+RMAN> 

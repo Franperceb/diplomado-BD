@@ -1,0 +1,171 @@
+_--creacion de tablespace
+
+sys@jpcdip02> run
+  1* create tablespace tbsp_bk datafile '/u01/app/oracle/oradata/JPCDIP02/tbsp_bk' size 300m
+
+Tablespace created.
+
+sys@jpcdip02> select * file_name from dba_data_files;
+select * file_name from dba_data_files
+         *
+ERROR at line 1:
+ORA-00923: FROM keyword not found where expected
+
+
+sys@jpcdip02> select file_name from dba_data_files;
+
+FILE_NAME
+--------------------------------------------------------------------------------
+/u01/app/oracle/oradata/JPCDIP02/system01.dbf
+/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+/u01/app/oracle/oradata/JPCDIP02/users01.dbf
+/u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+
+
+--creacion de usuario y asignacion de tablespace creado
+
+
+sys@jpcdip02> create user user06bk identified by user06bk
+  2  default tablespace tbsp_bk
+  3  quota unlimited on tbsp_bk; 
+
+User created.
+
+sys@jpcdip02> grant connect, resource, create table to user06bk;
+
+Grant succeeded.
+
+-- creacion de tabla e inserciones a la tabla
+sys@jpcdip02> create table user06bk.tablebk(name varchar2(30));
+
+Table created.
+
+sys@jpcdip02> insert into user06bk.tablebk values('dato1');
+
+1 row created.
+
+sys@jpcdip02> edit
+Wrote file afiedt.buf
+
+  1* insert into user06bk.tablebk values('dato2')
+sys@jpcdip02> run
+  1* insert into user06bk.tablebk values('dato2')
+
+1 row created.
+
+sys@jpcdip02> edit
+Wrote file afiedt.buf
+
+  1* insert into user06bk.tablebk values('dato3')
+sys@jpcdip02> run
+  1* insert into user06bk.tablebk values('dato3')
+
+1 row created.
+
+sys@jpcdip02> commit; 
+
+Commit complete.
+
+sys@jpcdip02> select * from user06bk.tablebk;
+
+NAME
+------------------------------
+dato1
+dato2
+dato3
+
+-- generacion de backup y muestra de creación
+RMAN> backup tablespace tbsp_bk tag bk_tbsp_bs;
+
+Starting backup at 27-JAN-24
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00005 name=/u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+channel ORA_DISK_1: starting piece 1 at 27-JAN-24
+channel ORA_DISK_1: finished piece 1 at 27-JAN-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_01_27/o1_mf_nnndf_BK_TBSP_BS_lvbqkw85_.bkp tag=BK_TBSP_BS comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 27-JAN-24
+
+Starting Control File and SPFILE Autobackup at 27-JAN-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_01_27/o1_mf_s_1159364957_lvbqkxxv_.bkp comment=NONE
+Finished Control File and SPFILE Autobackup at 27-JAN-24
+
+RMAN> list backup summary;
+
+
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time #Pieces #Copies Compressed Tag
+------- -- -- - ----------- --------------- ------- ------- ---------- ---
+4       B  A  A DISK        27-JAN-24       1       1       NO         INICIAL_FULL_BK1
+5       B  A  A DISK        27-JAN-24       1       1       NO         INICIAL_FULL_BK1
+6       B  F  A DISK        27-JAN-24       1       1       NO         TAG20240127T132052
+7       B  A  A DISK        27-JAN-24       1       1       NO         INICIAL_FULL_BK1
+8       B  F  A DISK        27-JAN-24       1       1       NO         TAG20240127T132109
+9       B  F  A DISK        27-JAN-24       1       1       NO         BK_TBSP_BS
+10      B  F  A DISK        27-JAN-24       1       1       NO         TAG20240127T134917
+
+RMAN> list backup by file;
+
+
+List of Datafile Backups
+========================
+
+File Key     TY LV S Ckp SCN    Ckp Time  #Pieces #Copies Compressed Tag
+---- ------- -  -- - ---------- --------- ------- ------- ---------- ---
+1    6       B  F  A 2906361    27-JAN-24 1       1       NO         TAG20240127T132052
+2    6       B  F  A 2906361    27-JAN-24 1       1       NO         TAG20240127T132052
+3    6       B  F  A 2906361    27-JAN-24 1       1       NO         TAG20240127T132052
+4    6       B  F  A 2906361    27-JAN-24 1       1       NO         TAG20240127T132052
+5    9       B  F  A 2909208    27-JAN-24 1       1       NO         BK_TBSP_BS
+
+List of Archived Log Backups
+============================
+
+Thrd Seq     Low SCN    Low Time  BS Key  S #Pieces #Copies Compressed Tag
+---- ------- ---------- --------- ------- - ------- ------- ---------- ---
+1    129     2651540    26-JAN-24 4       A 1       1       NO         INICIAL_FULL_BK1
+1    130     2757163    26-JAN-24 4       A 1       1       NO         INICIAL_FULL_BK1
+1    131     2886645    27-JAN-24 4       A 1       1       NO         INICIAL_FULL_BK1
+1    1       2894699    27-JAN-24 5       A 1       1       NO         INICIAL_FULL_BK1
+1    2       2906349    27-JAN-24 7       A 1       1       NO         INICIAL_FULL_BK1
+
+List of Control File Backups
+============================
+
+CF Ckp SCN Ckp Time  BS Key  S #Pieces #Copies Compressed Tag
+---------- --------- ------- - ------- ------- ---------- ---
+2909217    27-JAN-24 10      A 1       1       NO         TAG20240127T134917
+2906385    27-JAN-24 8       A 1       1       NO         TAG20240127T132109
+List of SPFILE Backups
+======================
+
+Modification Time BS Key  S #Pieces #Copies Compressed Tag
+----------------- ------- - ------- ------- ---------- ---
+27-JAN-24         10      A 1       1       NO         TAG20240127T134917
+27-JAN-24         8       A 1       1       NO         TAG20240127T132109
+
+
+-- Mostrando contenido de backup
+
+/unam-diplomado-bd/fast-recovery-area/
+└── [ 4.0K]  JPCDIP02
+    ├── [ 4.0K]  autobackup
+    │   ├── [ 4.0K]  2024_01_26
+    │   └── [ 4.0K]  2024_01_27
+    │       ├── [  18M]  o1_mf_s_1159363269_lvbox5yc_.bkp
+    │       └── [  18M]  o1_mf_s_1159364957_lvbqkxxv_.bkp
+    ├── [ 4.0K]  backupset
+    │   └── [ 4.0K]  2024_01_27
+    │       ├── [  50M]  o1_mf_annnn_INICIAL_FULL_BK1_lvbowl9q_.bkp
+    │       ├── [  15M]  o1_mf_annnn_INICIAL_FULL_BK1_lvbowmdf_.bkp
+    │       ├── [ 5.0K]  o1_mf_annnn_INICIAL_FULL_BK1_lvbox477_.bkp
+    │       ├── [ 1.1M]  o1_mf_nnndf_BK_TBSP_BS_lvbqkw85_.bkp
+    │       └── [ 1.6G]  o1_mf_nnndf_TAG20240127T132052_lvbownpz_.bkp
+    └── [ 4.0K]  flashback
+        ├── [  60M]  o1_mf_lv8mmmg4_.flb
+        ├── [  60M]  o1_mf_lv8mmnyx_.flb
+        └── [  60M]  o1_mf_lvbk5j4t_.flb

@@ -1,0 +1,181 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 26/01/2024
+##@Descripción: Ejercicio 06 -Flashback database.
+-------------------------------------------
+
+##SCRIPTS
+------------------------------------------------
+*********************e-06-flashback-database.sql*****************************
+---@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Ejercicio 06- Módulo 06. Flashback database.
+
+set linesize window
+set verify off
+
+define syslogon='sys/system2 as sysdba'
+define userlogon='user06/user06'
+conn &syslogon
+
+Prompt 1. Verificando el SCN actual
+select dbms_flashback.get_system_change_number() scn_inicial 
+from dual;
+
+Prompt 2. Creando punto de restauración
+create restore point punto_rest;
+
+Prompt 3. Verificando el punto de restauración
+col name format a15
+select scn, name , time from v$restore_point;
+
+
+Prompt 4. Con el usuario user06 creando tabla fb_database e insertando datos.
+conn &userlogon
+
+Prompt Creando tabla fb_database
+create table fb_database(id number(2),dato varchar2(15));
+
+Prompt Insertando datos
+insert into fb_database values(1,'dato1');
+insert into fb_database values(2,'dato2');
+insert into fb_database values(3,'dato3');
+insert into fb_database values(4,'dato4');
+
+commit;
+
+Prompt Mostrando contenido de la tabla
+select * from fb_database;
+
+Prompt 5.  Conectandose como sys , reiniciando instancia a modo mount y regresando la base por flashback
+conn &syslogon
+
+shutdown immediate
+startup mount
+
+
+Prompt 6. Regresando la base datos al punto de restauración
+flashback database to restore point punto_rest;
+
+
+Prompt 7. Abriendo la base de datos a open y reiniciando redologs
+alter database open resetlogs;
+
+Prompt 8. Verificando que se haya retornado al punto marcado
+select * from user06.fb_database;
+
+
+Prompt 9. Eliminando punto de restauración
+drop restore point punto_rest;
+
+exit
+-----------------------------------------------------
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+**********************e-06-flashback-database..sql*****************************
+
+user06@jpcdip02> start e-06-flashback-database.sql 
+Connected.
+1. Verificando el SCN actual
+
+SCN_INICIAL
+-----------
+    2894696
+
+2. Creando punto de restauración
+
+Restore point created.
+
+3. Verificando el punto de restauración
+
+       SCN NAME 	   TIME
+---------- --------------- ---------------------------------------------------------------------------
+   2894697 PUNTO_REST	   27-JAN-24 10.48.11.000000000 AM
+
+4. Con el usuario user06 creando tabla fb_database e insertando datos.
+Connected.
+Creando tabla fb_database
+
+Table created.
+
+Insertando datos
+insert into fb_database values(1,'dato1')
+            *
+ERROR at line 1:
+ORA-00604: error occurred at recursive SQL level 1
+ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","unknown object","KGLH0^461733ba","kglHeapInitialize:temp")
+
+
+insert into fb_database values(2,'dato2')
+            *
+ERROR at line 1:
+ORA-00604: error occurred at recursive SQL level 1
+ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","FB_DATABASE","KGLH0^dfbeb587","kglHeapInitialize:temp")
+
+
+insert into fb_database values(3,'dato3')
+            *
+ERROR at line 1:
+ORA-00604: error occurred at recursive SQL level 1
+ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","select cols","KGLH0^dfbeb587","kglHeapInitialize:temp")
+
+
+insert into fb_database values(4,'dato4')
+            *
+ERROR at line 1:
+ORA-00604: error occurred at recursive SQL level 1
+ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","FB_DATABASE","KGLH0^dfbeb587","kglHeapInitialize:temp")
+
+
+
+Commit complete.
+
+Mostrando contenido de la tabla
+select * from fb_database
+              *
+ERROR at line 1:
+ORA-00604: error occurred at recursive SQL level 1
+ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","unknown object","KGLH0^dc823523","kglHeapInitialize:temp")
+
+
+5.  Conectandose como sys , reiniciando instancia a modo mount y regresando la base por flashback
+Connected.
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+ORACLE instance started.
+
+Total System Global Area  486536496 bytes
+Fixed Size		    8897840 bytes
+Variable Size		  322961408 bytes
+Database Buffers	   41943040 bytes
+Redo Buffers		    7876608 bytes
+In-Memory Area		  104857600 bytes
+Database mounted.
+6. Regresando la base datos al punto de restauración
+
+Flashback complete.
+
+7. Abriendo la base de datos a open y reiniciando redologs
+
+Database altered.
+
+8. Verificando que se haya retornado al punto marcado
+select * from user06.fb_database
+                     *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+9. Eliminando punto de restauración
+
+Restore point dropped.
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+##Comentarios y conclusiones
