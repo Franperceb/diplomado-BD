@@ -1,0 +1,242 @@
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 11/01/2024
+--@Descripción: Ejercicio 04 - Módulo 04. Consultas - procesos.
+----------------------------------------------------------------
+
+
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 11/01/2024
+--@Descripción: Ejercicio 04 - Módulo 04. Consultas - procesos.
+
+/** Correr consultas en SQL Developer para mostrar todos los datos **/
+set linesize window
+prompt Conectando como sysdba
+connect sys/system2 as sysdba 
+-- Consulta 1: Mostrar el total de procesos de la instancia
+SELECT COUNT(*) AS total_procesos
+FROM v$process;
+
+-- Consulta 2: Mostrar los datos de los procesos que no son procesos de background
+SELECT *
+FROM v$session
+WHERE type != 'BACKGROUND';
+
+
+-- Consulta 3: Mostrar los datos de todos los procesos que son de background
+SELECT *
+FROM v$session
+WHERE type = 'BACKGROUND';
+
+-- Consulta 3
+SELECT sid, username, status
+FROM v$session
+WHERE username = 'SYS'; 
+
+
+--Consulta 4:  Obtener el ID de la sesión iniciada en SQL Developer
+DEFINE user = 'sys'; 
+COLUMN sid NEW_VALUE session_id
+
+SELECT sid
+FROM v$session
+WHERE username = UPPER('&user')
+and status ='ACTIVE';
+
+-- Consulta 5: Mostrar los datos del proceso asociado a la sesión creada en SQL Developer
+SELECT *
+FROM v$process
+WHERE addr = (SELECT paddr FROM v$session WHERE sid = &session_id);
+
+-- Consulta 6: Mostrar datos de monitoreo ASH para la sesión creada en SQL Developer
+SELECT *
+FROM v$active_session_history
+WHERE session_id = &session_id;
+------------------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 11/01/2024
+--@Descripción: Ejercicio 04 - Módulo 04. Consultas - procesos.
+
+/** Correr consultas en SQL Developer para mostrar todos los datos **/
+set linesize window
+prompt Conectando como sysdba
+connect sys/system2 as sysdba 
+-- Consulta 1: Mostrar el total de procesos de la instancia
+SELECT COUNT(*) AS total_procesos
+FROM v$process;
+/*
+"TOTAL_PROCESOS"
+90
+
+*/
+-- Consulta 2: Mostrar los datos de los procesos que no son procesos de background
+SELECT * FROM v$process WHERE background is null;
+
+/*
+"ADDR"	"PID"	"SOSID"	"SPID"	"STID"	"EXECUTION_TYPE"	"PNAME"	"USERNAME"	"SERIAL#"	"TERMINAL"	"PROGRAM"	"TRACEID"	"TRACEFILE"	"BACKGROUND"	"LATCHWAIT"	"LATCHSPIN"	"PGA_USED_MEM"	"PGA_ALLOC_MEM"	"PGA_FREEABLE_MEM"	"PGA_MAX_MEM"	"NUMA_DEFAULT"	"NUMA_CURR"	"CPU_USED"	"CON_ID"
+0000000076F0D358	1	""	""	""	"NONE"	""	""	0	""	"PSEUDO"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_ora_0.trc"	""	""	""	0	0	0	0	0	0	0	0
+0000000076F33F38	30	"13052"	"13052"	"13052"	"PROCESS"	"D000"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (D000)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_d000_13052.trc"	""	""	""	1578509	1661157	0	1669557	0	0	221075	0
+0000000076F37F58	33	"13054"	"13054"	"13054"	"PROCESS"	"D001"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (D001)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_d001_13054.trc"	""	""	""	1578509	1661157	0	1669557	0	0	181918	0
+0000000076F394B8	34	"13056"	"13056"	"13056"	"PROCESS"	"S000"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (S000)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_s000_13056.trc"	""	""	""	927253	1399013	131072	1399013	0	0	171275	0
+0000000076F3AA18	35	"13058"	"13058"	"13058"	"PROCESS"	"S001"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (S001)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_s001_13058.trc"	""	""	""	894989	1005797	0	1014197	0	0	137457	0
+0000000076F3BF78	36	"54076"	"54076"	"54076"	"PROCESS"	""	"oracle"	6	"UNKNOWN"	"oracle@pc-jpc.fi.unam (TNS V1-V3)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_ora_54076.trc"	""	""	""	1392373	2595429	1048576	3512933	0	0	43887	0
+0000000076F3D4D8	37	"13062"	"13062"	"13062"	"PROCESS"	"S003"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (S003)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_s003_13062.trc"	""	""	""	1335333	30169317	28311552	30169317	0	0	4336971	0
+0000000076834028	48	"13098"	"13098"	"13098"	"PROCESS"	"P000"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P000)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p000_13098.trc"	""	""	""	882149	940261	0	948661	0	0	437494	0
+0000000076836AE8	50	"13102"	"13102"	"13102"	"PROCESS"	"P001"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P001)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p001_13102.trc"	""	""	""	882149	940261	0	948661	0	0	477214	0
+00000000768395A8	52	"13106"	"13106"	"13106"	"PROCESS"	"P002"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P002)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p002_13106.trc"	""	""	""	882149	940261	0	948661	0	0	474459	0
+000000007683C068	54	"13110"	"13110"	"13110"	"PROCESS"	"P003"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P003)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p003_13110.trc"	""	""	""	882149	940261	0	948661	0	0	494558	0
+000000007683D5C8	55	"13112"	"13112"	"13112"	"PROCESS"	"L003"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (L003)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_l003_13112.trc"	""	""	""	902501	1005797	0	1014197	0	0	140872	0
+000000007683EB28	56	"13114"	"13114"	"13114"	"PROCESS"	"P004"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P004)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p004_13114.trc"	""	""	""	882149	940261	0	948661	0	0	469364	0
+00000000768415E8	58	"13118"	"13118"	"13118"	"PROCESS"	"P005"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P005)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p005_13118.trc"	""	""	""	882149	940261	0	948661	0	0	443364	0
+0000000076845608	61	"13124"	"13124"	"13124"	"PROCESS"	"P006"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P006)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p006_13124.trc"	""	""	""	882149	940261	0	948661	0	0	493067	0
+00000000768480C8	63	"13128"	"13128"	"13128"	"PROCESS"	"P007"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P007)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p007_13128.trc"	""	""	""	882149	940261	0	948661	0	0	502449	0
+0000000076849628	64	"13130"	"13130"	"13130"	"PROCESS"	"P008"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P008)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p008_13130.trc"	""	""	""	882149	940261	0	948661	0	0	477729	0
+000000007684C0E8	66	"13134"	"13134"	"13134"	"PROCESS"	"L009"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (L009)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_l009_13134.trc"	""	""	""	902501	1005797	0	1014197	0	0	142908	0
+000000007684D648	67	"13136"	"13136"	"13136"	"PROCESS"	"P009"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P009)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p009_13136.trc"	""	""	""	882149	940261	0	948661	0	0	484251	0
+000000007684EBA8	68	"13138"	"13138"	"13138"	"PROCESS"	"P00A"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P00A)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p00a_13138.trc"	""	""	""	882149	940261	0	948661	0	0	489086	0
+0000000076851668	70	"13142"	"13142"	"13142"	"PROCESS"	"P00B"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P00B)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p00b_13142.trc"	""	""	""	882149	940261	0	948661	0	0	453553	0
+0000000076852BC8	71	"13144"	"13144"	"13144"	"PROCESS"	"L011"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (L011)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_l011_13144.trc"	""	""	""	902501	1005797	0	1014197	0	0	142586	0
+0000000076854128	72	"13146"	"13146"	"13146"	"PROCESS"	"P00C"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P00C)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p00c_13146.trc"	""	""	""	882149	940261	0	948661	0	0	483126	0
+0000000076856BE8	74	"13150"	"13150"	"13150"	"PROCESS"	"P00D"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P00D)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p00d_13150.trc"	""	""	""	882149	940261	0	948661	0	0	501641	0
+00000000768596A8	76	"13154"	"13154"	"13154"	"PROCESS"	"P00E"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P00E)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p00e_13154.trc"	""	""	""	882149	940261	0	948661	0	0	486335	0
+000000007685C168	78	"13158"	"13158"	"13158"	"PROCESS"	"P00F"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (P00F)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_p00f_13158.trc"	""	""	""	882149	940261	0	948661	0	0	463071	0
+0000000076862C48	83	"13170"	"13170"	"13170"	"PROCESS"	"L020"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (L020)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_l020_13170.trc"	""	""	""	902501	1005797	0	1014197	0	0	146873	0
+00000000768681C8	87	"13178"	"13178"	"13178"	"PROCESS"	"L024"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (L024)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_l024_13178.trc"	""	""	""	1275757	1464549	0	2578661	0	0	261636	0
+0000000076870208	93	"13190"	"13190"	"13190"	"PROCESS"	"N000"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (N000)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_n000_13190.trc"	""	""	""	45774349	46946533	0	46954933	0	0	190271	0
+0000000076871768	94	"13194"	"13194"	"13194"	"PROCESS"	"L030"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (L030)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_l030_13194.trc"	""	""	""	1145445	1464549	131072	1464549	0	0	156564	0
+000000007688D848	115	"51435"	"51435"	"51435"	"PROCESS"	"D002"	"oracle"	25	"UNKNOWN"	"oracle@pc-jpc.fi.unam (D002)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_d002_51435.trc"	""	""	""	1578429	1669557	0	1669557	0	0	52580	0
+000000007688EDA8	116	"51437"	"51437"	"51437"	"PROCESS"	"D003"	"oracle"	37	"UNKNOWN"	"oracle@pc-jpc.fi.unam (D003)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_d003_51437.trc"	""	""	""	1578429	1669557	0	1669557	0	0	36334	0
+*/
+
+-- Consulta 3: Mostrar los datos de todos los procesos que son de background
+SELECT * FROM v$process WHERE background = '1';
+
+
+/*
+"ADDR"	"PID"	"SOSID"	"SPID"	"STID"	"EXECUTION_TYPE"	"PNAME"	"USERNAME"	"SERIAL#"	"TERMINAL"	"PROGRAM"	"TRACEID"	"TRACEFILE"	"BACKGROUND"	"LATCHWAIT"	"LATCHSPIN"	"PGA_USED_MEM"	"PGA_ALLOC_MEM"	"PGA_FREEABLE_MEM"	"PGA_MAX_MEM"	"NUMA_DEFAULT"	"NUMA_CURR"	"CPU_USED"	"CON_ID"
+0000000076F0E8B8	2	"12988"	"12988"	"12988"	"PROCESS"	"PMON"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (PMON)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_pmon_12988.trc"	"1"	""	""	1386197	1483525	0	1483525	0	0	952025	0
+0000000076F0FE18	3	"12990"	"12990"	"12990"	"PROCESS"	"CLMN"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (CLMN)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_clmn_12990.trc"	"1"	""	""	1386197	1483525	0	1483525	0	0	290748	0
+0000000076F11378	4	"12992"	"12992"	"12992"	"PROCESS"	"PSP0"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (PSP0)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_psp0_12992.trc"	"1"	""	""	1369661	1532605	0	1532605	0	0	1612255	0
+0000000076F128D8	5	"12994"	"12994"	"12994"	"PROCESS"	"VKTM"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (VKTM)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_vktm_12994.trc"	"1"	""	""	1366405	1532605	0	1532605	0	0	90166339	0
+0000000076F13E38	6	"12998"	"12998"	"12998"	"PROCESS"	"GEN0"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (GEN0)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_gen0_12998.trc"	"1"	""	""	1404797	1532605	0	1532605	0	0	541262	0
+0000000076F15398	7	"13000"	"13000"	"13000"	"PROCESS"	"MMAN"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (MMAN)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_mman_13000.trc"	"1"	""	""	1369661	1532605	0	1532605	0	0	282458	0
+0000000076F168F8	8	"13009_13010"	"13009"	"13010"	"THREAD"	"OFSD"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (OFSD)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_ofsd_13009_13010.trc"	"1"	""	""	1838781	2581181	327680	2581181	0	0	7389	0
+0000000076F17E58	9	"13004_13005"	"13004"	"13005"	"THREAD"	"GEN1"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (GEN1)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_gen1_13004_13005.trc"	"1"	""	""	1370653	1532605	0	1532605	0	0	3102027	0
+0000000076F193B8	10	"13004_13004"	"13004"	"13004"	"THREAD"	"SCMN"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (SCMN)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_scmn_13004_13004.trc"	"1"	""	""	1237909	1341877	0	1341877	0	0	5868	0
+0000000076F1A918	11	"13007"	"13007"	"13007"	"PROCESS"	"DIAG"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (DIAG)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_diag_13007.trc"	"1"	""	""	1366173	1532605	0	1532605	0	0	581406	0
+0000000076F1BE78	12	"13009_13009"	"13009"	"13009"	"THREAD"	"SCMN"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (SCMN)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_scmn_13009_13009.trc"	"1"	""	""	1237909	1341877	0	1341877	0	0	8641	0
+0000000076F1D3D8	13	"13012"	"13012"	"13012"	"PROCESS"	"DBRM"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (DBRM)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_dbrm_13012.trc"	"1"	""	""	1714341	2056893	0	2056893	0	0	7848067	0
+0000000076F1E938	14	"13014"	"13014"	"13014"	"PROCESS"	"VKRM"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (VKRM)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_vkrm_13014.trc"	"1"	""	""	1369685	1532605	0	1532605	0	0	26155136	0
+0000000076F1FE98	15	"13016"	"13016"	"13016"	"PROCESS"	"SVCB"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (SVCB)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_svcb_13016.trc"	"1"	""	""	1480309	1598141	0	1598141	0	0	557834	0
+0000000076F213F8	16	"13018"	"13018"	"13018"	"PROCESS"	"PMAN"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (PMAN)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_pman_13018.trc"	"1"	""	""	1372221	1532605	0	1532605	0	0	1431157	0
+0000000076F22958	17	"13020"	"13020"	"13020"	"PROCESS"	"DIA0"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (DIA0)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_dia0_13020.trc"	"1"	""	""	4766813	4923421	65536	4923421	0	0	9585384	0
+0000000076F23EB8	18	"13022"	"13022"	"13022"	"PROCESS"	"DBW0"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (DBW0)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_dbw0_13022.trc"	"1"	""	""	8251357	11147813	1245184	11409957	0	0	1043482	0
+0000000076F25418	19	"13024"	"13024"	"13024"	"PROCESS"	"LGWR"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (LGWR)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_lgwr_13024.trc"	"1"	""	""	1579141	2065293	0	2065293	0	0	707552	0
+0000000076F26978	20	"13026"	"13026"	"13026"	"PROCESS"	"CKPT"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (CKPT)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_ckpt_13026.trc"	"1"	""	""	1427685	1902693	0	1902693	0	0	3342361	0
+0000000076F27ED8	21	"13028"	"13028"	"13028"	"PROCESS"	"LG00"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (LG00)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_lg00_13028.trc"	"1"	""	""	1238213	1341877	0	1341877	0	0	1136190	0
+0000000076F29438	22	"13030"	"13030"	"13030"	"PROCESS"	"SMON"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (SMON)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_smon_13030.trc"	"1"	""	""	2163141	3564221	589824	3564221	0	0	378944	0
+0000000076F2A998	23	"13032"	"13032"	"13032"	"PROCESS"	"LG01"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (LG01)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_lg01_13032.trc"	"1"	""	""	1238213	1341877	0	1341877	0	0	456936	0
+0000000076F2BEF8	24	"13034"	"13034"	"13034"	"PROCESS"	"SMCO"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (SMCO)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_smco_13034.trc"	"1"	""	""	1369685	1532605	0	1532605	0	0	1316179	0
+0000000076F2D458	25	"13036"	"13036"	"13036"	"PROCESS"	"RECO"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (RECO)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_reco_13036.trc"	"1"	""	""	1970325	2777789	327680	3236541	0	0	290515	0
+0000000076F2E9B8	26	"42269"	"42269"	"42269"	"PROCESS"	"W00F"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W00F)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w00f_42269.trc"	"1"	""	""	2299629	2718133	0	4422069	0	0	161837	0
+0000000076F2FF18	27	"13040"	"13040"	"13040"	"PROCESS"	"LREG"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (LREG)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_lreg_13040.trc"	"1"	""	""	1976093	2367517	0	3171005	0	0	429170	0
+0000000076F31478	28	"42287"	"42287"	"42287"	"PROCESS"	"W008"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W008)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w008_42287.trc"	"1"	""	""	1391717	1472949	0	1472949	0	0	129840	0
+0000000076F329D8	29	"13044"	"13044"	"13044"	"PROCESS"	"PXMN"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (PXMN)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_pxmn_13044.trc"	"1"	""	""	1369661	1532605	0	1532605	0	0	243158	0
+0000000076F35498	31	"13048"	"13048"	"13048"	"PROCESS"	"MMON"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (MMON)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_mmon_13048.trc"	"1"	""	""	11471245	30901133	1376256	32539533	0	0	5893139	0
+0000000076F369F8	32	"13050"	"13050"	"13050"	"PROCESS"	"MMNL"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (MMNL)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_mmnl_13050.trc"	"1"	""	""	1457181	1860285	65536	1860285	0	0	4025714	0
+0000000076F3EA38	38	"13064"	"13064"	"13064"	"PROCESS"	"TMON"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (TMON)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_tmon_13064.trc"	"1"	""	""	1369661	1532605	0	1532605	0	0	146197	0
+0000000076F414F8	40	"42371"	"42371"	"42371"	"PROCESS"	"W00B"	"oracle"	4	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W00B)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w00b_42371.trc"	"1"	""	""	1461581	1735093	0	1735093	0	0	135217	0
+0000000076F42A58	41	"13079"	"13079"	"13079"	"PROCESS"	"TT00"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (TT00)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_tt00_13079.trc"	"1"	""	""	18486021	20019637	0	20019637	0	0	140740	0
+0000000076F43FB8	42	"13081"	"13081"	"13081"	"PROCESS"	"TT01"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (TT01)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_tt01_13081.trc"	"1"	""	""	1237909	1341877	0	1341877	0	0	119943	0
+0000000076F45518	43	"13083"	"13083"	"13083"	"PROCESS"	"TT02"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (TT02)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_tt02_13083.trc"	"1"	""	""	1237909	1341877	0	1341877	0	0	436793	0
+0000000076F46A78	44	"13085"	"13085"	"13085"	"PROCESS"	"IMCO"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (IMCO)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_imco_13085.trc"	"1"	""	""	2254429	4350653	1572864	4350653	0	0	1414780	0
+0000000076F47FD8	45	"13087"	"13087"	"13087"	"PROCESS"	"AQPC"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (AQPC)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_aqpc_13087.trc"	"1"	""	""	1826837	1991357	0	2515645	0	0	121619	0
+0000000076F49538	46	"13089"	"13089"	"13089"	"PROCESS"	"CJQ0"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (CJQ0)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_cjq0_13089.trc"	"1"	""	""	3647213	4162445	0	7111565	0	0	10661396	0
+0000000076F4AA98	47	"41462"	"41462"	"41462"	"PROCESS"	"Q001"	"oracle"	9	"UNKNOWN"	"oracle@pc-jpc.fi.unam (Q001)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_q001_41462.trc"	"1"	""	""	1854869	2587061	262144	2587061	0	0	87301	0
+0000000076872CC8	95	"13196"	"13196"	"13196"	"PROCESS"	"W002"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W002)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w002_13196.trc"	"1"	""	""	2324013	2652597	0	3701173	0	0	519808	0
+0000000076874228	96	"42375"	"42375"	"42375"	"PROCESS"	"M000"	"oracle"	4	"UNKNOWN"	"oracle@pc-jpc.fi.unam (M000)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_m000_42375.trc"	"1"	""	""	12028821	12810677	0	19429813	0	0	5148625	0
+0000000076875788	97	"42377"	"42377"	"42377"	"PROCESS"	"M001"	"oracle"	3	"UNKNOWN"	"oracle@pc-jpc.fi.unam (M001)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_m001_42377.trc"	"1"	""	""	5877309	6257077	0	12876213	0	0	4282825	0
+0000000076876CE8	98	"42289"	"42289"	"42289"	"PROCESS"	"W001"	"oracle"	4	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W001)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w001_42289.trc"	"1"	""	""	1712605	1866165	0	3439029	0	0	149214	0
+0000000076878248	99	"13414"	"13414"	"13414"	"PROCESS"	"QM02"	"oracle"	4	"UNKNOWN"	"oracle@pc-jpc.fi.unam (QM02)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_qm02_13414.trc"	"1"	""	""	1698341	1800629	0	2324917	0	0	182981	0
+00000000768797A8	100	"42315"	"42315"	"42315"	"PROCESS"	"W005"	"oracle"	6	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W005)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w005_42315.trc"	"1"	""	""	1329725	1407413	0	1407413	0	0	127609	0
+000000007687AD08	101	"47797"	"47797"	"47797"	"PROCESS"	"M003"	"oracle"	7	"UNKNOWN"	"oracle@pc-jpc.fi.unam (M003)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_m003_47797.trc"	"1"	""	""	2015357	3832245	1441792	3832245	0	0	2378985	0
+000000007687C268	102	"13420"	"13420"	"13420"	"PROCESS"	"Q003"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (Q003)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_q003_13420.trc"	"1"	""	""	1443165	1604021	0	1604021	0	0	121049	0
+000000007687D7C8	103	"42317"	"42317"	"42317"	"PROCESS"	"W003"	"oracle"	3	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W003)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w003_42317.trc"	"1"	""	""	1395061	1604021	0	2128309	0	0	128446	0
+000000007687ED28	104	"42379"	"42379"	"42379"	"PROCESS"	"M002"	"oracle"	4	"UNKNOWN"	"oracle@pc-jpc.fi.unam (M002)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_m002_42379.trc"	"1"	""	""	10984205	11762101	131072	22313397	0	0	4240007	0
+0000000076880288	105	"42322"	"42322"	"42322"	"PROCESS"	"W004"	"oracle"	3	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W004)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w004_42322.trc"	"1"	""	""	1391717	1472949	0	1472949	0	0	131552	0
+00000000768817E8	106	"14219"	"14219"	"14219"	"PROCESS"	"W007"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W007)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w007_14219.trc"	"1"	""	""	2293293	2390453	0	4487605	0	0	477996	0
+0000000076882D48	107	"42366"	"42366"	"42366"	"PROCESS"	"W000"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W000)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w000_42366.trc"	"1"	""	""	1329725	1407413	0	1407413	0	0	129197	0
+00000000768842A8	108	"42381"	"42381"	"42381"	"PROCESS"	"W009"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W009)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w009_42381.trc"	"1"	""	""	1840277	2062773	0	3570101	0	0	143793	0
+0000000076885808	109	"42407"	"42407"	"42407"	"PROCESS"	"W00D"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W00D)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w00d_42407.trc"	"1"	""	""	1365445	1538485	0	3111349	0	0	142040	0
+0000000076886D68	110	"42424"	"42424"	"42424"	"PROCESS"	"W00A"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W00A)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w00a_42424.trc"	"1"	""	""	1329541	1407413	0	1407413	0	0	128534	0
+00000000768882C8	111	"14241"	"14241"	"14241"	"PROCESS"	"W00C"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W00C)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w00c_14241.trc"	"1"	""	""	2400437	3111349	0	4553141	0	0	474057	0
+0000000076889828	112	"42448"	"42448"	"42448"	"PROCESS"	"W006"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W006)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w006_42448.trc"	"1"	""	""	1813245	2128309	0	2849205	0	0	137478	0
+000000007688AD88	113	"14253"	"14253"	"14253"	"PROCESS"	"W00E"	"oracle"	1	"UNKNOWN"	"oracle@pc-jpc.fi.unam (W00E)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_w00e_14253.trc"	"1"	""	""	1944869	2455989	0	3570101	0	0	448679	0
+
+*/
+-- Consulta 3
+SELECT sid, username, status
+FROM v$session
+WHERE username = 'SYS'; 
+/*
+"SID"	"USERNAME"	"STATUS"
+1	"SYS"	"ACTIVE"
+289	"SYS"	"INACTIVE"
+365	"SYS"	"ACTIVE"
+*/
+
+--Consulta 4:  Obtener el ID de la sesión iniciada en SQL Developer
+DEFINE user = 'sys'; 
+COLUMN sid NEW_VALUE session_id
+
+SELECT sid
+FROM v$session
+WHERE username = UPPER('&user')
+and status ='ACTIVE';
+
+/*
+"SID"
+1			
+365		"
+*/
+
+-- Consulta 5: Mostrar los datos del proceso asociado a la sesión creada en SQL Developer
+SELECT *
+FROM v$process
+WHERE addr = (SELECT paddr FROM v$session WHERE sid = &session_id);
+/*
+"ADDR"	"PID"	"SOSID"	"SPID"	"STID"	"EXECUTION_TYPE"	"PNAME"	"USERNAME"	"SERIAL#"	"TERMINAL"	"PROGRAM"	"TRACEID"	"TRACEFILE"	"BACKGROUND"	"LATCHWAIT"	"LATCHSPIN"	"PGA_USED_MEM"	"PGA_ALLOC_MEM"	"PGA_FREEABLE_MEM"	"PGA_MAX_MEM"	"NUMA_DEFAULT"	"NUMA_CURR"	"CPU_USED"	"CON_ID"
+0000000076F168F8	8	"13009_13010"	"13009"	"13010"	"THREAD"	"OFSD"	"oracle"	2	"UNKNOWN"	"oracle@pc-jpc.fi.unam (OFSD)"	""	"/u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_ofsd_13009_13010.trc"	"1"	""	""	1838781	2581181	327680	2581181	0	0	7389	0
+*/
+
+-- Consulta 6: Mostrar datos de monitoreo ASH para la sesión creada en SQL Developer
+SELECT *
+FROM v$active_session_history
+WHERE session_id = &session_id;
+/*
+"SAMPLE_ID"	"SAMPLE_TIME"	"SAMPLE_TIME_UTC"	"USECS_PER_ROW"	"IS_AWR_SAMPLE"	"SESSION_ID"	"SESSION_SERIAL#"	"SESSION_TYPE"	"FLAGS"	"USER_ID"	"SQL_ID"	"IS_SQLID_CURRENT"	"SQL_CHILD_NUMBER"	"SQL_OPCODE"	"SQL_OPNAME"	"FORCE_MATCHING_SIGNATURE"	"TOP_LEVEL_SQL_ID"	"TOP_LEVEL_SQL_OPCODE"	"SQL_ADAPTIVE_PLAN_RESOLVED"	"SQL_FULL_PLAN_HASH_VALUE"	"SQL_PLAN_HASH_VALUE"	"SQL_PLAN_LINE_ID"	"SQL_PLAN_OPERATION"	"SQL_PLAN_OPTIONS"	"SQL_EXEC_ID"	"SQL_EXEC_START"	"PLSQL_ENTRY_OBJECT_ID"	"PLSQL_ENTRY_SUBPROGRAM_ID"	"PLSQL_OBJECT_ID"	"PLSQL_SUBPROGRAM_ID"	"QC_INSTANCE_ID"	"QC_SESSION_ID"	"QC_SESSION_SERIAL#"	"PX_FLAGS"	"EVENT"	"EVENT_ID"	"EVENT#"	"SEQ#"	"P1TEXT"	"P1"	"P2TEXT"	"P2"	"P3TEXT"	"P3"	"WAIT_CLASS"	"WAIT_CLASS_ID"	"WAIT_TIME"	"SESSION_STATE"	"TIME_WAITED"	"BLOCKING_SESSION_STATUS"	"BLOCKING_SESSION"	"BLOCKING_SESSION_SERIAL#"	"BLOCKING_INST_ID"	"BLOCKING_HANGCHAIN_INFO"	"CURRENT_OBJ#"	"CURRENT_FILE#"	"CURRENT_BLOCK#"	"CURRENT_ROW#"	"TOP_LEVEL_CALL#"	"TOP_LEVEL_CALL_NAME"	"CONSUMER_GROUP_ID"	"XID"	"REMOTE_INSTANCE#"	"TIME_MODEL"	"IN_CONNECTION_MGMT"	"IN_PARSE"	"IN_HARD_PARSE"	"IN_SQL_EXECUTION"	"IN_PLSQL_EXECUTION"	"IN_PLSQL_RPC"	"IN_PLSQL_COMPILATION"	"IN_JAVA_EXECUTION"	"IN_BIND"	"IN_CURSOR_CLOSE"	"IN_SEQUENCE_LOAD"	"IN_INMEMORY_QUERY"	"IN_INMEMORY_POPULATE"	"IN_INMEMORY_PREPOPULATE"	"IN_INMEMORY_REPOPULATE"	"IN_INMEMORY_TREPOPULATE"	"IN_TABLESPACE_ENCRYPTION"	"CAPTURE_OVERHEAD"	"REPLAY_OVERHEAD"	"IS_CAPTURED"	"IS_REPLAYED"	"IS_REPLAY_SYNC_TOKEN_HOLDER"	"SERVICE_HASH"	"PROGRAM"	"MODULE"	"ACTION"	"CLIENT_ID"	"MACHINE"	"PORT"	"ECID"	"DBREPLAY_FILE_ID"	"DBREPLAY_CALL_COUNTER"	"TM_DELTA_TIME"	"TM_DELTA_CPU_TIME"	"TM_DELTA_DB_TIME"	"DELTA_TIME"	"DELTA_READ_IO_REQUESTS"	"DELTA_WRITE_IO_REQUESTS"	"DELTA_READ_IO_BYTES"	"DELTA_WRITE_IO_BYTES"	"DELTA_INTERCONNECT_IO_BYTES"	"DELTA_READ_MEM_BYTES"	"PGA_ALLOCATED"	"TEMP_SPACE_ALLOCATED"	"CON_DBID"	"CON_ID"	"DBOP_NAME"	"DBOP_EXEC_ID"
+202871	11-JAN-24 07.38.41.948000000 AM	11-JAN-24 01.38.41.000000000 PM	1000187	"N"	365	45670	"FOREGROUND"	16	0	"3ck5ur13wmmaj"	"Y"	1	3	"SELECT"	15432541685446614778	"3ck5ur13wmmaj"	3	0	1261828474	0	14	"TABLE ACCESS"	"FULL"	16777217	11-01-2024 07:38:40									""			3538	"driver id"	1297371904	"#bytes"	1	""	0	""		8	"ON CPU"	0	"NOT IN WAIT"				""	40	1	81110	0	94	"V8 Bundled Exec"	19640			1024	"N"	"N"	"N"	"Y"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	1491841285	"SQL Developer"	"SQL Developer"	""	""	"pc-jpc.fi.unam"	17500	""	0	0	176049103	289510	286373	176065167	1	0	8192	0	8192	92856320	8142848	1048576	3728965376	0	""	0
+202695	11-JAN-24 07.35.45.883000000 AM	11-JAN-24 01.35.45.000000000 PM	1000247	"Y"	365	45670	"FOREGROUND"	144	0	"3ck5ur13wmmaj"	"Y"	0	3	"SELECT"	15432541685446614778	"3ck5ur13wmmaj"	3	0	1261828474	0	14	"TABLE ACCESS"	"FULL"	16777216	11-01-2024 07:35:45									""			3417	"driver id"	1297371904	"#bytes"	1	""	0	""		6	"ON CPU"	0	"NOT IN WAIT"				""	40	1	81110	0	94	"V8 Bundled Exec"	19640			1024	"N"	"N"	"N"	"Y"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	1491841285	"SQL Developer"	"SQL Developer"	""	""	"pc-jpc.fi.unam"	17500	""	0	0	449118617	491542	489568	449150867	840	0	6979584	0	6979584	270712832	8142848	1048576	3728965376	0	""	0
+202246	11-JAN-24 07.28.16.732000000 AM	11-JAN-24 01.28.16.000000000 PM	1000215	"N"	365	45670	"FOREGROUND"	16	0	"2bdcp1uwx8utq"	"Y"	1	3	"SELECT"	10091368517336785565	"2bdcp1uwx8utq"	3	1	470967364	3384222937		""	""											""			2371	"file#"	1	"block#"	12562	"blocks"	1	""		3	"ON CPU"	0	"NOT IN WAIT"				""	70	1	54951	0	94	"V8 Bundled Exec"	19640			1168	"N"	"Y"	"Y"	"Y"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	1491841285	"SQL Developer"	"SQL Developer"	""	""	"pc-jpc.fi.unam"	17500	""	0	0	21606964275	1156409	1363528	42027704883	1411	0	17784832	0	17784832	111411200	2441216	1048576	3728965376	0	""	0
+180693	10-JAN-24 07.47.49.027000000 PM	11-JAN-24 01.47.49.000000000 AM	1000215	"N"	365	45670	"FOREGROUND"	16	0	"0zg5scs7brcfg"	"Y"	0	3	"SELECT"	5828963143303944528	"0zg5scs7brcfg"	3	1	1515676371	1228228710		""	""											""			460	"driver id"	1297371904	"#bytes"	1	""	0	""		5	"ON CPU"	0	"NOT IN WAIT"				""	145	1	1433	0	94	"V8 Bundled Exec"	19640			1168	"N"	"Y"	"Y"	"Y"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	"N"	1491841285	"SQL Developer"	"SQL Developer"	""	""	"pc-jpc.fi.unam"	17500	""	0	0	690498	657421	649713	705825	119	1	1007616	5120	1013248	26255360	2506752	0	3728965376	0	""	0
+*/
+
+
+
+
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+Este ejercicio proporcionó una comprensión práctica y aplicada de cómo utilizar SQL Developer para consultar información crítica 
+sobre procesos en una instancia de Oracle. Estas consultas son esenciales para la administración, 
+el monitoreo y la optimización del entorno de base de datos. La capacidad para identificar procesos, comprender su naturaleza y 
+monitorizar la actividad de la sesión es fundamental para mantener un entorno de base de datos saludable y eficiente.
+Es importante remarcar que existen multiples maneras de hacer consultas para obtener el mismo resultado a través de las múltiples vistas que cuenta la instancia.
+En general, todo fue muy claro y no se tuvo problemas al realizar el ejercicio.

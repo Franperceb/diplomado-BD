@@ -1,0 +1,109 @@
+
+
+idle> start examen-01.sql  
+conectando como usuario sys
+Connected.
+
+System altered.
+
+validando servicios
+
+LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 08-JAN-2024 22:21:52
+
+Copyright (c) 1991, 2019, Oracle.  All rights reserved.
+
+Connecting to (ADDRESS=(PROTOCOL=tcp)(HOST=)(PORT=1521))
+Services Summary...
+Service "jpcdip02.fi.unam" has 1 instance(s).
+  Instance "jpcdip02", status READY, has 1 handler(s) for this service...
+    Handler(s):
+      "DEDICATED" established:24 refused:0 state:ready
+         LOCAL SERVER
+The command completed successfully
+
+cambiando a modo compartido
+
+System altered.
+
+
+System altered.
+
+
+System altered.
+
+
+System altered.
+
+mostrando cambio de parametros
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+max_shared_servers		     integer	 4
+shared_servers			     integer	 4
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+dispatchers			     string	 (dispatchers=2)(protocol=tcp)
+max_dispatchers 		     integer	 2
+
+System altered.
+
+mostrando servicios
+
+LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 08-JAN-2024 22:21:52
+
+Copyright (c) 1991, 2019, Oracle.  All rights reserved.
+
+Connecting to (ADDRESS=(PROTOCOL=tcp)(HOST=)(PORT=1521))
+Services Summary...
+Service "jpcdip02.fi.unam" has 1 instance(s).
+  Instance "jpcdip02", status READY, has 1 handler(s) for this service...
+    Handler(s):
+      "DEDICATED" established:24 refused:0 state:ready
+         LOCAL SERVER
+The command completed successfully
+
+iniciando connection pool
+
+PL/SQL procedure successfully completed.
+
+configurando el número mínimo de conexiones que serán creadas y almacenadas en el pool (30 y 50)
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+cambiando valores de parametros en pool
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+
+System altered.
+
+validando servicios
+
+LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 08-JAN-2024 22:21:53
+
+Copyright (c) 1991, 2019, Oracle.  All rights reserved.
+
+Connecting to (ADDRESS=(PROTOCOL=tcp)(HOST=)(PORT=1521))
+Services Summary...
+Service "jpcdip02.fi.unam" has 1 instance(s).
+  Instance "jpcdip02", status READY, has 4 handler(s) for this service...
+    Handler(s):
+      "DEDICATED" established:24 refused:0 state:ready
+         LOCAL SERVER
+      "D001" established:0 refused:0 current:0 max:1022 state:ready
+         DISPATCHER <machine: pc-jpc.fi.unam, pid: 30015>
+         (ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=10883))
+      "D000" established:0 refused:0 current:0 max:1022 state:ready
+         DISPATCHER <machine: pc-jpc.fi.unam, pid: 30013>
+         (ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=28741))
+      "N000" established:0 refused:0 current:0 max:40000 state:ready
+         CMON <machine: pc-jpc.fi.unam, pid: 30034>
+         (ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=16955))
+The command completed successfully

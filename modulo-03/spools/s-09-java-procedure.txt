@@ -1,0 +1,373 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##29-11-2023
+##Módulo 03. E-05- Java Pool.
+-------------------------------------------
+
+##SCRIPTS
+***** s-06-instalar-ora-jvm.sql
+prompt conectando como sys
+connect sys/system2 as sysdba
+
+Prompt instalando Oracle JVM
+
+alter system set "_system_trig_enabled" = false scope=memory;
+@?/javavm/install/initjvm.sql
+@?/rdbms/admin/catjava.sql
+
+Prompt comprobando la instalaci�n, El status debe ser  VALID
+
+col comp_name format a30
+col status format a15
+select comp_name, version, status from dba_registry where comp_name like '%JAVA%' ;
+
+Prompt mostrando objetos de la instalaci�n
+select count(*), object_type from all_objects
+   where object_type like '%JAVA%' group by object_type;
+
+Pause Listo! Reiniciando instancia, [enter] para continuar
+shutdown immediate
+startup
+
+
+
+*****s-07-ejemplo-java.sql
+
+prompt conectando como sys
+connect sys/system2 as sysdba
+
+declare
+  v_count number;
+begin
+  select count(*) into v_count from all_users where username='USERJAVA';
+  if v_count > 0 then 
+    execute immediate 'drop user userJava cascade';
+  end if;
+end;
+/
+
+prompt creando usuario userJava
+create user userJava identified by userJava quota unlimited on users;
+grant create table, create session, create procedure to userJava;
+
+Prompt otorgar permisos para cargar archivos jars
+
+begin 
+  dbms_java.grant_permission( 'USERJAVA',
+    'java.util.PropertyPermission','*', 'read,write');
+  dbms_java.grant_permission( 'USERJAVA',
+    'java.util.PropertyPermission','*','read');
+  dbms_java.grant_permission( 'USERJAVA',
+    'SYS:java.lang.RuntimePermission', 'getClassLoader', ' ' );
+  dbms_java.grant_permission( 'USERJAVA', 
+    'SYS:oracle.aurora.security.JServerPermission', 'Verifier', ' ' );
+  dbms_java.grant_permission( 'USERJAVA', 
+    'SYS:java.lang.RuntimePermission', 'accessClassInPackage.sun.util.calendar', ' ' ) ; 
+  dbms_java.grant_permission( 'USERJAVA', 
+    'java.net.SocketPermission', '*', 'connect,resolve' );
+  dbms_java.grant_permission( 'USERJAVA', 
+    'SYS:java.lang.RuntimePermission', 'createClassLoader', ' ');
+  --Permiso de lectura del archivo de entrada
+  dbms_java.grant_permission( 'USERJAVA', 
+    'SYS:java.io.FilePermission', '/tmp/paisaje.png', 'read');
+  --permiso de lectura y escritura para el archivo de salida
+  dbms_java.grant_permission( 'USERJAVA', 
+    'SYS:java.io.FilePermission', '/tmp/output-paisaje.png', 'read,write,delete');  
+end;
+/
+
+prompt Listo!
+
+
+
+*****s-08-carga-jar-ordinario.sh
+#!/bin/bash
+echo "Creando archivo ResizeImage.java"
+mkdir -p mx/edu/unam/fi/dipbd/
+
+echo "creando la clase ResizeImage.java"
+
+cat <<EOF > mx/edu/unam/fi/dipbd/ResizeImage.java
+
+package mx.edu.unam.fi.dipbd;
+
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+
+/**
+ * Utility class used to resize an Image using {@link Graphics2D}
+ */
+
+public class ResizeImage {
+
+  /**
+   * Método encargado de modificar el tamaño de una imagen. La imagen
+   * modificada será almacenada en el mismo directorio con el nombre
+   * output-<nombre-archivo>
+   * @param imgPath Ruta absoluta donde se encuentra la imagen origen
+   * @param targetWidth Ancho de la imagen
+   * @param targetHeight Alto de la imagen
+   * @throws IOException Si ocurre un error.
+   */
+
+  public static void resizeImage(String imgPath, int targetWidth, int targetHeight)
+    throws IOException {
+    System.out.println("Procesando imagen " + imgPath);
+    File imgFile = new File(imgPath);
+    BufferedImage srcImg = ImageIO.read(imgFile);
+    Image outputImg =
+      srcImg.getScaledInstance(targetWidth, targetHeight, Image.SCALE_DEFAULT);
+    BufferedImage outputImage =
+      new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+    outputImage.getGraphics().drawImage(outputImg, 0, 0, null);
+    System.out.println("Escribiendo imagen ");
+    String outputName = "output-" + imgFile.getName();
+    File outputFile = new File(imgFile.getParent(), outputName);
+    ImageIO.write(outputImage, "png", outputFile);
+  }
+}
+EOF
+
+echo "Creando archivo jar"
+rm -f  ejemplo-java-img.jar
+$ORACLE_HOME/jdk/bin/jar cf ejemplo-java-img.jar mx
+echo "Mostrando el contenido del archivo Jar"
+unzip -l ejemplo-java-img.jar
+
+echo "Dar de baja la clase Java de la BD, se intenta eliminar en caso de existir"
+dropjava -user userJava/userJava mx/edu/unam/fi/dipbd/ResizeImage
+
+echo "Cargando archivo Jar en BD"
+loadjava -user userJava/userJava ejemplo-java-img.jar 
+
+echo "copiando imagen al directorio /tmp"
+cp paisaje.png /tmp
+chmod 744 /tmp/paisaje.png
+
+echo "Listo!"
+
+
+
+
+
+
+
+
+
+*****s-09-java-procedure.sql
+Prompt conectando como usuario userJava 
+connect userJava/userJava
+
+Prompt creando procedimiento almacenado
+
+create or replace procedure sp_resizeImage(
+  p_filePath varchar2, p_width number, p_height number
+  ) as 
+  language java
+  name 'mx.edu.unam.fi.dipbd.ResizeImage.resizeImage(java.lang.String, int,int)';
+/
+
+show errors
+
+prompt invocando el procedimiento
+exec sp_resizeImage('/tmp/paisaje.png',734,283);
+
+prompt mostrando el contenido de la carpeta /tmp
+!ls -lh /tmp/paisaje.png
+!ls -lh /tmp/output-paisaje.png
+
+Prompt Mostrando operaciones de ajuste de memoria para el java pool
+connect sys/system2 as sysdba 
+
+col component format a15
+col parameter format a15
+
+alter session set nls_date_format='dd/mm/yyyy hh24:mi:ss';
+
+select component,oper_type,
+  trunc(initial_size/1024/1024,2) initial_size_mb,
+  trunc(target_size/1024/1024,2) target_size_mb,
+  trunc(final_size/1024/1024,2) final_size_mb,
+  start_time,parameter
+from v$sga_resize_ops 
+where component='java pool'
+order by start_time;
+
+Prompt realizando limpieza
+connect sys/system2 as sysdba 
+
+drop user userJava cascade;
+
+
+
+
+
+-------------------------------------------------------
+
+##SALIDA DE EJECUCIÓN
+sys@jpcdip02> start s-09-java-procedure.sql
+conectando como usuario userJava
+Connected.
+creando procedimiento almacenado
+
+Procedure created.
+
+No errors.
+invocando el procedimiento
+
+PL/SQL procedure successfully completed.
+
+mostrando el contenido de la carpeta /tmp
+-rwxr--r--. 1 jorge jorge 32M Nov 28 22:20 /tmp/paisaje.png
+
+-rw-rw-r--. 1 oracle oinstall 503K Nov 28 22:20 /tmp/output-paisaje.png
+
+Mostrando operaciones de ajuste de memoria para el java pool
+Connected.
+
+Session altered.
+
+
+COMPONENT	OPER_TYPE     INITIAL_SIZE_MB TARGET_SIZE_MB FINAL_SIZE_MB
+--------------- ------------- --------------- -------------- -------------
+START_TIME	    PARAMETER
+------------------- ---------------
+java pool	STATIC			    0		   4		 4
+28/11/2023 22:17:54 java_pool_size
+
+java pool	GROW			    4		   8		 8
+28/11/2023 22:19:52 java_pool_size
+
+java pool	GROW			    4		   8		 8
+28/11/2023 22:19:52 java_pool_size
+
+
+COMPONENT	OPER_TYPE     INITIAL_SIZE_MB TARGET_SIZE_MB FINAL_SIZE_MB
+--------------- ------------- --------------- -------------- -------------
+START_TIME	    PARAMETER
+------------------- ---------------
+java pool	GROW			    8		  12		12
+28/11/2023 22:19:53 java_pool_size
+
+java pool	GROW			    8		  12		12
+28/11/2023 22:19:53 java_pool_size
+
+java pool	GROW			   12		  16		16
+28/11/2023 22:19:53 java_pool_size
+
+
+COMPONENT	OPER_TYPE     INITIAL_SIZE_MB TARGET_SIZE_MB FINAL_SIZE_MB
+--------------- ------------- --------------- -------------- -------------
+START_TIME	    PARAMETER
+------------------- ---------------
+java pool	GROW			   12		  16		16
+28/11/2023 22:19:53 java_pool_size
+
+java pool	GROW			   16		  20		20
+28/11/2023 22:19:53 java_pool_size
+
+java pool	GROW			   28		  32		32
+28/11/2023 22:19:54 java_pool_size
+
+
+COMPONENT	OPER_TYPE     INITIAL_SIZE_MB TARGET_SIZE_MB FINAL_SIZE_MB
+--------------- ------------- --------------- -------------- -------------
+START_TIME	    PARAMETER
+------------------- ---------------
+java pool	GROW			   28		  32		32
+28/11/2023 22:19:54 java_pool_size
+
+java pool	GROW			   24		  28		28
+28/11/2023 22:19:54 java_pool_size
+
+java pool	GROW			   20		  24		24
+28/11/2023 22:19:54 java_pool_size
+
+
+COMPONENT	OPER_TYPE     INITIAL_SIZE_MB TARGET_SIZE_MB FINAL_SIZE_MB
+--------------- ------------- --------------- -------------- -------------
+START_TIME	    PARAMETER
+------------------- ---------------
+java pool	GROW			   32		  36		36
+28/11/2023 22:19:54 java_pool_size
+
+java pool	GROW			   36		  40		40
+28/11/2023 22:19:54 java_pool_size
+
+java pool	GROW			   36		  40		40
+28/11/2023 22:19:54 java_pool_size
+
+
+COMPONENT	OPER_TYPE     INITIAL_SIZE_MB TARGET_SIZE_MB FINAL_SIZE_MB
+--------------- ------------- --------------- -------------- -------------
+START_TIME	    PARAMETER
+------------------- ---------------
+java pool	GROW			   44		  48		48
+28/11/2023 22:19:56 java_pool_size
+
+java pool	GROW			   40		  44		44
+28/11/2023 22:19:56 java_pool_size
+
+java pool	GROW			   52		  56		56
+28/11/2023 22:20:32 java_pool_size
+
+
+COMPONENT	OPER_TYPE     INITIAL_SIZE_MB TARGET_SIZE_MB FINAL_SIZE_MB
+--------------- ------------- --------------- -------------- -------------
+START_TIME	    PARAMETER
+------------------- ---------------
+java pool	GROW			   48		  52		52
+28/11/2023 22:20:32 java_pool_size
+
+java pool	GROW			   56		  60		60
+28/11/2023 22:20:32 java_pool_size
+
+java pool	GROW			   64		  68		68
+28/11/2023 22:20:32 java_pool_size
+
+
+COMPONENT	OPER_TYPE     INITIAL_SIZE_MB TARGET_SIZE_MB FINAL_SIZE_MB
+--------------- ------------- --------------- -------------- -------------
+START_TIME	    PARAMETER
+------------------- ---------------
+java pool	GROW			   60		  64		64
+28/11/2023 22:20:32 java_pool_size
+
+java pool	GROW			   68		  72		72
+28/11/2023 22:20:33 java_pool_size
+
+java pool	GROW			   72		  76		76
+28/11/2023 22:20:33 java_pool_size
+
+
+COMPONENT	OPER_TYPE     INITIAL_SIZE_MB TARGET_SIZE_MB FINAL_SIZE_MB
+--------------- ------------- --------------- -------------- -------------
+START_TIME	    PARAMETER
+------------------- ---------------
+java pool	GROW			   76		  80		80
+28/11/2023 22:20:34 java_pool_size
+
+
+25 rows selected.
+
+realizando limpieza
+Connected.
+
+User dropped.
+
+---------------------------------------------------------------
+
+#CONCLUSIONES
+
+En este ejercicio, se llevó a cabo la integración exitosa de un programa Java en una base
+ de datos Oracle para manipular imágenes mediante procedimientos almacenados. 
+ Las principales etapas incluyeron la instalación de Oracle JVM, 
+ la configuración de permisos para un usuario específico, la carga de la clase Java y 
+ la creación de un archivo JAR. Se desarrolló un procedimiento almacenado Java para 
+ redimensionar imágenes, y se consultaron los ajustes de memoria en el Java pool.
+  Finalmente, se realizaron operaciones de limpieza y revisión, confirmando el logro de la integración
+   y destacando las capacidades especializadas dentro del entorno de la base de datos Oracle.

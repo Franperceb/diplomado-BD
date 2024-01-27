@@ -1,3 +1,7 @@
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 27 /11/2023
+--@Descripción: Ejercicio 05 -módulo 03 . Bind Variables.
+
 connect sys/system2 as sysdba
 
 prompt creando usuario user01
@@ -7,7 +11,18 @@ grant create session, create table to user01;
 Prompt creando tabla de prueba
 create table user01.test(id number) segment creation immediate;
 
+Prompt removiendo información del shared pool
 alter system flush shared_pool;
+
+
+prompt 2. Sentencias SQL sin bind variables
+
+begin
+  for i in 1..100000 loop
+    execute immediate 'insert into user01.test (id) values ('||i||')';
+  end loop;
+end;
+/
 
 prompt 1. Sentencias SQL con bind variables
 set timing on 
@@ -19,14 +34,6 @@ begin
 end;
 /
 
-prompt 2. Sentencias SQL sin bind variables
-
-begin
-  for i in 1..100000 loop
-    execute immediate 'insert into user01.test (id) values ('||i||')';
-  end loop;
-end;
-/
 
 Prompt mostrando datos de la sentencia SQL sin bind variables
 select  count(*) t_rows, sum(executions) executions,sum(loads) loads,

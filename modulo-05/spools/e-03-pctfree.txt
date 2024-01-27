@@ -1,0 +1,248 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-01-2024
+##Módulo 05. E-03- PCT free.
+-------------------------------------------
+
+##SCRIPT
+------------------------------------------------
+
+-@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/01/2024
+--@Descripción: Módulo 05. Ejercicio 03 - pctfree.
+
+connect jorge05/jorge05
+
+drop table t02_random_str_0;
+drop table t02_random_str_50;
+
+whenever sqlerror exit  rollback;
+
+Prompt creando tabla con pctfree 0
+create table t02_random_str_0(
+  str char(18)
+) pctfree 0;
+
+Prompt creando tabla con pctfree 50
+create table t02_random_str_50(
+  str char(18)
+) pctfree 50;
+
+Pause presione [Enter] para comenzar con la carga
+
+declare
+  v_str char(18);
+begin
+  v_str := rpad('A',18,'X');
+  for v_index in 1..10000 loop
+    insert into  t02_random_str_0 values(v_str);
+    insert into  t02_random_str_50 values(v_str);
+  end loop;
+end;
+/
+commit;
+
+Prompt consultando  bloques y sus registros para t02_random_str_0
+select dbms_rowid.rowid_relative_fno(rowid) as file_number,
+  dbms_rowid.rowid_block_number(rowid) as block_number, 
+  count(*) total_registros
+from t02_random_str_0
+group by dbms_rowid.rowid_relative_fno(rowid), 
+         dbms_rowid.rowid_block_number(rowid)
+order by 1,2;
+
+
+Prompt consultando  bloques y sus registros para t02_random_str_50
+select dbms_rowid.rowid_relative_fno(rowid) as file_number,
+  dbms_rowid.rowid_block_number(rowid) as block_number, 
+  count(*) total_registros
+from t02_random_str_50
+group by dbms_rowid.rowid_relative_fno(rowid), dbms_rowid.rowid_block_number(rowid)
+order by 1,2;
+
+-----------------------------------------------------
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+
+idle> start e-03-pctfree.sql
+Connected.
+drop table t02_random_str_0
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+drop table t02_random_str_50
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+creando tabla con pctfree 0
+
+Table created.
+
+creando tabla con pctfree 50
+
+Table created.
+
+presione [Enter] para comenzar con la carga
+
+
+PL/SQL procedure successfully completed.
+
+
+Commit complete.
+
+consultando  bloques y sus registros para t02_random_str_0
+
+FILE_NUMBER BLOCK_NUMBER TOTAL_REGISTROS
+----------- ------------ ---------------
+	  4	   90083	     336
+	  4	   90084	     336
+	  4	   90085	     336
+	  4	   90086	     336
+	  4	   90087	     336
+	  4	   90104	     336
+	  4	   90105	     336
+	  4	   90106	     336
+	  4	   90107	     336
+	  4	   90108	     336
+	  4	   90109	     336
+
+FILE_NUMBER BLOCK_NUMBER TOTAL_REGISTROS
+----------- ------------ ---------------
+	  4	   90110	     336
+	  4	   90111	     336
+	  4	   93585	     336
+	  4	   93586	     336
+	  4	   93587	     336
+	  4	   93588	     336
+	  4	   93589	     336
+	  4	   93590	     336
+	  4	   93591	     336
+	  4	   93608	     336
+	  4	   93609	     336
+
+FILE_NUMBER BLOCK_NUMBER TOTAL_REGISTROS
+----------- ------------ ---------------
+	  4	   93610	     336
+	  4	   93611	     336
+	  4	   93612	     336
+	  4	   93613	     336
+	  4	   93614	     336
+	  4	   93615	     336
+	  4	   93637	     336
+	  4	   93638	     256
+
+30 rows selected.
+
+consultando  bloques y sus registros para t02_random_str_50
+
+FILE_NUMBER BLOCK_NUMBER TOTAL_REGISTROS
+----------- ------------ ---------------
+	  4	   90091	     168
+	  4	   90092	     168
+	  4	   90093	     168
+	  4	   90094	     168
+	  4	   90095	     168
+	  4	   90096	     168
+	  4	   90097	     168
+	  4	   90098	     168
+	  4	   90099	     168
+	  4	   90100	     168
+	  4	   90101	     168
+
+FILE_NUMBER BLOCK_NUMBER TOTAL_REGISTROS
+----------- ------------ ---------------
+	  4	   90102	     168
+	  4	   90103	     168
+	  4	   93569	     168
+	  4	   93570	     168
+	  4	   93571	     168
+	  4	   93572	     168
+	  4	   93573	     168
+	  4	   93574	     168
+	  4	   93575	     168
+	  4	   93576	     168
+	  4	   93577	     168
+
+FILE_NUMBER BLOCK_NUMBER TOTAL_REGISTROS
+----------- ------------ ---------------
+	  4	   93578	     168
+	  4	   93579	     168
+	  4	   93580	     168
+	  4	   93581	     168
+	  4	   93582	     168
+	  4	   93583	     168
+	  4	   93593	     168
+	  4	   93594	     168
+	  4	   93595	     168
+	  4	   93596	     168
+	  4	   93597	     168
+
+FILE_NUMBER BLOCK_NUMBER TOTAL_REGISTROS
+----------- ------------ ---------------
+	  4	   93598	     168
+	  4	   93599	     168
+	  4	   93600	     168
+	  4	   93601	     168
+	  4	   93602	     168
+	  4	   93603	     168
+	  4	   93604	     168
+	  4	   93605	     168
+	  4	   93606	     168
+	  4	   93607	     168
+	  4	   93617	     168
+
+FILE_NUMBER BLOCK_NUMBER TOTAL_REGISTROS
+----------- ------------ ---------------
+	  4	   93618	     168
+	  4	   93619	     168
+	  4	   93620	     168
+	  4	   93621	     168
+	  4	   93622	     168
+	  4	   93623	     168
+	  4	   93624	     168
+	  4	   93625	     168
+	  4	   93626	     168
+	  4	   93627	     168
+	  4	   93628	     168
+
+FILE_NUMBER BLOCK_NUMBER TOTAL_REGISTROS
+----------- ------------ ---------------
+	  4	   93629	     168
+	  4	   93630	     168
+	  4	   93631	     168
+	  4	   93645	     168
+	  4	   93646	      88
+
+60 rows selected.
+
+
+
+------------------------------------------------------
+##COMENTARIOS Y CONCLUSIONES
+
+En este ejercicio, se abordó la influencia del parámetro PCTFREE en la estructura y utilización del espacio en bloques de una tabla en Oracle.
+Se crearon dos tablas con la misma estructura, pero con diferentes valores de PCTFREE: una con PCTFREE igual a 0 y otra con PCTFREE del 50%. 
+Se cargaron ambas tablas con 100,000 registros cada una mediante un programa PL/SQL.
+Posteriormente, se ejecutaron consultas utilizando el paquete dbms_rowid para mostrar el número de data file, el número de bloque 
+y el total de registros en cada bloque para ambas tablas. Los resultados fueron analizados y discutidos, 
+destacando las diferencias en la distribución de bloques y la cantidad de registros contenidos en cada bloque entre las tablas con diferentes valores de PCTFREE. 
+Este ejercicio proporcionó una comprensión práctica de cómo el ajuste del parámetro PCTFREE afecta la organización y el aprovechamiento del espacio en bloques en 
+Oracle. En general no se tuvieron complicaciones y tanto la documentación como la profesora fueron muy claros al explcar el concepto y el ejercicio.
+
+
+
+
+
+
+
+
+
+
+

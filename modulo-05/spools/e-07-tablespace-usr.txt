@@ -1,0 +1,117 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-01-2024
+##Módulo 05. E-07- Tablespace user.
+-------------------------------------------
+
+##SCRIPT
+------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/01/2024
+--@Descripción: Ejercicio 07 - Módulo 05. Tablespaces 
+
+
+Prompt connect sys/system2 as sysdba
+
+connect sys/system2 as sysdba
+
+set linesize window
+col property_name format a30
+col property_value format a30
+col username format a30
+
+Prompt 1 mostrando datos de los tablespaces empleando database_properties
+select property_name, property_value
+from database_properties
+where property_name like '%TABLESPACE%';
+
+Prompt 2 Mostrar los nombres de los tablespaces asignados al usuario
+select DEFAULT_TABLESPACE , TEMPORARY_TABLESPACE, LOCAL_TEMP_TABLESPACE
+from user_users
+where username = 'JORGE05';
+
+Prompt 3 Mostrar el nombre del tablespace undo empleado por todos los usuarios
+show parameter undo_tablespace
+
+Prompt 4 Mostrar las cuotas de almacenamiento en MB que tienen los usuarios de la base de datos
+select tablespace_name, username, bytes/1024/1024 quota_mb, blocks, max_blocks
+from dba_ts_quotas;
+
+Prompt 5 Mostrar en MB los siguientes datos del TS temporal: tamaño, espacio libre, espacio asignado
+select tablespace_name, 
+  tablespace_size/1024/1024 as ts_size_mb,
+  free_space/1024/1024 free_space_mb,
+  allocated_space/1024/1024 allocate_space_mb
+from dba_temp_free_space;
+
+exit;
+
+-----------------------------------------------------
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+jorge05@jpcdip02> start e-07-tablespace-usr.sql
+connect sys/system2 as sysdba
+Connected.
+1 mostrando datos de los tablespaces empleando database_properties
+
+PROPERTY_NAME		       PROPERTY_VALUE
+------------------------------ ------------------------------
+DEFAULT_PERMANENT_TABLESPACE   USERS
+DEFAULT_TEMP_TABLESPACE        TEMPTS1
+
+2 Mostrar los nombres de los tablespaces asignados al usuario
+
+no rows selected
+
+3 Mostrar el nombre del tablespace undo empleado por todos los usuarios
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+undo_tablespace 		     string	 UNDOTBS1
+4 Mostrar las cuotas de almacenamiento en MB que tienen los usuarios de la base de datos
+
+TABLESPACE_NAME 	       USERNAME 			QUOTA_MB     BLOCKS MAX_BLOCKS
+------------------------------ ------------------------------ ---------- ---------- ----------
+SYSAUX			       AUDSYS				       0	  0	    -1
+SYSTEM			       OUTLN				   .5625	 72	    -1
+SYSAUX			       DBSFWUSER			       0	  0	    -1
+SYSAUX			       GSMADMIN_INTERNAL		    .875	112	    -1
+SYSAUX			       APPQOSSYS			       0	  0	    -1
+SYSAUX			       GGSYS				       0	  0	    -1
+USERS			       USER03IMC			       6	768	    -1
+USERS			       USER04MONITOR			   .0625	  8	    -1
+USERS			       WORKER_M03_1			138.9375      17784	    -1
+USERS			       WORKER_M03_2			138.9375      17784	    -1
+USERS			       WORKER_M03_3			138.9375      17784	    -1
+USERS			       WORKER_M03_4			138.9375      17784	    -1
+USERS			       WORKER_M03_5			138.9375      17784	    -1
+USERS			       JORGE				       0	  0	    -1
+USERS			       JORGE05				 30.6875       3928	    -1
+
+15 rows selected.
+
+5 Mostrar en MB los siguientes datos del TS temporal: tamaño, espacio libre, espacio asignado
+
+TABLESPACE_NAME 	       TS_SIZE_MB FREE_SPACE_MB ALLOCATE_SPACE_MB
+------------------------------ ---------- ------------- -----------------
+TEMPTS1 			       20	     18 		9
+
+
+
+-----------------------------------------------------
+##Comentarios y conclusiones
+
+En este ejercicio sobre tablespaces en Oracle, se realizaron diversas consultas para obtener información clave sobre la gestión de espacios
+de almacenamiento en la base de datos. A través de la exploración de vistas como `database_properties` y `user_users`,
+se identificaron los tablespaces utilizados por todos los usuarios, así como aquellos asignados a un usuario específico, en este caso, jorge05.
+Además, se examinaron los tablespaces de tipo undo, que son esenciales para gestionar transacciones y deshacer operaciones. Se obtuvieron detalles 
+sobre las cuotas de almacenamiento asignadas a los usuarios, incluyendo el nombre del tablespace, bloques asignados y el límite máximo de bloques permitidos.
+Se exploraron los tablespaces temporales, proporcionando información sobre su tamaño total, espacio libre y espacio asignado hasta el momento, expresados en megabytes. 
+Este análisis permite comprender la utilización y capacidad de los tablespaces temporales en la base de datos.
+Finalmente, se planteó la investigación sobre la instrucción utilizada para asignar un nuevo tablespace temporal,
+ofreciendo una perspectiva sobre cómo realizar esta acción en futuras operaciones de administración de tablespaces.
+En resumen, el ejercicio abordó diversos aspectos relacionados con tablespaces, desde la asignación y 
+utilización por parte de usuarios específicos hasta la exploración detallada de tablespaces temporales y de deshacer.En general no se presentaron dificultades significativas.

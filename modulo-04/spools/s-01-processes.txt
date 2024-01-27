@@ -1,0 +1,214 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##26-11-2023
+##Módulo 04. E-01-Tipos de procesos.
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 11/01/2024
+--@Descripción: Ejercicio 01 - Módulo 04. Tipos de procesos.
+
+/* En terminal correr antes
+Prompt Iniciando listener
+lsnrctl start
+
+-- user procesess = sqlplus  a nivel cliente
+-- server processes =  a nivel instancia
+-- Asumiendo que la instancia se encuentra detenida, ningún usuario haciendo uso de sqlplus.
+-- Mostrando user y server processes
+ps -ef | grep -e jpcdip02 -e sqlplus | grep -v grep 
+
+
+Prompt entrando a sqlplus 
+sqlplus /nolog
+*/
+
+Pause Mostrando nuevamente user y server processes ¿ Qué debería mostrarse? [ Enter ] para continuar
+!ps -ef | grep -e jpcdip02 -e sqlplus | grep -v grep 
+
+
+Prompt conectando como sysdba
+conn sys/system2 as sysdba
+
+Pause Mostrando nuevamente user y server processes ¿ Qué debería mostrarse? [ Enter ] para continuar
+!ps -ef | grep -e jpcdip02 -e sqlplus | grep -v grep 
+
+Prompt Mostrando el proceso asciado con el  listener
+!ps -ef | grep -e listener | grep -v grep
+
+Pause Analizar resultado , [ Enter ] ...
+
+Prompt Iniciando instancia en modo nomount
+startup nomount
+
+Pause Montando procesos. ¿ Qué se obtendra ? [ Enter ] para continuar
+!ps -ef  | grep -e jpcdip02 -e sqlplus | grep -v grep
+
+
+Pause Analizar resultado, [Enter] para continuar 
+
+Prompt abriendo BD.
+alter database mount;
+alter database open;
+
+Prompt  Saliendo de sesión 
+disconnect
+
+Prompt Creando una nueva sesión como sysdba
+conn sys/system2 as sysdba
+
+Prompt Montando procesos de esta nueva conexión a nivel S.O.
+!ps -ef  | grep -i  -e 'local=yes' -e sqlplus | grep -v grep
+
+Prompt Anotar los IDs de los procesos en SQL Developer. Ejecutar el repoerte.
+pause Presionar [Enter] hasta que se haya viusalizado el reporte 
+
+/* Correr en SQLDeveloper
+ select sosid, pid, pname, username, program, tracefile, background,
+trunc(pga_used_mem/1024/1024,2) pga_used_mem_mb
+from v$process
+where sosid in ('id1'. 'id2');
+*/
+------------------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521)))
+STATUS of the LISTENER
+------------------------
+Alias                     LISTENER
+Version                   TNSLSNR for Linux: Version 19.0.0.0.0 - Production
+Start Date                10-JAN-2024 18:26:00
+Uptime                    0 days 1 hr. 19 min. 28 sec
+Trace Level               off
+Security                  ON: Local OS Authentication
+SNMP                      OFF
+Listener Parameter File   /u01/app/oracle/product/19.3.0/dbhome_1/network/admin/listener.ora
+Listener Log File         /u01/app/oracle/diag/tnslsnr/pc-jpc/listener/alert/log.xml
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=1521)))
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1521)))
+The listener supports no services
+The command completed successfully
+[oracle@pc-jpc modulo-04]$ ps -ef | grep -e jpcdip02 -e sqlplus | grep -v grep 
+[oracle@pc-jpc modulo-04]$ 
+[oracle@pc-jpc modulo-04]$ sqlplus /nolog
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Wed Jan 10 19:46:17 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+idle> start s-01-processes.sql
+Mostrando nuevamente user y server processes ¿ Qué debería mostrarse? [ Enter ] para continuar
+
+oracle     12953    7144  0 19:46 pts/1    00:00:00 sqlplus       
+
+conectando como sysdba
+Connected to an idle instance.
+Mostrando nuevamente user y server processes ¿ Qué debería mostrarse? [ Enter ] para continuar
+
+oracle     12953    7144  0 19:46 pts/1    00:00:00 sqlplus       
+oracle     12965   12953  0 19:46 ?        00:00:00 oraclejpcdip02 (DESCRIPTION=(LOCAL=YES)(ADDRESS=(PROTOCOL=beq)))
+
+Mostrando el proceso asciado con el  listener
+
+Analizar resultado , [ Enter ] ...
+
+Iniciando instancia en modo nomount
+ORACLE instance started.
+
+Total System Global Area 1073737800 bytes
+Fixed Size		    8904776 bytes
+Variable Size		  901775360 bytes
+Database Buffers	   50331648 bytes
+Redo Buffers		    7868416 bytes
+In-Memory Area		  104857600 bytes
+Montando procesos. ¿ Qué se obtendra ? [ Enter ] para continuar
+
+oracle     12953    7144  0 19:46 pts/1    00:00:00 sqlplus       
+oracle     12988    4976  0 19:46 ?        00:00:00 ora_pmon_jpcdip02
+oracle     12990    4976  0 19:46 ?        00:00:00 ora_clmn_jpcdip02
+oracle     12992    4976  0 19:46 ?        00:00:00 ora_psp0_jpcdip02
+oracle     12994    4976  0 19:46 ?        00:00:00 ora_vktm_jpcdip02
+oracle     12998    4976  0 19:46 ?        00:00:00 ora_gen0_jpcdip02
+oracle     13000    4976  0 19:46 ?        00:00:00 ora_mman_jpcdip02
+oracle     13004    4976  0 19:46 ?        00:00:00 ora_gen1_jpcdip02
+oracle     13007    4976  0 19:46 ?        00:00:00 ora_diag_jpcdip02
+oracle     13009    4976  0 19:46 ?        00:00:00 ora_ofsd_jpcdip02
+oracle     13012    4976  0 19:46 ?        00:00:00 ora_dbrm_jpcdip02
+oracle     13014    4976  0 19:46 ?        00:00:00 ora_vkrm_jpcdip02
+oracle     13016    4976  0 19:46 ?        00:00:00 ora_svcb_jpcdip02
+oracle     13018    4976  0 19:46 ?        00:00:00 ora_pman_jpcdip02
+oracle     13020    4976  0 19:46 ?        00:00:00 ora_dia0_jpcdip02
+oracle     13022    4976  0 19:46 ?        00:00:00 ora_dbw0_jpcdip02
+oracle     13024    4976  0 19:46 ?        00:00:00 ora_lgwr_jpcdip02
+oracle     13026    4976  0 19:46 ?        00:00:00 ora_ckpt_jpcdip02
+oracle     13028    4976  0 19:46 ?        00:00:00 ora_lg00_jpcdip02
+oracle     13030    4976  0 19:46 ?        00:00:00 ora_smon_jpcdip02
+oracle     13032    4976  0 19:46 ?        00:00:00 ora_lg01_jpcdip02
+oracle     13034    4976  0 19:46 ?        00:00:00 ora_smco_jpcdip02
+oracle     13036    4976  0 19:46 ?        00:00:00 ora_reco_jpcdip02
+oracle     13038    4976  0 19:46 ?        00:00:00 ora_w000_jpcdip02
+oracle     13040    4976  0 19:46 ?        00:00:00 ora_lreg_jpcdip02
+oracle     13042    4976  0 19:46 ?        00:00:00 ora_w001_jpcdip02
+oracle     13044    4976  0 19:46 ?        00:00:00 ora_pxmn_jpcdip02
+oracle     13048    4976  0 19:46 ?        00:00:00 ora_mmon_jpcdip02
+oracle     13050    4976  0 19:46 ?        00:00:00 ora_mmnl_jpcdip02
+oracle     13052    4976  0 19:46 ?        00:00:00 ora_d000_jpcdip02
+oracle     13054    4976  0 19:46 ?        00:00:00 ora_d001_jpcdip02
+oracle     13056    4976  0 19:46 ?        00:00:00 ora_s000_jpcdip02
+oracle     13058    4976  0 19:46 ?        00:00:00 ora_s001_jpcdip02
+oracle     13060    4976  0 19:46 ?        00:00:00 ora_s002_jpcdip02
+oracle     13062    4976  0 19:46 ?        00:00:00 ora_s003_jpcdip02
+oracle     13064    4976  0 19:46 ?        00:00:00 ora_tmon_jpcdip02
+oracle     13065   12953  0 19:46 ?        00:00:00 oraclejpcdip02 (DESCRIPTION=(LOCAL=YES)(ADDRESS=(PROTOCOL=beq)))
+oracle     13068    4976  0 19:47 ?        00:00:00 ora_m000_jpcdip02
+
+Analizar resultado, [Enter] para continuar
+
+abriendo BD.
+
+Database altered.
+
+
+Database altered.
+
+Saliendo de sesión
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+Creando una nueva sesión como sysdba
+Connected.
+Montando procesos de esta nueva conexión a nivel S.O.
+oracle     12953    7144  0 19:46 pts/1    00:00:00 sqlplus       
+oracle     13090   12953 33 19:47 ?        00:00:00 oraclejpcdip02 (DESCRIPTION=(LOCAL=YES)(ADDRESS=(PROTOCOL=beq)))
+
+Anotar los IDs de los procesos en SQL Developer. Ejecutar el repoerte.
+Presionar [Enter] hasta que se haya viusalizado el reporte
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+El ejercicio abordó la gestión de procesos en una instancia Oracle a través de la creación de un script llamado "s-01-processes.sql". 
+Se inició creando una carpeta de trabajo, luego se utilizó el comando grep del sistema operativo para mostrar los procesos de usuario y servidor en ejecución,
+discutiendo la salida esperada y anotando los IDs de los procesos identificados.
+Se procedió a ingresar a SQL*Plus, donde se repitió el comando grep, discutiendo los resultados y autenticándose como sysdba para ejecutar nuevamente el comando.
+Se observó la ausencia del proceso del listener en la segunda ejecución y se planteó la necesidad de un comando para visualizar el proceso deamon asociado al listener.
+Luego, se inició la instancia en modo nomount, se abrió la base de datos y se cerró la sesión. Al volver a autenticarse como sysdba, se ejecutó un comando a 
+nivel de sistema operativo para identificar los IDs de los procesos de usuario y servidor. Utilizando la vista v$process, se generó un reporte en SQL Developer 
+que mostraba información detallada sobre estos procesos.
+La conclusión destacó aprendizajes sobre la gestión de procesos en Oracle, desde comandos del sistema operativo hasta consultas en la base de datos. 
+Se señalaron problemas como la falta de un directorio de trabajo y la ausencia del proceso del listener, proponiendo soluciones.
+Se sugiere  que el ejercicio narrado esté mejor redactado pues no es muy claro sobretodo en el principio con lo que se debe realizar en el script. 
+En resumen, el ejercicio proporcionó una comprensión práctica y completa de los procesos en una instancia Oracle, se observo y confirmó que al iniciar 
+una nueva sesión se crea un nuevo proceso, el proceso de server processes se reflejan a través del sistema operativo y de la base de datos y que los procesos de background
+se reflejan una vez la instancia iniciada.
+
+
+
+
+

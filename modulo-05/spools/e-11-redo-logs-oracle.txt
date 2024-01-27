@@ -1,0 +1,422 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-01-2024
+##Módulo 05. E-12 Redo logs consultas y manejo de grupos 
+-------------------------------------------
+
+##SCRIPT
+------------------------------------------------
+
+--JORGE FRANCISCO PEREDA CEBALLOS
+--26-01-2024
+--Módulo 05. E-011 RedoLogs Consultas , manejo y creación de grupos redo
+-------------------------------------------
+
+
+define syslogon='sys/system2 as sysdba'
+define userlogon='jorge05/jorge05'
+
+Prompt  1. mostrando Redo logs en S.O
+--su -l oracle
+--!find /unam-diplomado-bd/disk-*/app/oracle/oradata/JPCDIP02/redo*.log -name "*redo*.log" -type f -exec ls -l {} \;
+
+connect &syslogon
+prompt 2. Mostrando datos de los grupos de Redo Logs
+select group#, sequence#, bytes/1024/1024 as tam_mb, blocksize, members, status,
+  first_change#, to_char(first_time,'DD-MON-YYYY HH:MI:SS') as first_time, next_change# 
+from v$log;
+
+Prompt 3. Que grupo de Redo Log es el que se esta empleando
+-- current   el 2
+
+prompt 4. Mostrando datos de los miembros de cada grupo de Redo Logs
+col member format a67
+select group#, status, type, member
+from v$logfile;
+
+Prompt 5 . Agregar grupos nuevos.
+
+connect &syslogon
+
+Prompt creando grupo 4
+alter database add logfile group 4 (
+  '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo04a_60.log',
+  '/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo04b_60.log'
+) size 60m blocksize 512;
+
+Prompt creando grupo 5
+alter database add logfile group 5 (
+  '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo05a_60.log',
+  '/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo05b_60.log'
+) size 60m blocksize 512;
+
+Prompt creando grupo 6
+alter database add logfile group 6 (
+  '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo06a_60.log',
+  '/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo06b_60.log'
+) size 60m blocksize 512;
+
+Prompt 6. Agregar miembros
+
+alter database add logfile member 
+  '/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo04c_60.log' to group 4;
+
+alter database add logfile member 
+  '/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo05c_60.log' to group 5;
+
+alter database add logfile member 
+  '/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo06c_60.log' to group 6;
+
+
+Prompt 7. consultar nuevamente  grupos.
+set linesize window 
+
+select * from v$log;
+Pause  Analizar y [enter] para continuar
+
+Prompt 8. consultar nuevamente  miembros
+col member format  a50 
+select * from v$logfile;
+
+Prompt 9 Forzar log switch para liberar grupos 1,2 y 3
+
+set serveroutput on 
+declare
+  v_group number;
+begin
+  loop
+    select group# into v_group from v$log where status ='CURRENT';
+    dbms_output.put_line('Grupo en uso: '||v_group);
+    if v_group in (1,2,3) then
+      execute immediate 'alter system switch logfile';
+    else 
+      exit;
+    end if;
+  end loop;
+end;
+/
+
+Prompt 10. Confirmando grupo actual.
+select * from v$log;
+Pause Analizar y [enter] para continuar
+
+Prompt 11.  Validando que los grupo 1 a 3 no tengan status active
+
+declare
+  v_count number;
+begin
+  select count(*) into v_count from v$log where status = 'ACTIVE';
+  if v_count > 0 then
+    dbms_output.put_line('Forzando checkpoint para sicronizar data files con db buffer');
+    execute immediate 'alter system checkpoint';
+  end if;
+end;
+/
+
+Prompt 12. Confirmando que no existen grupos con status ACTIVE.
+select * from v$log;
+Pause Analizar y [enter] para continuar
+
+Prompt 13. Eliminar grupos 1, 2, y 3
+
+alter database drop logfile  group  1;
+alter database drop logfile  group  2;
+alter database drop logfile  group  3;
+
+Prompt 14. Confirmando que se han eliminado grupos 1, 2 y 3.
+select * from v$log;
+Pause Analizar y [enter] para continuar OJO! validar que todo esta OK.
+
+Prompt 15 y 16 Eliminar archivos via S.O.
+--su -l oracle
+Prompt eliminando redo logs grupo 1
+!rm /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo01a.log
+!rm /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo01b.log
+!rm /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo01c.log
+
+Prompt eliminando redo logs grupo 2
+!rm /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo02a.log
+!rm /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo02b.log
+!rm /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo02c.log
+
+Prompt eliminando redo logs grupo 3
+!rm /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo03a.log
+!rm /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo03b.log
+!rm /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo03c.log
+
+Prompt 17. revisar archivos esperados a nivel s.o.
+!find /unam-diplomado-bd/disk-*/app/oracle/oradata/JPCDIP02/redo* -name "*redo*.log" -type f -exec ls -l {} \;
+
+exit
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+
+sys@jpcdip02> start e-11-redo-logs-oracle.sql
+1. mostrando Redo logs en S.O
+Connected.
+2. Mostrando datos de los grupos de Redo Logs
+
+    GROUP#  SEQUENCE#	  TAM_MB  BLOCKSIZE    MEMBERS STATUS
+---------- ---------- ---------- ---------- ---------- ----------------
+FIRST_CHANGE# FIRST_TIME		    NEXT_CHANGE#
+------------- ----------------------------- ------------
+	 1	  127	      50	512	     3 INACTIVE
+      2530244 25-JAN-2024 06:17:01		 2631312
+
+	 2	  128	      50	512	     3 CURRENT
+      2631312 25-JAN-2024 06:17:39	      1.8447E+19
+
+	 3	  126	      50	512	     3 INACTIVE
+      2427214 25-JAN-2024 05:03:20		 2530244
+
+
+3. Que grupo de Redo Log es el que se esta empleando
+4. Mostrando datos de los miembros de cada grupo de Redo Logs
+
+    GROUP# STATUS  TYPE
+---------- ------- -------
+MEMBER
+-------------------------------------------------------------------
+	 1	   ONLINE
+/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo01a.log
+
+	 1	   ONLINE
+/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo01b.log
+
+	 1	   ONLINE
+/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo01c.log
+
+
+    GROUP# STATUS  TYPE
+---------- ------- -------
+MEMBER
+-------------------------------------------------------------------
+	 2	   ONLINE
+/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo02a.log
+
+	 2	   ONLINE
+/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo02b.log
+
+	 2	   ONLINE
+/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo02c.log
+
+
+    GROUP# STATUS  TYPE
+---------- ------- -------
+MEMBER
+-------------------------------------------------------------------
+	 3	   ONLINE
+/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo03a.log
+
+	 3	   ONLINE
+/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo03b.log
+
+	 3	   ONLINE
+/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo03c.log
+
+
+9 rows selected.
+
+5 . Agregar grupos nuevos.
+Connected.
+creando grupo 4
+
+Database altered.
+
+creando grupo 5
+
+Database altered.
+
+creando grupo 6
+
+Database altered.
+
+6. Agregar miembros
+
+Database altered.
+
+
+Database altered.
+
+
+Database altered.
+
+7. consultar nuevamente  grupos.
+
+    GROUP#    THREAD#  SEQUENCE#      BYTES  BLOCKSIZE	  MEMBERS ARC STATUS	       FIRST_CHANGE# FIRST_TIME 	NEXT_CHANGE# NEXT_TIME		    CON_ID
+---------- ---------- ---------- ---------- ---------- ---------- --- ---------------- ------------- ------------------ ------------ ------------------ ----------
+	 1	    1	     127   52428800	   512		3 NO  INACTIVE		     2530244 25-JAN-24		     2631312 25-JAN-24			 0
+	 2	    1	     128   52428800	   512		3 NO  CURRENT		     2631312 25-JAN-24		  1.8447E+19				 0
+	 3	    1	     126   52428800	   512		3 NO  INACTIVE		     2427214 25-JAN-24		     2530244 25-JAN-24			 0
+	 4	    1	       0   62914560	   512		3 YES UNUSED			   0				   0				 0
+	 5	    1	       0   62914560	   512		3 YES UNUSED			   0				   0				 0
+	 6	    1	       0   62914560	   512		3 YES UNUSED			   0				   0				 0
+
+6 rows selected.
+
+Analizar y [enter] para continuar
+
+8. consultar nuevamente  miembros
+
+    GROUP# STATUS  TYPE    MEMBER					      IS_     CON_ID
+---------- ------- ------- -------------------------------------------------- --- ----------
+	 1	   ONLINE  /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo01a.log
+
+	 1	   ONLINE  /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo01b.log
+
+	 1	   ONLINE  /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo01c.log
+
+	 2	   ONLINE  /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo02a.log
+
+	 2	   ONLINE  /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo02b.log
+
+	 2	   ONLINE  /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo02c.log
+
+	 3	   ONLINE  /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo03a.log
+
+	 3	   ONLINE  /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo03b.log
+
+	 3	   ONLINE  /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo03c.log
+
+	 4	   ONLINE  /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo04a_60.log
+
+	 4	   ONLINE  /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo04b_60.log
+
+	 5	   ONLINE  /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo05a_60.log
+
+	 5	   ONLINE  /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo05b_60.log
+
+	 6	   ONLINE  /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo06a_60.log
+
+	 6	   ONLINE  /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo06b_60.log
+
+	 4 INVALID ONLINE  /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo04c_60.log
+
+	 5 INVALID ONLINE  /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCD NO	   0
+
+    GROUP# STATUS  TYPE    MEMBER					      IS_     CON_ID
+---------- ------- ------- -------------------------------------------------- --- ----------
+			   IP02/redo05c_60.log
+
+	 6 INVALID ONLINE  /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCD NO	   0
+			   IP02/redo06c_60.log
+
+
+18 rows selected.
+
+9 Forzar log switch para liberar grupos 1,2 y 3
+Grupo en uso: 2
+Grupo en uso: 4
+
+PL/SQL procedure successfully completed.
+
+10. Confirmando grupo actual.
+
+    GROUP#    THREAD#  SEQUENCE#      BYTES  BLOCKSIZE	  MEMBERS ARC STATUS	       FIRST_CHANGE# FIRST_TIME 	NEXT_CHANGE# NEXT_TIME		    CON_ID
+---------- ---------- ---------- ---------- ---------- ---------- --- ---------------- ------------- ------------------ ------------ ------------------ ----------
+	 1	    1	     127   52428800	   512		3 NO  INACTIVE		     2530244 25-JAN-24		     2631312 25-JAN-24			 0
+	 2	    1	     128   52428800	   512		3 NO  ACTIVE		     2631312 25-JAN-24		     2651540 26-JAN-24			 0
+	 3	    1	     126   52428800	   512		3 NO  INACTIVE		     2427214 25-JAN-24		     2530244 25-JAN-24			 0
+	 4	    1	     129   62914560	   512		3 NO  CURRENT		     2651540 26-JAN-24		  1.8447E+19				 0
+	 5	    1	       0   62914560	   512		3 YES UNUSED			   0				   0				 0
+	 6	    1	       0   62914560	   512		3 YES UNUSED			   0				   0				 0
+
+6 rows selected.
+
+Analizar y [enter] para continuar
+
+11.  Validando que los grupo 1 a 3 no tengan status active
+Forzando checkpoint para sicronizar data files con db buffer
+
+PL/SQL procedure successfully completed.
+
+12. Confirmando que no existen grupos con status ACTIVE.
+
+    GROUP#    THREAD#  SEQUENCE#      BYTES  BLOCKSIZE	  MEMBERS ARC STATUS	       FIRST_CHANGE# FIRST_TIME 	NEXT_CHANGE# NEXT_TIME		    CON_ID
+---------- ---------- ---------- ---------- ---------- ---------- --- ---------------- ------------- ------------------ ------------ ------------------ ----------
+	 1	    1	     127   52428800	   512		3 NO  INACTIVE		     2530244 25-JAN-24		     2631312 25-JAN-24			 0
+	 2	    1	     128   52428800	   512		3 NO  INACTIVE		     2631312 25-JAN-24		     2651540 26-JAN-24			 0
+	 3	    1	     126   52428800	   512		3 NO  INACTIVE		     2427214 25-JAN-24		     2530244 25-JAN-24			 0
+	 4	    1	     129   62914560	   512		3 NO  CURRENT		     2651540 26-JAN-24		  1.8447E+19				 0
+	 5	    1	       0   62914560	   512		3 YES UNUSED			   0				   0				 0
+	 6	    1	       0   62914560	   512		3 YES UNUSED			   0				   0				 0
+
+6 rows selected.
+
+Analizar y [enter] para continuar
+
+13. Eliminar grupos 1, 2, y 3
+
+Database altered.
+
+
+Database altered.
+
+
+Database altered.
+
+14. Confirmando que se han eliminado grupos 1, 2 y 3.
+
+    GROUP#    THREAD#  SEQUENCE#      BYTES  BLOCKSIZE	  MEMBERS ARC STATUS	       FIRST_CHANGE# FIRST_TIME 	NEXT_CHANGE# NEXT_TIME		    CON_ID
+---------- ---------- ---------- ---------- ---------- ---------- --- ---------------- ------------- ------------------ ------------ ------------------ ----------
+	 4	    1	     129   62914560	   512		3 NO  CURRENT		     2651540 26-JAN-24		  1.8447E+19				 0
+	 5	    1	       0   62914560	   512		3 YES UNUSED			   0				   0				 0
+	 6	    1	       0   62914560	   512		3 YES UNUSED			   0				   0				 0
+
+Analizar y [enter] para continuar OJO! validar que todo esta OK.
+
+15 y 16 Eliminar archivos via S.O.
+eliminando redo logs grupo 1
+
+
+
+eliminando redo logs grupo 2
+
+
+
+eliminando redo logs grupo 3
+
+
+
+17. revisar archivos esperados a nivel s.o.
+
+
+
+-----------------------------------------------------
+##Comentarios y conclusiones
+
+
+
+En este ejercicio, se abordó la tarea de modificar el tamaño de los Online Redo Logs en Oracle. 
+El script e-11-redo-logs-oracle.sql se encargó de llevar a cabo esta actividad, siguiendo una estrategia que implicaba 
+la creación de nuevos grupos y la eliminación de los existentes.
+Se comenzó mostrando la ruta y tamaño actual de todos los Online Redo Logs a nivel del sistema operativo, utilizando el comando find. Luego,
+se realizaron consultas detalladas sobre los grupos de Redo Logs, identificando el grupo en uso y explorando los datos de los miembros.
+Se procedió a crear nuevos grupos con tamaños y configuraciones específicas, añadiendo terceros miembros a cada grupo.
+Se revisaron las consultas anteriores para observar las diferencias, destacando los cambios en el status de los nuevos miembros.
+Para facilitar la eliminación de los grupos antiguos, se ajustó el Redo Log actual al grupo 4 y se eliminaron las dependencias de recovery. 
+Se ejecutaron las sentencias necesarias para eliminar los grupos 1 a 3, asegurándose de que estuvieran en un status seguro para la eliminación.
+Se subrayó la importancia de respaldos antes de eliminar archivos en un entorno productivo. 
+Finalmente, se realizaron los comandos en el sistema operativo para eliminar los archivos de Redo Logs antiguos.
+El ejercicio proporcionó una comprensión profunda de la administración de Redo Logs, la creación y eliminación de grupos, y la importancia de mantener la integridad 
+y disponibilidad del sistema durante estos procesos. El aprendizaje principal radica en la necesidad de comprender a fondo las implicaciones y 
+dependencias antes de realizar cambios críticos en la configuración de la base de datos.

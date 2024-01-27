@@ -1,0 +1,15 @@
+SELECT
+    s.sid,
+    s.serial#,
+    p.spid,
+    s.status,
+    CASE
+        WHEN s.server = 'DEDICATED' THEN 'Dedicado'
+        WHEN s.server = 'SHARED' THEN 'Compartido'
+        WHEN s.server = 'POOLED' THEN 'Pooled'
+        ELSE 'Desconocido'
+    END AS tipo_conexion,
+    p.addr AS direccion_proceso
+FROM v$session s
+JOIN v$process p ON s.paddr = p.addr
+/

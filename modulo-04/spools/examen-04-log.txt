@@ -1,0 +1,17 @@
+idle> start examen-03-prueba.sql
+probando conexiones dedicadas
+conectando con privilegio de administración
+Connected.
+conectando sin privilegio de administración
+Connected.
+probando conexiones compartidas
+conectando con privilegio de administración
+Connected.
+conectando sin privilegio de administración
+Connected.
+probando conexiones pooled
+conectando con privilegio de administración
+Connected.
+conectando sin privilegio de administración
+Connected.
+Listo!

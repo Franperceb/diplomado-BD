@@ -1,0 +1,136 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##29-11-2023
+##Módulo 03. E-04- Componentes SGA.
+-------------------------------------------
+
+
+##SCRIPT
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 27 /11/2023
+--@Descripción: Ejercicio 04 -módulo 03 . Componentes de la SGA.
+
+
+
+connect sys/system2 as sysdba
+
+set linesize window
+Prompt Reporte 1
+
+select q1.pool, q1.num_componentes,trunc(q1.megas_usados,2) megas_usados,
+  trunc(q2.megas_libres,2) megas_libres,
+  trunc(q1.megas_usados + nvl(q2.megas_libres,0),2) mb_asignados
+from (
+  select pool, count(*) as num_componentes,
+    sum(bytes)/1024/1024 megas_usados
+  from v$sgastat  
+  where name <>'free memory'
+  and pool is not null
+  group by pool
+) q1 
+left outer join (
+  select pool, trunc(bytes/1024/1024,2) megas_libres
+  from v$sgastat
+  where name ='free memory'
+  and pool is not  null
+) q2
+on q1.pool = q2.pool
+union all
+select name, 0,bytes/1024/1024,-1,bytes/1024/1024
+from v$sgastat
+where pool is null
+order by megas_usados desc;
+
+Prompt Reporte 2
+
+select name, trunc(bytes/1024/1024,2) mb_asignados
+from v$sgainfo 
+where name not in(
+  'Free SGA Memory Available',
+  'Maximum SGA Size',
+  'Granule Size',
+  'Startup overhead in Shared Pool'
+)
+union all 
+select 'Memoria total', trunc(sum(bytes)/1024/1024,2)
+from v$sgainfo 
+where name not in (
+  'Free SGA Memory Available',
+  'Maximum SGA Size',
+  'Granule Size',
+  'Startup overhead in Shared Pool'
+)
+group by 'Memoria total'
+union all
+select name, trunc(bytes/1024/1024,2)
+from v$sgainfo 
+where name ='Free SGA Memory Available'
+order by 2 desc;
+
+
+
+
+##SALIDA DE EJECUCIÓN
+idle> start s-04-componentes-sga.sql
+SP2-0734: unknown command beginning "sys@jpcdip..." - rest of line ignored.
+idle> start s-04-componentes-sga.sql
+Connected.
+
+                                                                                
+
+Reporte 1
+
+POOL                       NUM_COMPONENTES MEGAS_USADOS MEGAS_LIBRES MB_ASIGNADOS                                              
+-------------------------- --------------- ------------ ------------ ------------                                              
+shared pool                           1402       250.19         41.8       291.99                                              
+buffer_cache                             0          100           -1          100                                              
+large pool                               1           15            5           20                                              
+shared_io_pool                           0           12           -1           12                                              
+fixed_sga                                0   8.48931885           -1   8.48931885                                              
+log_buffer                               0    7.5078125           -1    7.5078125                                              
+
+6 rows selected.
+
+Reporte 2
+
+NAME                             MB_ASIGNADOS                                                                                  
+-------------------------------- ------------                                                                                  
+Memoria total                          455.99                                                                                  
+Free SGA Memory Available                 324                                                                                  
+Shared Pool Size                          292                                                                                  
+Buffer Cache Size                         112                                                                                  
+Large Pool Size                            20                                                                                  
+Shared IO Pool Size                        12                                                                                  
+Fixed SGA Size                           8.48                                                                                  
+Redo Buffers                              7.5                                                                                  
+Java Pool Size                              4                                                                                  
+Streams Pool Size                           0                                                                                  
+Data Transfer Cache Size                    0                                                                                  
+In-Memory Area Size                         0                                                                                  
+
+12 rows selected.
+
+sys@jpcdip02> spool off
+
+
+##CONCLUSIONES
+En este ejercicio, se ha desarrollado un script, s-04-componentes-sga.sql, que permite obtener 
+dos informes detallados  sobre la memoria asignada y utilizada en la Shared Global Area (SGA) de una 
+base de datos Oracle.
+En el primer reporte, utilizando la vista v$sgastat, se identifican los distintos pools o áreas
+de la SGA, excluyendo registros no relevantes como Free SGA Memory Available y Maximum SGA Size. 
+Se proporciona información sobre la cantidad de memoria utilizada y libre en cada pool, 
+así como la cantidad total asignada. Este análisis se realiza considerando componentes específicos 
+y áreas de memoria sin asignar a un pool.
+En el segundo reporte, mediante la vista v$sgainfo, se presenta un desglose ordenado de las áreas 
+de memoria de la SGA según la cantidad total de memoria asignada de mayor a menor. 
+Este informe ofrece una comparación detallada con los resultados del primer reporte, 
+proporcionando una visión más específica de cómo se distribuye la memoria en las distintas áreas de 
+la SGA.
+En conjunto, estos informes ofrecen una comprensión detallada de la asignación y utilización de 
+la memoria en la SGA, permitiendo una gestión más efectiva y una identificación de posibles áreas 
+de optimización en entornos de bases de datos Oracle.
+
+
+
+
+

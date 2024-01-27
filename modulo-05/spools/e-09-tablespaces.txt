@@ -1,0 +1,498 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-01-2024
+##Módulo 05. E-09-10 Tablespaces y Data Files.
+-------------------------------------------
+
+##SCRIPTs
+------------------------------------------------
+*****e-09-tablespaces.sql
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 19/01/2024
+--@Descripción: Ejercicio 09 - Módulo 05.  Tablespaces. 
+
+
+
+define syslogon='sys/system2 as sysdba'
+define t_user='m05_store_user'
+define t_userlogon='&t_user/&t_user'
+
+set linesize window
+
+Prompt conectando como sys
+
+connect &syslogon
+
+Prompt Creando tablespace
+Prompt Ejercicio 1 crear TS m05_store_tbs1
+
+create tablespace m05_store_tbs1
+datafile '/u01/app/oracle/oradata/JPCDIP02/m05_store_tbs01.dbf'
+size 30M
+extent management local autoallocate
+segment space management auto;
+
+Prompt Ejercicio 2 crear TS m05_store_multiple_tbs
+create tablespace m05_store_multiple_tbs
+datafile 
+ '/u01/app/oracle/oradata/JPCDIP02/m05_store_multiple_tbs_01.dbf' size 15M,
+ '/u01/app/oracle/oradata/JPCDIP02/m05_store_multiple_tbs_02.dbf' size 15M,
+ '/u01/app/oracle/oradata/JPCDIP02/m05_store_multiple_tbs_03.dbf' size 15M
+extent management local autoallocate
+segment space management auto;
+
+Prompt Ejercicio 3 crear TS m05_store_tbs_custom
+create tablespace m05_store_tbs_custom
+  datafile '/u01/app/oracle/oradata/JPCDIP02/m05_store_tbs_custom_01.dbf' size 15M
+  reuse
+  autoextend on next 2M maxsize 40M
+nologging
+blocksize 8K
+offline
+extent management local uniform size 64k
+segment space management auto;
+
+Prompt Ejercicio 4 Consultar tablespaces creados
+select tablespace_name, status, contents
+from dba_tablespaces;
+
+Pause Analizar resultados, [Enter] para continuar
+
+Prompt Ejercicio 5 crear usuario m05_store_user
+create user &t_user identified by &t_user
+  quota unlimited on m05_store_tbs1
+  default tablespace m05_store_tbs1;
+grant create session, create table, create procedure to &t_user;
+
+Prompt Ejercicio 6 crear tabla store_data con el usuario m05_store_user
+connect &t_userlogon
+create table store_data(
+  c1 char(1024),
+  c2 char(1024)
+) segment creation deferred;
+
+Prompt Ejercicio 7 Programa que llena un TS
+
+create or replace procedure sp_e6_reserva_extensiones is
+    v_total_espacio number;
+    v_extensiones number;
+begin
+ v_extensiones := 0;
+loop
+    begin
+      execute immediate 'alter table store_data allocate extent';
+    exception
+      when others then 
+        if sqlcode = -1653 then
+          dbms_output.put_line('===> Sin espacio en TS');
+          dbms_output.put_line('===> Código error  ' ||sqlcode);
+          dbms_output.put_line('===> Mensaje error ' ||sqlerrm);
+          dbms_output.put_line('===>'||dbms_utility.format_error_backtrace);
+          exit;
+        end if;
+    end;
+  end loop;
+  -- total espacio asignado
+  select sum(bytes)/1024/1024, count(*) 
+  into   v_total_espacio, v_extensiones
+  from user_extents
+  where segment_name = 'STORE_DATA';
+
+
+  dbms_output.put_line('=> Total de extensiones reservadas: '|| v_extensiones);
+  dbms_output.put_line('=> Total de espacio reservado (MB): '|| v_total_espacio);
+end;
+/
+
+show errors
+
+Prompt ejecutar procedimiento
+set serveroutput on
+exec sp_e6_reserva_extensiones
+
+Pause Analizar resultados, [Enter] para continuar
+
+Prompt Ejercicio 8 Modificar TS para poder almacenar
+
+connect &syslogon
+alter tablespace m05_store_tbs1
+add datafile '/u01/app/oracle/oradata/JPCDIP02/m05_store_tbs02.dbf'
+size 10M;
+
+Prompt Ejercicio 9 ejecutar nuevamente el programa para confirmar resultados
+connect &t_userlogon
+set serveroutput on
+exec sp_e6_reserva_extensiones
+
+Pause Analizar Nuevamente resultados, [Enter] para continuar
+
+Prompt Ejercicio 10 Consultar dba_tablespaces
+connect &syslogon
+
+select t.tablespace_name, count(s.tablespace_name) as total_segmentos
+from dba_tablespaces t 
+left outer join dba_segments s
+on t.tablespace_name = s.tablespace_name
+group by t.tablespace_name
+order by 2 desc;
+
+Pause Analizar Nuevamente resultados, [Enter] para continuar
+
+Prompt Ejecutando script e-10-data-files
+@e-10-data-files.sql 
+
+Prompt - limpieza
+connect &syslogon
+
+-- eliminando TS y usuario
+
+drop tablespace m05_store_tbs1 including contents and datafiles;
+drop tablespace m05_store_multiple_tbs including contents and datafiles;
+drop tablespace m05_store_tbs_custom including contents and datafiles;
+
+drop user &t_user cascade;
+
+Prompt Listo !
+exit
+
+
+
+*****e-10-data-files.sql
+
+------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 19/01/2024
+--@Descripción: Ejercicio 09 - Módulo 05.  data files. 
+
+
+
+define syslogon='sys/system2 as sysdba'
+
+set pagesize 100
+set linesize window
+
+Prompt 2 Consultando data files empleando dba_data_files
+
+connect &syslogon
+
+select file_name, file_id, relative_fno, tablespace_name,
+  bytes/(1024*1024) bytes_mb,
+  status, autoextensible, increment_by, 
+  user_bytes/(1024*1024) user_bytes_mb,
+  (bytes-user_bytes)/1024 header_kb,
+  online_status
+from dba_data_files;
+
+  -- status del data_file : online available, invalid
+  -- status online : sysoff, system, offline, online, recover
+
+Prompt 3 Consultando data_files de v$datafile
+select name, file#, creation_change#,
+  to_char(creation_time,'dd/mm/yyyy hh24:mi:ss') creation_time,
+  checkpoint_change#, to_char(checkpoint_time,'dd/mm/yyyy hh24:mi:ss') checkpoint_time,
+  last_change#, to_char(last_time, 'dd/mm/yyyy hh24:mi:ss') last_time
+from v$datafile;
+
+Pause 4 Analizar salida, [Enter] para continuar 
+
+Prompt 5 Mostrando datos del header del data_file
+select file#, name, error, recover, checkpoint_change#,
+  to_char(checkpoint_time,'dd/mm/yyyy hh24:mi:ss') checkpoint_time
+from v$datafile_header;
+
+Pause Analizar salida, [Enter] para continuar 
+
+Prompt Mostrando datos de archivos temporales
+
+select file_id, file_name, tablespace_name, status,
+  autoextensible, bytes/(1024*1024) bytes_mb
+from dba_temp_files;
+
+Pause Analizar salida, [Enter] para continuar 
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+idle> col name format a30
+idle> col file_name format a40
+idle> start e-09-tablespaces.sql
+conectando como sys
+Connected.
+Creando tablespace
+Ejercicio 1 crear TS m05_store_tbs1
+
+Tablespace created.
+
+Ejercicio 2 crear TS m05_store_multiple_tbs
+
+Tablespace created.
+
+Ejercicio 3 crear TS m05_store_tbs_custom
+
+Tablespace created.
+
+Ejercicio 4 Consultar tablespaces creados
+
+TABLESPACE_NAME 	       STATUS	 CONTENTS
+------------------------------ --------- ---------------------
+SYSTEM			       ONLINE	 PERMANENT
+SYSAUX			       ONLINE	 PERMANENT
+UNDOTBS1		       ONLINE	 UNDO
+TEMPTS1 		       ONLINE	 TEMPORARY
+USERS			       ONLINE	 PERMANENT
+M05_STORE_TBS1		       ONLINE	 PERMANENT
+M05_STORE_MULTIPLE_TBS	       ONLINE	 PERMANENT
+M05_STORE_TBS_CUSTOM	       OFFLINE	 PERMANENT
+
+8 rows selected.
+
+Analizar resultados, [Enter] para continuar
+
+Ejercicio 5 crear usuario m05_store_user
+old   1: create user &t_user identified by &t_user
+new   1: create user m05_store_user identified by m05_store_user
+
+User created.
+
+old   1: grant create session, create table, create procedure to &t_user
+new   1: grant create session, create table, create procedure to m05_store_user
+
+Grant succeeded.
+
+Ejercicio 6 crear tabla store_data con el usuario m05_store_user
+Connected.
+
+Table created.
+
+Ejercicio 7 Programa que llena un TS
+
+Procedure created.
+
+No errors.
+ejecutar procedimiento
+===> Sin espacio en TS
+===> Código error  -1653
+===> Mensaje error ORA-01653: unable to extend table M05_STORE_USER.STORE_DATA by 128 in tablespace M05_STORE_TBS1
+===>ORA-06512: at "M05_STORE_USER.SP_E6_RESERVA_EXTENSIONES", line 8
+
+
+=> Total de extensiones reservadas: 44
+=> Total de espacio reservado (MB): 29
+
+PL/SQL procedure successfully completed.
+
+Analizar resultados, [Enter] para continuar
+
+Ejercicio 8 Modificar TS para poder almacenar
+Connected.
+
+Tablespace altered.
+
+Ejercicio 9 ejecutar nuevamente el programa para confirmar resultados
+Connected.
+===> Sin espacio en TS
+===> Código error  -1653
+===> Mensaje error ORA-01653: unable to extend table M05_STORE_USER.STORE_DATA by 128 in tablespace M05_STORE_TBS1
+===>ORA-06512: at "M05_STORE_USER.SP_E6_RESERVA_EXTENSIONES", line 8
+
+
+=> Total de extensiones reservadas: 53
+=> Total de espacio reservado (MB): 38
+
+PL/SQL procedure successfully completed.
+
+Analizar Nuevamente resultados, [Enter] para continuar
+
+Ejercicio 10 Consultar dba_tablespaces
+Connected.
+
+TABLESPACE_NAME 	       TOTAL_SEGMENTOS
+------------------------------ ---------------
+SYSAUX					  2597
+SYSTEM					  2172
+USERS					    65
+UNDOTBS1				    10
+M05_STORE_TBS1				     1
+M05_STORE_MULTIPLE_TBS			     0
+TEMPTS1 				     0
+M05_STORE_TBS_CUSTOM			     0
+
+8 rows selected.
+
+Analizar Nuevamente resultados, [Enter] para continuar
+
+Ejecutando script e-10-data-files
+2 Consultando data files empleando dba_data_files
+Connected.
+
+FILE_NAME				    FILE_ID RELATIVE_FNO TABLESPACE_NAME		  BYTES_MB STATUS    AUT INCREMENT_BY USER_BYTES_MB  HEADER_KB ONLINE_
+---------------------------------------- ---------- ------------ ------------------------------ ---------- --------- --- ------------ ------------- ---------- -------
+/u01/app/oracle/oradata/JPCDIP02/system0	  1	       1 SYSTEM 			       760 AVAILABLE YES	 1280		759	  1024 SYSTEM
+1.dbf
+
+/u01/app/oracle/oradata/JPCDIP02/sysaux0	  2	       2 SYSAUX 			       550 AVAILABLE YES	 1280		549	  1024 ONLINE
+1.dbf
+
+/u01/app/oracle/oradata/JPCDIP02/undotbs	  3	       3 UNDOTBS1			       370 AVAILABLE YES	  640		369	  1024 ONLINE
+01.dbf
+
+/u01/app/oracle/oradata/JPCDIP02/users01	  4	       4 USERS				  770.3125 AVAILABLE YES	    1	   769.3125	  1024 ONLINE
+.dbf
+
+/u01/app/oracle/oradata/JPCDIP02/m05_sto	  5	       5 M05_STORE_TBS1 			30 AVAILABLE NO 	    0		 29	  1024 ONLINE
+re_tbs01.dbf
+
+/u01/app/oracle/oradata/JPCDIP02/m05_sto	  6	       6 M05_STORE_MULTIPLE_TBS 		15 AVAILABLE NO 	    0		 14	  1024 ONLINE
+re_multiple_tbs_01.dbf
+
+/u01/app/oracle/oradata/JPCDIP02/m05_sto	  7	       7 M05_STORE_MULTIPLE_TBS 		15 AVAILABLE NO 	    0		 14	  1024 ONLINE
+re_multiple_tbs_02.dbf
+
+/u01/app/oracle/oradata/JPCDIP02/m05_sto	  8	       8 M05_STORE_MULTIPLE_TBS 		15 AVAILABLE NO 	    0		 14	  1024 ONLINE
+re_multiple_tbs_03.dbf
+
+/u01/app/oracle/oradata/JPCDIP02/m05_sto	  9	       9 M05_STORE_TBS_CUSTOM			   AVAILABLE					       OFFLINE
+re_tbs_custom_01.dbf
+
+/u01/app/oracle/oradata/JPCDIP02/m05_sto	 10	      10 M05_STORE_TBS1 			10 AVAILABLE NO 	    0		  9	  1024 ONLINE
+re_tbs02.dbf
+
+
+10 rows selected.
+
+3 Consultando data_files de v$datafile
+
+NAME				    FILE# CREATION_CHANGE# CREATION_TIME       CHECKPOINT_CHANGE# CHECKPOINT_TIME     LAST_CHANGE# LAST_TIME
+------------------------------ ---------- ---------------- ------------------- ------------------ ------------------- ------------ -------------------
+/u01/app/oracle/oradata/JPCDIP		1		 8 26/11/2023 02:29:22		  2375997 19/01/2024 15:53:35
+02/system01.dbf
+
+/u01/app/oracle/oradata/JPCDIP		2	      3247 26/11/2023 02:29:25		  2375997 19/01/2024 15:53:35
+02/sysaux01.dbf
+
+/u01/app/oracle/oradata/JPCDIP		3	      4154 26/11/2023 02:29:27		  2375997 19/01/2024 15:53:35
+02/undotbs01.dbf
+
+/u01/app/oracle/oradata/JPCDIP		4	      4319 26/11/2023 02:29:28		  2375997 19/01/2024 15:53:35
+02/users01.dbf
+
+/u01/app/oracle/oradata/JPCDIP		5	   2382049 19/01/2024 16:05:21		  2382050 19/01/2024 16:05:21
+02/m05_store_tbs01.dbf
+
+/u01/app/oracle/oradata/JPCDIP		6	   2382081 19/01/2024 16:05:21		  2382084 19/01/2024 16:05:21
+02/m05_store_multiple_tbs_01.d
+bf
+
+/u01/app/oracle/oradata/JPCDIP		7	   2382082 19/01/2024 16:05:21		  2382084 19/01/2024 16:05:21
+02/m05_store_multiple_tbs_02.d
+bf
+
+/u01/app/oracle/oradata/JPCDIP		8	   2382083 19/01/2024 16:05:21		  2382084 19/01/2024 16:05:21
+02/m05_store_multiple_tbs_03.d
+bf
+
+/u01/app/oracle/oradata/JPCDIP		9	   2382113 19/01/2024 16:05:21		  2382113 19/01/2024 16:05:21	   2382113 19/01/2024 16:05:21
+02/m05_store_tbs_custom_01.dbf
+
+/u01/app/oracle/oradata/JPCDIP	       10	   2382600 19/01/2024 16:05:24		  2382601 19/01/2024 16:05:24
+02/m05_store_tbs02.dbf
+
+
+10 rows selected.
+
+4 Analizar salida, [Enter] para continuar
+
+5 Mostrando datos del header del data_file
+
+     FILE# NAME 			  ERROR 							    REC CHECKPOINT_CHANGE# CHECKPOINT_TIME
+---------- ------------------------------ ----------------------------------------------------------------- --- ------------------ -------------------
+	 1 /u01/app/oracle/oradata/JPCDIP								    NO		   2375997 19/01/2024 15:53:35
+	   02/system01.dbf
+
+	 2 /u01/app/oracle/oradata/JPCDIP								    NO		   2375997 19/01/2024 15:53:35
+	   02/sysaux01.dbf
+
+	 3 /u01/app/oracle/oradata/JPCDIP								    NO		   2375997 19/01/2024 15:53:35
+	   02/undotbs01.dbf
+
+	 4 /u01/app/oracle/oradata/JPCDIP								    NO		   2375997 19/01/2024 15:53:35
+	   02/users01.dbf
+
+	 5 /u01/app/oracle/oradata/JPCDIP								    NO		   2382050 19/01/2024 16:05:21
+	   02/m05_store_tbs01.dbf
+
+	 6 /u01/app/oracle/oradata/JPCDIP								    NO		   2382084 19/01/2024 16:05:21
+	   02/m05_store_multiple_tbs_01.d
+	   bf
+
+	 7 /u01/app/oracle/oradata/JPCDIP								    NO		   2382084 19/01/2024 16:05:21
+	   02/m05_store_multiple_tbs_02.d
+	   bf
+
+	 8 /u01/app/oracle/oradata/JPCDIP								    NO		   2382084 19/01/2024 16:05:21
+	   02/m05_store_multiple_tbs_03.d
+	   bf
+
+	 9 /u01/app/oracle/oradata/JPCDIP								    NO		   2382113 19/01/2024 16:05:21
+	   02/m05_store_tbs_custom_01.dbf
+
+	10 /u01/app/oracle/oradata/JPCDIP								    NO		   2382601 19/01/2024 16:05:24
+	   02/m05_store_tbs02.dbf
+
+
+10 rows selected.
+
+Analizar salida, [Enter] para continuar
+
+Mostrando datos de archivos temporales
+
+   FILE_ID FILE_NAME				    TABLESPACE_NAME		   STATUS  AUT	 BYTES_MB
+---------- ---------------------------------------- ------------------------------ ------- --- ----------
+	 1 /u01/app/oracle/oradata/JPCDIP02/temp01. TEMPTS1			   ONLINE  YES	       20
+	   dbf
+
+
+Analizar salida, [Enter] para continuar
+
+- limpieza
+Connected.
+
+Tablespace dropped.
+
+
+Tablespace dropped.
+
+
+Tablespace dropped.
+
+old   1: drop user &t_user cascade
+new   1: drop user m05_store_user cascade
+
+User dropped.
+
+Listo !
+
+
+
+
+-----------------------------------------------------
+##Comentarios y conclusiones
+En este conjunto de ejercicios, se exploraron diversas operaciones relacionadas con tablespaces y data files en Oracle, abordando la creación, 
+configuración y gestión de estos elementos fundamentales en una base de datos.
+En primer lugar, se crearon tablespaces con diferentes configuraciones, tales como local management de extensiones, tamaño fijo o variable, 
+y cifrado de datos utilizando el algoritmo AES. Se asignaron cuotas a usuarios específicos, asegurando que los segmentos generados 
+por estos usuarios se almacenen en tablespaces designados.
+Luego, se diseñó un programa PL/SQL que simula la reserva continua de extensiones para una tabla específica hasta que se alcanza el límite de 
+espacio asignado al tablespace. Se introdujo un cambio posterior para permitir que el usuario continúe reservando espacio sin exceder 
+el límite de tamaño del tablespace.
+Además, se realizaron consultas detalladas sobre data files y tablespaces, explorando las diferencias entre las vistas dba_data_files y v$datafile.
+Se analizaron datos como la ubicación, el tamaño, el estado, el crecimiento automático, entre otros, tanto a nivel de dba_data_files como v$datafile.
+Para finalizar, se abordaron consultas específicas sobre los headers de data files, incluyendo detalles sobre el checkpoint, el System Change Number (SCN), 
+y se exploraron las características de los archivos temporales.
+En cuanto a las dificultades, se encontraron desafíos en la gestión de extensiones, en la comprensión de las vistas y la información proporcionada por cada una.
+Estos desafíos fueron superados mediante la revisión cuidadosa de la documentación de Oracle y la experimentación con las consultas.
+Como aprendizaje principal, se destacan la importancia de comprender en profundidad la configuración de tablespaces y data files, así como la necesidad de 
+adaptar estas configuraciones según los requisitos específicos de la base de datos y sus usuarios.
+En cuanto a sugerencias, se recomienda practicar continuamente con estos conceptos y realizar experimentos en un entorno controlado para fortalecer 
+la comprensión de la gestión de tablespaces y data files en Oracle. 

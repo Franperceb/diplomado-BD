@@ -1,3 +1,9 @@
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 27 /11/2023
+--@Descripción: Ejercicio 04 -módulo 03 . Componentes de la SGA.
+
+
+
 connect sys/system2 as sysdba
 
 set linesize window

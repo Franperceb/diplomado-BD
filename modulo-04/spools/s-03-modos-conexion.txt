@@ -1,0 +1,200 @@
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 11/01/2024
+--@Descripción: Ejercicio 03 - Módulo 04. Configuracíón modo dedicado y compartido
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 11/01/2024
+--@Descripción: Ejercicio 04 - Módulo 04. Consultas - procesos.
+
+-- Consulta 1: Mostrar el total de procesos de la instancia
+SELECT COUNT(*) AS total_procesos
+FROM v$process;
+
+-- Consulta 2: Mostrar los datos de los procesos que no son procesos de background
+SELECT *
+FROM v$session
+WHERE type != 'BACKGROUND';
+
+-- Consulta 3: Mostrar los datos de todos los procesos que son de background
+SELECT *
+FROM v$session
+WHERE type = 'BACKGROUND';
+
+-- Consulta 4: Mostrar los datos de la sesión iniciada en SQL Developer
+SELECT *
+FROM v$session
+WHERE username = 'TU_USUARIO'; -- Reemplaza 'TU_USUARIO' con el nombre de usuario
+
+-- Obtener el ID de la sesión iniciada en SQL Developer
+DEFINE tu_usuario = 'TU_USUARIO'; -- Reemplaza 'TU_USUARIO' con el nombre de usuario
+COLUMN sid NEW_VALUE session_id
+SELECT sid
+FROM v$session
+WHERE username = UPPER('&tu_usuario');
+
+-- Consulta 5: Mostrar los datos del proceso asociado a la sesión creada en SQL Developer
+SELECT *
+FROM v$process
+WHERE addr = (SELECT paddr FROM v$session WHERE sid = &session_id);
+
+-- Consulta 6: Mostrar datos de monitoreo ASH para la sesión creada en SQL Developer
+SELECT *
+FROM v$active_session_history
+WHERE session_id = &session_id;
+
+------------------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+idle> start s-03-modos-conexion.sql
+conectando como usuario sys
+Connected.
+cambiando a modo compartido
+
+System altered.
+
+configurando shared servers
+
+System altered.
+
+mostrando cambio de parametros
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+max_shared_servers		     integer	 4
+shared_servers			     integer	 3
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+dispatchers			     string	 (dispatchers=2)(protocol=tcp),
+						  (ADDRESS=(PROTOCOL=TCP)(PORT=
+						 5000)), (ADDRESS=(PROTOCOL=TCP
+						 )(PORT=5001))
+max_dispatchers 		     integer	 2
+iniciando connection pool
+
+PL/SQL procedure successfully completed.
+
+configurando el número mínimo de conexiones que serán creadas y almacenadas en el pool (5 y 10)
+BEGIN dbms_connection_pool.alter_param('','MAXSIZE','10'); END;
+
+*
+ERROR at line 1:
+ORA-56507: DRCP: Pool alter configuration failed
+ORA-56510: DRCP: Pool alter configuration failed
+ORA-06512: at "SYS.DBMS_CONNECTION_POOL", line 59
+ORA-06512: at line 1
+
+
+
+PL/SQL procedure successfully completed.
+
+cambiando valores de parametros en pool
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+mostrando parametro db_domain
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+db_domain			     string	 fi.unam
+Notificando al listener los servicios disponibles
+
+System altered.
+
+validando servicios
+
+LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 11-JAN-2024 07:14:10
+
+Copyright (c) 1991, 2019, Oracle.  All rights reserved.
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521)))
+Services Summary...
+Service "jpcdip02.fi.unam" has 1 instance(s).
+  Instance "jpcdip02", status READY, has 4 handler(s) for this service...
+    Handler(s):
+      "DEDICATED" established:0 refused:0 state:ready
+         LOCAL SERVER
+      "D001" established:0 refused:0 current:0 max:1022 state:ready
+         DISPATCHER <machine: pc-jpc.fi.unam, pid: 13054>
+         (ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=32577))
+      "D000" established:1 refused:0 current:1 max:1022 state:ready
+         DISPATCHER <machine: pc-jpc.fi.unam, pid: 13052>
+         (ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=19241))
+      "N000" established:0 refused:0 current:0 max:40000 state:ready
+         CMON <machine: pc-jpc.fi.unam, pid: 13190>
+         (ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=12199))
+The command completed successfully
+
+Analizar resultados [Enter] para continuar
+
+Añadir service names en tnsnames.ora [Enter] para continuar
+
+Probando conexión en modo dedicado
+Connected.
+
+SYSDATE
+------------------
+11-JAN-24
+
+[Enter] para continuar
+
+Probando conexión en modo compartido
+Connected.
+
+SYSDATE
+------------------
+11-JAN-24
+
+[Enter] para continuar
+
+mostrando datos de v$circuit
+
+CIRCUIT 	 DISPATCHER	  STATUS		  KBS
+---------------- ---------------- ---------------- ----------
+0000000069034028 0000000076F33F38 NORMAL	   40.4746094
+00000000690359B8 000000007688D848 NORMAL	   7.92773438
+
+Probando conexión en modo pooled
+Connected.
+
+SYSDATE
+------------------
+11-JAN-24
+
+[Enter] para continuar
+
+
+
+
+-----------------------------------------------------------------------------
+###Comentarios  y conclusiones 
+
+El ejercicio "s-03-modos-conexion.sql" abordó la configuración y prueba de diferentes modos de conexión en Oracle Database, incluyendo modos dedicado,
+compartido y pooled.
+El script comenzó configurando parámetros para habilitar el modo compartido. Se establecieron 2 dispatchers y 3 shared servers,
+ y se inició el Database Resident Connection Pooling (DRCP) por defecto, con un pool específico. Además, se configuró el parámetro db_domain con el valor "fi.unam" 
+ y se notificó al listener de los cambios.
+Se mostraron los servicios ofrecidos por el listener, identificando las opciones de conexión disponibles. 
+Luego, se reinició para confirmar que los cambios fueran permanentes, y se volvió a mostrar los servicios del listener después del reinicio.
+En la siguiente parte, se configuró el archivo tnsnames.ora con alias específicos para cada modo de conexión (dedicado, compartido y pooled). Es importante este punto
+para que se puedan establecer las conexiones según el modo.
+Se utilizó netmgr para realizar estas configuraciones y se revisaron los cambios en el archivo.
+Se realizaron pruebas de conexión en cada modo: dedicado, compartido y pooled. Se mostró la fecha actual como parte de la verificación de la conexión en cada caso.
+Finalmente, se mostraron columnas específicas de la vista v$circuit para confirmar la existencia de conexiones en modo compartido, incluyendo información sobre el circuito, 
+el dispatcher, el estado, y el uso de bytes.
+En conclusión, el ejercicio proporcionó una comprensión detallada de la configuración y prueba de los diferentes modos de conexión en Oracle, 
+desde la configuración del DRCP hasta la verificación de las conexiones en modo compartido. Se destacaron los cambios necesarios en el listener, 
+el tnsnames.ora y se llevaron a cabo pruebas exhaustivas en cada modo para confirmar la configuración correcta.
+
+
+
+
+

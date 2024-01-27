@@ -1,0 +1,100 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-01-2024
+##Módulo 05. E-06- Segmentos.
+-------------------------------------------
+
+##SCRIPT
+------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/01/2024
+--@Descripción: Ejercicio 06 - Módulo 05. Segmentos.
+
+Prompt Explorando segmentos
+connect jorge05/jorge05
+
+begin
+  execute immediate 'drop table jorge05.empleado';
+exception
+  when others then
+    null;
+end;
+/
+
+create table empleado(
+  empleado_id number(10,0) constraint empleado_pk primary key,
+    curp  varchar2(18) constraint empleado_curp_uk unique,
+    email varchar2(100),
+    foto  blob,
+    cv    clob,
+    perfil  varchar2(4000)
+) segment creation immediate;
+
+Prompt creando un índice explícito
+create index empleado_email_ix on empleado(email);
+
+Prompt mostrando los segmentos asociados con esta tabla.
+set linesize window
+col segment_name format a30
+select tablespace_name,segment_name, segment_type, blocks,extents
+from user_segments
+where segment_name like'%EMPLEADO%';
+
+Prompt mostrando datos de user_lobs
+col index_name format a30
+col column_name format a30
+select tablespace_name,segment_name,index_name,column_name
+from user_lobs 
+where table_name='EMPLEADO';
+
+
+-----------------------------------------------------
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+
+
+sys@jpcdip02> start e-06-segmentos.sql
+Explorando segmentos
+Connected.
+
+PL/SQL procedure successfully completed.
+
+
+Table created.
+
+creando un índice explícito
+
+Index created.
+
+mostrando los segmentos asociados con esta tabla.
+
+TABLESPACE_NAME 	       SEGMENT_NAME		      SEGMENT_TYPE	     BLOCKS    EXTENTS
+------------------------------ ------------------------------ ------------------ ---------- ----------
+USERS			       EMPLEADO_PK		      INDEX			  8	     1
+USERS			       EMPLEADO_CURP_UK 	      INDEX			  8	     1
+USERS			       EMPLEADO_EMAIL_IX	      INDEX			  8	     1
+USERS			       EMPLEADO 		      TABLE			  8	     1
+
+mostrando datos de user_lobs
+
+TABLESPACE_NAME 	       SEGMENT_NAME		      INDEX_NAME		     COLUMN_NAME
+------------------------------ ------------------------------ ------------------------------ ------------------------------
+USERS			       SYS_LOB0000060325C00004$$      SYS_IL0000060325C00004$$	     FOTO
+USERS			       SYS_LOB0000060325C00005$$      SYS_IL0000060325C00005$$	     CV
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+##Comentarios y conclusiones
+
+
+En el ejercicio se diseñó el script e-06-segmentos.sql con el objetivo de explorar la creación de varios tipos de segmentos en Oracle utilizando
+la cláusula segment creation immediate.
+La idea principal fue generar una tabla de prueba que abarcase todos los posibles tipos de segmentos disponibles.
+Después de ejecutar el script, se verificaron los resultados mediante la vista user_segments, la cual proporciona detalles sobre los segmentos 
+asociados al usuario actual. El proceso fue exitoso, confirmando la presencia de los diferentes segmentos generados.
+Como sugerencias, se recomienda  explorar otras vistas relacionadas, como dba_segments, para obtener una comprensión más completa del espacio utilizado por los segmentos en la base de datos.
+En resumen, el ejercicio permitió experimentar prácticamente con la creación y verificación de diversos tipos de segmentos en Oracle, 
+ofreciendo una comprensión práctica de su implementación y gestión en el entorno de la base de datos.

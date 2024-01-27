@@ -1,0 +1,2043 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-01-2024
+##Módulo 05. E-02- Rowsids.
+-------------------------------------------
+
+##SCRIPT
+------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/01/2024
+--@Descripción: Ejercicio 02 - Módulo 05. Row ids
+
+
+connect jorge05/jorge05
+
+Prompt  mostrando los primeros 10 registros y sus rowids.
+--subconsulta para ordenar
+
+select row_id,id 
+from (
+  select rowid as row_id,id
+  from t01_id
+  order by id
+) where rownum <=10;
+
+Prompt mostrando segmentos generados
+select substr(rowid,1,6) segmento, 
+       count(*) as total_registros
+from t01_id
+group by substr(rowid,1,6);
+Pause [Enter] para continuar
+
+Prompt mostrando data file y registros asignados
+select substr(rowid,7,3) data_file, 
+       count(*) as total_registros
+from t01_id
+group by substr(rowid,7,3);
+Pause [Enter] para continuar
+
+Prompt mostrando bloque de datos y registros incluidos en el.
+select substr(rowid,10,6) bloque, 
+       count(*) as total_registros
+from t01_id
+group by substr(rowid,10,6);
+
+
+
+-----------------------------------------------------
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+idle> start e-02-rowids.sql
+Connected.
+mostrando los primeros 10 registros y sus rowids.
+
+ROW_ID			   ID
+------------------ ----------
+AAAOudAAEAAAVzlAAA	    1
+AAAOudAAEAAAVzlAAB	    2
+AAAOudAAEAAAVzlAAC	    3
+AAAOudAAEAAAVzlAAD	    4
+AAAOudAAEAAAVzlAAE	    5
+AAAOudAAEAAAVzlAAF	    6
+AAAOudAAEAAAVzlAAG	    7
+AAAOudAAEAAAVzlAAH	    8
+AAAOudAAEAAAVzlAAI	    9
+AAAOudAAEAAAVzlAAJ	   10
+
+10 rows selected.
+
+mostrando segmentos generados
+
+SEGMENTO		 TOTAL_REGISTROS
+------------------------ ---------------
+AAAOud				 1000000
+
+[Enter] para continuar
+
+mostrando data file y registros asignados
+
+DATA_FILE    TOTAL_REGISTROS
+------------ ---------------
+AAE		     1000000
+
+[Enter] para continuar
+
+mostrando bloque de datos y registros incluidos en el.
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV8m				     660
+AAAV9M				     660
+AAAV9+				     660
+AAAV+i				     660
+AAAV+x				     660
+AAAWCF				     660
+AAAWCI				     660
+AAAWCg				     660
+AAAWDB				     660
+AAAWDC				     660
+AAAWDM				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWDR				     660
+AAAWDU				     660
+AAAWDp				     660
+AAAWD1				     660
+AAAWHY				     660
+AAAWH4				     660
+AAAWKF				     660
+AAAWKQ				     660
+AAAWKW				     660
+AAAWKf				     660
+AAAWLI				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWLM				     660
+AAAWLm				     660
+AAAWLz				     660
+AAAWL6				     660
+AAAWOT				     660
+AAAWOZ				     660
+AAAWOk				     660
+AAAWOt				     660
+AAAWOw				     660
+AAAWO5				     660
+AAAWO+				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWPU				     660
+AAAWPr				     660
+AAAWPy				     660
+AAAWUD				     660
+AAAWUN				     660
+AAAWUc				     660
+AAAWUp				     660
+AAAWU8				     660
+AAAWVS				     660
+AAAWVZ				     660
+AAAWVf				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWVp				     660
+AAAWV5				     660
+AAAWYH				     660
+AAAWYQ				     660
+AAAWYS				     660
+AAAWY3				     660
+AAAWY+				     660
+AAAWZU				     660
+AAAWZc				     660
+AAAWZf				     660
+AAAWZg				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWZz				     660
+AAAWZ2				     660
+AAAWcI				     660
+AAAWc9				     660
+AAAWc+				     660
+AAAWdS				     660
+AAAWdU				     660
+AAAWgO				     660
+AAAWg8				     660
+AAAWhX				     660
+AAAWhi				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWhr				     660
+AAAWmi				     660
+AAAWmx				     660
+AAAWm7				     660
+AAAWm+				     660
+AAAWnA				     660
+AAAWnB				     660
+AAAWnQ				     660
+AAAWnb				     660
+AAAWnd				     660
+AAAWnp				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWnz				     660
+AAAWn7				     660
+AAAWn9				     660
+AAAWn+				     660
+AAAWqZ				     660
+AAAWqw				     660
+AAAWrF				     660
+AAAWrJ				     660
+AAAWrU				     660
+AAAWrV				     660
+AAAWrZ				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWr0				     660
+AAAWu+				     660
+AAAWvS				     660
+AAAWvh				     660
+AAAWvr				     660
+AAAWz0				     660
+AAAV8j				     660
+AAAV9u				     660
+AAAV9/				     660
+AAAV/B				     660
+AAAV/L				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWCL				     660
+AAAWCX				     660
+AAAWCf				     660
+AAAWCl				     660
+AAAWCx				     660
+AAAWCz				     660
+AAAWDZ				     660
+AAAWD2				     660
+AAAWGh				     660
+AAAWGi				     660
+AAAWHI				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWHV				     660
+AAAWHa				     660
+AAAWHk				     660
+AAAWHn				     660
+AAAWHu				     660
+AAAWHx				     660
+AAAWLN				     660
+AAAWLU				     660
+AAAWLa				     660
+AAAWLs				     660
+AAAWL/				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWOb				     660
+AAAWOl				     660
+AAAWOu				     660
+AAAWOy				     660
+AAAWPN				     660
+AAAWP/				     660
+AAAWUG				     660
+AAAWUS				     660
+AAAWUs				     660
+AAAWU9				     660
+AAAWVF				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWVI				     660
+AAAWV0				     660
+AAAWV/				     660
+AAAWYX				     660
+AAAWYY				     660
+AAAWYc				     660
+AAAWYn				     660
+AAAWYs				     660
+AAAWZB				     660
+AAAWZE				     660
+AAAWZG				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWZX				     660
+AAAWZj				     660
+AAAWZ8				     660
+AAAWcD				     660
+AAAWcE				     660
+AAAWcL				     660
+AAAWcS				     660
+AAAWc0				     660
+AAAWdJ				     660
+AAAWdg				     660
+AAAWdt				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWdz				     660
+AAAWd7				     660
+AAAWd9				     660
+AAAWgd				     660
+AAAWgk				     660
+AAAWgv				     660
+AAAWg2				     660
+AAAWhl				     660
+AAAWhv				     660
+AAAWhw				     660
+AAAWhx				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWmG				     660
+AAAWmJ				     660
+AAAWmO				     660
+AAAWmY				     660
+AAAWme				     660
+AAAWm0				     660
+AAAWm8				     660
+AAAWnY				     660
+AAAWnc				     660
+AAAWnk				     660
+AAAWnw				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWn4				     660
+AAAWn6				     660
+AAAWqV				     660
+AAAWqa				     660
+AAAWqh				     660
+AAAWrC				     660
+AAAWrb				     660
+AAAWuR				     660
+AAAWuW				     660
+AAAWu3				     660
+AAAWvg				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWvl				     660
+AAAWvp				     660
+AAAVz4				     660
+AAAVz6				     660
+AAAV9b				     660
+AAAV99				     660
+AAAV+T				     660
+AAAV+W				     660
+AAAV/E				     660
+AAAV/G				     660
+AAAV/T				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV/d				     660
+AAAWCK				     660
+AAAWCU				     660
+AAAWCv				     660
+AAAWC1				     660
+AAAWDK				     660
+AAAWDP				     660
+AAAWDw				     660
+AAAWGE				     660
+AAAWGH				     660
+AAAWGW				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWGa				     660
+AAAWHT				     660
+AAAWHU				     660
+AAAWHv				     660
+AAAWH6				     660
+AAAWKJ				     660
+AAAWKq				     660
+AAAWK/				     660
+AAAWLW				     660
+AAAWLd				     660
+AAAWLx				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWL1				     660
+AAAWL5				     660
+AAAWOJ				     660
+AAAWOR				     660
+AAAWOj				     660
+AAAWOm				     660
+AAAWOr				     660
+AAAWO7				     660
+AAAWPF				     660
+AAAWPg				     660
+AAAWP8				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWUw				     660
+AAAWUz				     660
+AAAWU4				     660
+AAAWVW				     660
+AAAWVg				     660
+AAAWVq				     660
+AAAWYK				     660
+AAAWYg				     660
+AAAWYh				     660
+AAAWZv				     660
+AAAWcN				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWcW				     660
+AAAWc3				     660
+AAAWc8				     660
+AAAWdT				     660
+AAAWdn				     660
+AAAWdx				     660
+AAAWd+				     660
+AAAWgL				     660
+AAAWgT				     660
+AAAWga				     660
+AAAWgb				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWgm				     660
+AAAWgn				     660
+AAAWg/				     660
+AAAWhh				     660
+AAAWh1				     660
+AAAWmF				     660
+AAAWmZ				     660
+AAAWms				     660
+AAAWnL				     660
+AAAWnZ				     660
+AAAWn5				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWqd				     660
+AAAWqm				     660
+AAAWqu				     660
+AAAWuD				     660
+AAAWuc				     660
+AAAWuy				     660
+AAAWu6				     660
+AAAWvF				     660
+AAAWvX				     660
+AAAWvZ				     660
+AAAWvi				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWv+				     660
+AAAVzl				     660
+AAAVzn				     660
+AAAVz9				     660
+AAAV8z				     660
+AAAV9J				     660
+AAAV9Z				     660
+AAAV+U				     660
+AAAV+h				     660
+AAAV/I				     660
+AAAWCD				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWCM				     660
+AAAWDT				     660
+AAAWDs				     660
+AAAWGC				     660
+AAAWGI				     660
+AAAWGR				     660
+AAAWGU				     660
+AAAWHR				     660
+AAAWHf				     660
+AAAWKD				     660
+AAAWKd				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWKk				     660
+AAAWKy				     660
+AAAWK0				     660
+AAAWK6				     660
+AAAWK8				     660
+AAAWK9				     660
+AAAWLK				     660
+AAAWLZ				     660
+AAAWLl				     660
+AAAWLo				     660
+AAAWOX				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWOq				     660
+AAAWPS				     660
+AAAWPh				     660
+AAAWPj				     660
+AAAWP7				     660
+AAAWUE				     660
+AAAWUn				     660
+AAAWUv				     660
+AAAWU7				     660
+AAAWVO				     660
+AAAWVd				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWVh				     660
+AAAWVr				     660
+AAAWV6				     660
+AAAWYT				     660
+AAAWYZ				     660
+AAAWYa				     660
+AAAWYk				     660
+AAAWY5				     660
+AAAWZN				     660
+AAAWZb				     660
+AAAWZm				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWZu				     660
+AAAWcm				     660
+AAAWcn				     660
+AAAWdL				     660
+AAAWdo				     660
+AAAWdv				     660
+AAAWgK				     660
+AAAWgM				     660
+AAAWgf				     660
+AAAWgi				     660
+AAAWg1				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWhM				     660
+AAAWhO				     660
+AAAWhj				     660
+AAAWhz				     660
+AAAWh5				     660
+AAAWmI				     660
+AAAWmh				     660
+AAAWmm				     660
+AAAWmt				     660
+AAAWmw				     660
+AAAWmz				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWqO				     660
+AAAWqo				     660
+AAAWqs				     660
+AAAWq+				     660
+AAAWrl				     660
+AAAWrt				     660
+AAAWry				     660
+AAAWuP				     660
+AAAWua				     660
+AAAWu2				     660
+AAAWu9				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWvC				     660
+AAAWvK				     660
+AAAWv5				     660
+AAAVz5				     660
+AAAVz+				     660
+AAAVz/				     660
+AAAV8K				     660
+AAAV8h				     660
+AAAV9o				     660
+AAAV/R				     660
+AAAV/f				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWCa				     660
+AAAWCi				     660
+AAAWC3				     660
+AAAWDD				     660
+AAAWDj				     660
+AAAWDl				     660
+AAAWD5				     660
+AAAWGG				     660
+AAAWGK				     660
+AAAWGN				     660
+AAAWGm				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWGz				     660
+AAAWHE				     660
+AAAWHS				     660
+AAAWHb				     660
+AAAWHd				     660
+AAAWHe				     660
+AAAWHp				     660
+AAAWHs				     660
+AAAWH0				     660
+AAAWKK				     660
+AAAWKT				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWKc				     660
+AAAWKg				     660
+AAAWKv				     660
+AAAWK4				     660
+AAAWLS				     660
+AAAWLT				     660
+AAAWLb				     660
+AAAWLj				     660
+AAAWLu				     660
+AAAWLv				     660
+AAAWOi				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWOv				     660
+AAAWO1				     660
+AAAWPi				     660
+AAAWPl				     660
+AAAWPo				     660
+AAAWP1				     660
+AAAWUR				     660
+AAAWUT				     660
+AAAWUU				     660
+AAAWUt				     660
+AAAWUu				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWUx				     660
+AAAWU6				     660
+AAAWVB				     660
+AAAWVj				     660
+AAAWVv				     660
+AAAWV7				     660
+AAAWYV				     660
+AAAWY6				     660
+AAAWY9				     660
+AAAWZA				     660
+AAAWZH				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWZI				     660
+AAAWZh				     660
+AAAWZt				     660
+AAAWcC				     660
+AAAWcO				     660
+AAAWcZ				     660
+AAAWck				     660
+AAAWc6				     660
+AAAWdO				     660
+AAAWdX				     660
+AAAWdb				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWdh				     660
+AAAWdj				     660
+AAAWgF				     660
+AAAWgU				     660
+AAAWg7				     660
+AAAWhE				     660
+AAAWhV				     660
+AAAWhZ				     660
+AAAWha				     660
+AAAWh7				     660
+AAAWh9				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWmb				     660
+AAAWnh				     660
+AAAWn1				     660
+AAAWqE				     660
+AAAWqc				     660
+AAAWql				     660
+AAAWq4				     660
+AAAWrE				     660
+AAAWrH				     660
+AAAWrK				     660
+AAAWre				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWrz				     660
+AAAWr1				     660
+AAAWuC				     660
+AAAWuJ				     660
+AAAWub				     660
+AAAWui				     660
+AAAWuz				     660
+AAAWu4				     660
+AAAV80				     660
+AAAV9t				     660
+AAAV97				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV+w				     660
+AAAV+3				     660
+AAAV/C				     660
+AAAV/J				     660
+AAAV/V				     660
+AAAV/e				     660
+AAAWCC				     660
+AAAWCZ				     660
+AAAWCc				     660
+AAAWCp				     660
+AAAWC4				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWC7				     660
+AAAWDA				     660
+AAAWDF				     660
+AAAWDG				     660
+AAAWDN				     660
+AAAWDQ				     660
+AAAWDY				     660
+AAAWDd				     660
+AAAWDm				     660
+AAAWDv				     660
+AAAWGf				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWGg				     660
+AAAWGy				     660
+AAAWG4				     660
+AAAWHO				     660
+AAAWHg				     660
+AAAWKY				     660
+AAAWKm				     660
+AAAWK1				     660
+AAAWK3				     660
+AAAWK+				     660
+AAAWLE				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWLF				     660
+AAAWLQ				     660
+AAAWLY				     660
+AAAWLn				     660
+AAAWLw				     660
+AAAWL4				     660
+AAAWOC				     660
+AAAWOE				     660
+AAAWOP				     660
+AAAWOa				     660
+AAAWOd				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWOz				     660
+AAAWO8				     660
+AAAWPB				     660
+AAAWPD				     660
+AAAWPY				     660
+AAAWPx				     660
+AAAWP5				     660
+AAAWUf				     660
+AAAWUm				     660
+AAAWUo				     660
+AAAWVa				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWV4				     660
+AAAWYP				     660
+AAAWYW				     660
+AAAWY7				     660
+AAAWZL				     660
+AAAWZa				     660
+AAAWZe				     660
+AAAWZq				     660
+AAAWZs				     660
+AAAWZ/				     660
+AAAWci				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWd3				     660
+AAAWgR				     660
+AAAWgS				     660
+AAAWgV				     660
+AAAWgu				     660
+AAAWhN				     660
+AAAWhY				     660
+AAAWhk				     660
+AAAWhm				     660
+AAAWh0				     660
+AAAWh4				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWh+				     660
+AAAWmy				     660
+AAAWnF				     660
+AAAWnR				     660
+AAAWnW				     660
+AAAWnl				     660
+AAAWqk				     660
+AAAWq2				     660
+AAAWq6				     660
+AAAWrB				     660
+AAAWrW				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWrX				     660
+AAAWrq				     660
+AAAWrs				     660
+AAAWr7				     660
+AAAWr9				     660
+AAAWuN				     660
+AAAWuQ				     660
+AAAWuw				     660
+AAAWu5				     660
+AAAWvP				     660
+AAAWv3				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWv7				     660
+AAAWzJ				     100
+AAAV8x				     660
+AAAV9I				     660
+AAAV+y				     660
+AAAV+1				     660
+AAAV/P				     660
+AAAV/a				     660
+AAAWCk				     660
+AAAWC+				     660
+AAAWC/				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWD3				     660
+AAAWD8				     660
+AAAWGq				     660
+AAAWGs				     660
+AAAWG7				     660
+AAAWHL				     660
+AAAWHM				     660
+AAAWHP				     660
+AAAWHt				     660
+AAAWHz				     660
+AAAWKM				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWKV				     660
+AAAWKh				     660
+AAAWKo				     660
+AAAWLH				     660
+AAAWLJ				     660
+AAAWLi				     660
+AAAWLr				     660
+AAAWO4				     660
+AAAWPJ				     660
+AAAWPv				     660
+AAAWP2				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWUI				     660
+AAAWUq				     660
+AAAWVC				     660
+AAAWVE				     660
+AAAWVm				     660
+AAAWVo				     660
+AAAWV1				     660
+AAAWV+				     660
+AAAWYG				     660
+AAAWYI				     660
+AAAWYJ				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWYM				     660
+AAAWYe				     660
+AAAWYf				     660
+AAAWYz				     660
+AAAWZV				     660
+AAAWZd				     660
+AAAWZi				     660
+AAAWZo				     660
+AAAWZr				     660
+AAAWZ+				     660
+AAAWcH				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWcb				     660
+AAAWcq				     660
+AAAWcx				     660
+AAAWdB				     660
+AAAWdG				     660
+AAAWdk				     660
+AAAWd5				     660
+AAAWgC				     660
+AAAWgP				     660
+AAAWgW				     660
+AAAWgY				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWgs				     660
+AAAWhG				     660
+AAAWhS				     660
+AAAWhU				     660
+AAAWhp				     660
+AAAWhq				     660
+AAAWh8				     660
+AAAWmP				     660
+AAAWmg				     660
+AAAWmo				     660
+AAAWmv				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWm4				     660
+AAAWm9				     660
+AAAWnf				     660
+AAAWnu				     660
+AAAWqK				     660
+AAAWqj				     660
+AAAWqq				     660
+AAAWq5				     660
+AAAWq7				     660
+AAAWrm				     660
+AAAWuF				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWuL				     660
+AAAWuX				     660
+AAAWuf				     660
+AAAWuk				     660
+AAAWul				     660
+AAAWup				     660
+AAAWu7				     660
+AAAWu/				     660
+AAAWvV				     660
+AAAWvj				     660
+AAAWvq				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAVz7				     660
+AAAV8k				     660
+AAAV9c				     660
+AAAV+R				     660
+AAAV/S				     660
+AAAV/W				     660
+AAAV/Y				     660
+AAAWCE				     660
+AAAWCR				     660
+AAAWCS				     660
+AAAWCb				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWCh				     660
+AAAWCy				     660
+AAAWDL				     660
+AAAWDk				     660
+AAAWDt				     660
+AAAWDx				     660
+AAAWD+				     660
+AAAWGL				     660
+AAAWGQ				     660
+AAAWGX				     660
+AAAWGb				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWGe				     660
+AAAWGn				     660
+AAAWHD				     660
+AAAWHG				     660
+AAAWHK				     660
+AAAWHl				     660
+AAAWHq				     660
+AAAWH1				     660
+AAAWH5				     660
+AAAWH8				     660
+AAAWKI				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWKe				     660
+AAAWKj				     660
+AAAWKs				     660
+AAAWK5				     660
+AAAWLC				     660
+AAAWLO				     660
+AAAWLR				     660
+AAAWLc				     660
+AAAWLf				     660
+AAAWLp				     660
+AAAWL3				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWL9				     660
+AAAWOD				     660
+AAAWOK				     660
+AAAWOL				     660
+AAAWOY				     660
+AAAWO3				     660
+AAAWO6				     660
+AAAWPb				     660
+AAAWPu				     660
+AAAWPw				     660
+AAAWP4				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWUO				     660
+AAAWU/				     660
+AAAWVD				     660
+AAAWVG				     660
+AAAWVT				     660
+AAAWVb				     660
+AAAWYF				     660
+AAAWYi				     660
+AAAWYt				     660
+AAAWY0				     660
+AAAWY4				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWZP				     660
+AAAWZw				     660
+AAAWcX				     660
+AAAWcd				     660
+AAAWcr				     660
+AAAWct				     660
+AAAWcu				     660
+AAAWc5				     660
+AAAWc/				     660
+AAAWdA				     660
+AAAWdC				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWdD				     660
+AAAWdH				     660
+AAAWdV				     660
+AAAWdc				     660
+AAAWdf				     660
+AAAWgG				     660
+AAAWgJ				     660
+AAAWgl				     660
+AAAWgt				     660
+AAAWg0				     660
+AAAWg+				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWhT				     660
+AAAWmR				     660
+AAAWmn				     660
+AAAWmr				     660
+AAAWmu				     660
+AAAWnG				     660
+AAAWnK				     660
+AAAWnM				     660
+AAAWnm				     660
+AAAWqC				     660
+AAAWqJ				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWq8				     660
+AAAWrI				     660
+AAAWrY				     660
+AAAWrh				     660
+AAAWrp				     660
+AAAWrx				     660
+AAAWuK				     660
+AAAWud				     660
+AAAWue				     660
+AAAWug				     660
+AAAWur				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWvU				     660
+AAAWva				     660
+AAAWvd				     660
+AAAWvf				     660
+AAAWzc				     660
+AAAWzk				     660
+AAAV8J				     660
+AAAV8M				     660
+AAAV9N				     660
+AAAV9O				     660
+AAAV/D				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV/F				     660
+AAAV/X				     660
+AAAWCG				     660
+AAAWCH				     660
+AAAWCN				     660
+AAAWCP				     660
+AAAWCQ				     660
+AAAWCV				     660
+AAAWDO				     660
+AAAWDV				     660
+AAAWDh				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWG9				     660
+AAAWHH				     660
+AAAWHW				     660
+AAAWKR				     660
+AAAWKr				     660
+AAAWK7				     660
+AAAWLe				     660
+AAAWLq				     660
+AAAWOG				     660
+AAAWON				     660
+AAAWOc				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWOp				     660
+AAAWPQ				     660
+AAAWPT				     660
+AAAWPZ				     660
+AAAWPe				     660
+AAAWPt				     660
+AAAWUH				     660
+AAAWUK				     660
+AAAWUZ				     660
+AAAWU1				     660
+AAAWVA				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWVR				     660
+AAAWVe				     660
+AAAWYE				     660
+AAAWYU				     660
+AAAWYp				     660
+AAAWZM				     660
+AAAWZY				     660
+AAAWZ1				     660
+AAAWZ4				     660
+AAAWcF				     660
+AAAWcc				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWch				     660
+AAAWcw				     660
+AAAWdZ				     660
+AAAWd0				     660
+AAAWgQ				     660
+AAAWgj				     660
+AAAWgq				     660
+AAAWg3				     660
+AAAWg6				     660
+AAAWg9				     660
+AAAWhP				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWhW				     660
+AAAWhb				     660
+AAAWh/				     660
+AAAWmT				     660
+AAAWmc				     660
+AAAWnJ				     660
+AAAWna				     660
+AAAWng				     660
+AAAWn0				     660
+AAAWqR				     660
+AAAWqp				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWqz				     660
+AAAWrc				     660
+AAAWro				     660
+AAAWrv				     660
+AAAWrw				     660
+AAAWvW				     660
+AAAWvt				     660
+AAAWvy				     660
+AAAWzB				     660
+AAAWz8				     660
+AAAV8N				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV8l				     660
+AAAV82				     660
+AAAV9e				     660
+AAAV+S				     660
+AAAV+V				     660
+AAAV+m				     660
+AAAV/M				     660
+AAAWCq				     660
+AAAWC6				     660
+AAAWDW				     660
+AAAWDX				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWDe				     660
+AAAWDn				     660
+AAAWD0				     660
+AAAWD/				     660
+AAAWGr				     660
+AAAWGv				     660
+AAAWG3				     660
+AAAWG5				     660
+AAAWG8				     660
+AAAWHX				     660
+AAAWKL				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWKO				     660
+AAAWKP				     660
+AAAWKl				     660
+AAAWKn				     660
+AAAWKw				     660
+AAAWK2				     660
+AAAWLX				     660
+AAAWLh				     660
+AAAWO9				     660
+AAAWPA				     660
+AAAWPE				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWPG				     660
+AAAWPP				     660
+AAAWPc				     660
+AAAWPk				     660
+AAAWPs				     660
+AAAWP+				     660
+AAAWUJ				     660
+AAAWUP				     660
+AAAWUk				     660
+AAAWUy				     660
+AAAWU+				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWVJ				     660
+AAAWVc				     660
+AAAWVz				     660
+AAAWYD				     660
+AAAWYN				     660
+AAAWYR				     660
+AAAWYo				     660
+AAAWYq				     660
+AAAWYw				     660
+AAAWZK				     660
+AAAWZS				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWZ0				     660
+AAAWZ9				     660
+AAAWcg				     660
+AAAWco				     660
+AAAWc7				     660
+AAAWdK				     660
+AAAWdP				     660
+AAAWdp				     660
+AAAWdu				     660
+AAAWgN				     660
+AAAWgX				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWgg				     660
+AAAWgw				     660
+AAAWgz				     660
+AAAWg5				     660
+AAAWhB				     660
+AAAWhQ				     660
+AAAWhc				     660
+AAAWhf				     660
+AAAWht				     660
+AAAWmS				     660
+AAAWmd				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWm5				     660
+AAAWm6				     660
+AAAWnt				     660
+AAAWqD				     660
+AAAWrG				     660
+AAAWrO				     660
+AAAWrQ				     660
+AAAWra				     660
+AAAWrd				     660
+AAAWr3				     660
+AAAWr4				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWr+				     660
+AAAWuZ				     660
+AAAWuj				     660
+AAAWun				     660
+AAAWuo				     660
+AAAWux				     660
+AAAWvE				     660
+AAAWvG				     660
+AAAWvJ				     660
+AAAWvN				     660
+AAAWvR				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWvm				     660
+AAAWvx				     660
+AAAWzg				     660
+AAAWzw				     660
+AAAVzj				     660
+AAAV8y				     660
+AAAV9K				     660
+AAAV9P				     660
+AAAV9q				     660
+AAAV9s				     660
+AAAV9v				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV+n				     660
+AAAV+2				     660
+AAAV/c				     660
+AAAWCJ				     660
+AAAWCd				     660
+AAAWCj				     660
+AAAWCw				     660
+AAAWC0				     660
+AAAWDu				     660
+AAAWD6				     660
+AAAWG1				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWG2				     660
+AAAWG6				     660
+AAAWHc				     660
+AAAWH2				     660
+AAAWH9				     660
+AAAWKG				     660
+AAAWKS				     660
+AAAWKX				     660
+AAAWKp				     660
+AAAWOH				     660
+AAAWOI				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWOV				     660
+AAAWOe				     660
+AAAWOf				     660
+AAAWOg				     660
+AAAWOh				     660
+AAAWOx				     660
+AAAWPC				     660
+AAAWPI				     660
+AAAWPd				     660
+AAAWPf				     660
+AAAWUX				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWUY				     660
+AAAWUl				     660
+AAAWVi				     660
+AAAWVu				     660
+AAAWV3				     660
+AAAWYx				     660
+AAAWcJ				     660
+AAAWcV				     660
+AAAWcl				     660
+AAAWcp				     660
+AAAWcs				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWcv				     660
+AAAWdR				     660
+AAAWdi				     660
+AAAWdq				     660
+AAAWgE				     660
+AAAWgZ				     660
+AAAWhu				     660
+AAAWmD				     660
+AAAWmK				     660
+AAAWmX				     660
+AAAWm1				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWnD				     660
+AAAWnH				     660
+AAAWnO				     660
+AAAWnV				     660
+AAAWn2				     660
+AAAWn3				     660
+AAAWqF				     660
+AAAWqH				     660
+AAAWqL				     660
+AAAWqM				     660
+AAAWqe				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWqf				     660
+AAAWqn				     660
+AAAWqt				     660
+AAAWq1				     660
+AAAWrA				     660
+AAAWrD				     660
+AAAWrM				     660
+AAAWrN				     660
+AAAWrS				     660
+AAAWuM				     660
+AAAWuV				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWuu				     660
+AAAWvQ				     660
+AAAWvk				     660
+AAAWvz				     660
+AAAWzo				     660
+AAAV8O				     660
+AAAV8g				     660
+AAAV9r				     660
+AAAV+l				     660
+AAAV/N				     660
+AAAWCT				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWCY				     660
+AAAWCe				     660
+AAAWC2				     660
+AAAWDE				     660
+AAAWDI				     660
+AAAWGM				     660
+AAAWGV				     660
+AAAWGY				     660
+AAAWGk				     660
+AAAWGl				     660
+AAAWG/				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWHZ				     660
+AAAWH7				     660
+AAAWH+				     660
+AAAWKH				     660
+AAAWKN				     660
+AAAWKZ				     660
+AAAWKb				     660
+AAAWLD				     660
+AAAWLy				     660
+AAAWPR				     660
+AAAWPW				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWP3				     660
+AAAWP6				     660
+AAAWP9				     660
+AAAWUj				     660
+AAAWU3				     660
+AAAWVQ				     660
+AAAWVU				     660
+AAAWVs				     660
+AAAWYC				     660
+AAAWYL				     660
+AAAWYl				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWZF				     660
+AAAWZO				     660
+AAAWZW				     660
+AAAWZ6				     660
+AAAWcG				     660
+AAAWcU				     660
+AAAWcY				     660
+AAAWdW				     660
+AAAWdY				     660
+AAAWdw				     660
+AAAWd8				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWd/				     660
+AAAWgp				     660
+AAAWg4				     660
+AAAWhC				     660
+AAAWhD				     660
+AAAWhd				     660
+AAAWh6				     660
+AAAWmC				     660
+AAAWmE				     660
+AAAWmH				     660
+AAAWmp				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWmq				     660
+AAAWnN				     660
+AAAWni				     660
+AAAWny				     660
+AAAWn/				     660
+AAAWqQ				     660
+AAAWri				     660
+AAAWrj				     660
+AAAWrr				     660
+AAAWuq				     660
+AAAWvB				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWvO				     660
+AAAWvb				     660
+AAAWvo				     660
+AAAWvu				     660
+AAAWv1				     660
+AAAWv4				     660
+AAAWv/				     660
+AAAV81				     660
+AAAV9L				     660
+AAAV9d				     660
+AAAV+X				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV+j				     660
+AAAV+k				     660
+AAAV+z				     660
+AAAV+0				     660
+AAAWCO				     660
+AAAWDH				     660
+AAAWDJ				     660
+AAAWDc				     660
+AAAWDi				     660
+AAAWDo				     660
+AAAWD9				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWGF				     660
+AAAWGJ				     660
+AAAWGP				     660
+AAAWGo				     660
+AAAWG+				     660
+AAAWHA				     660
+AAAWHC				     660
+AAAWHQ				     660
+AAAWHo				     660
+AAAWHr				     660
+AAAWH3				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWKE				     660
+AAAWKi				     660
+AAAWKu				     660
+AAAWLA				     660
+AAAWLG				     660
+AAAWLV				     660
+AAAWL+				     660
+AAAWOF				     660
+AAAWOM				     660
+AAAWOU				     660
+AAAWPa				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWPn				     660
+AAAWUF				     660
+AAAWUd				     660
+AAAWUh				     660
+AAAWU5				     660
+AAAWVH				     660
+AAAWVY				     660
+AAAWVx				     660
+AAAWYO				     660
+AAAWYd				     660
+AAAWYu				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWYy				     660
+AAAWY1				     660
+AAAWY/				     660
+AAAWZR				     660
+AAAWZl				     660
+AAAWZn				     660
+AAAWZy				     660
+AAAWZ5				     660
+AAAWZ7				     660
+AAAWcT				     660
+AAAWdE				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWdl				     660
+AAAWdy				     660
+AAAWd2				     660
+AAAWgH				     660
+AAAWgI				     660
+AAAWgc				     660
+AAAWgx				     660
+AAAWhF				     660
+AAAWho				     660
+AAAWh3				     660
+AAAWmM				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWmj				     660
+AAAWmk				     660
+AAAWml				     660
+AAAWm2				     660
+AAAWnS				     660
+AAAWnU				     660
+AAAWne				     660
+AAAWnn				     660
+AAAWns				     660
+AAAWnv				     660
+AAAWqG				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWqN				     660
+AAAWqW				     660
+AAAWqX				     660
+AAAWqb				     660
+AAAWqy				     660
+AAAWq9				     660
+AAAWrR				     660
+AAAWrT				     660
+AAAWr6				     660
+AAAWuH				     660
+AAAWuI				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWuh				     660
+AAAWu0				     660
+AAAWvL				     660
+AAAWv2				     660
+AAAWv6				     660
+AAAWzF				     660
+AAAVzk				     660
+AAAV8P				     660
+AAAV8i				     660
+AAAV98				     660
+AAAV/H				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV/Z				     660
+AAAWCn				     660
+AAAWCo				     660
+AAAWC9				     660
+AAAWDa				     660
+AAAWDb				     660
+AAAWDr				     660
+AAAWGD				     660
+AAAWGO				     660
+AAAWGS				     660
+AAAWGZ				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWGc				     660
+AAAWGu				     660
+AAAWGw				     660
+AAAWGx				     660
+AAAWHB				     660
+AAAWHJ				     660
+AAAWHN				     660
+AAAWHy				     660
+AAAWH/				     660
+AAAWKC				     660
+AAAWKU				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWLP				     660
+AAAWL2				     660
+AAAWL8				     660
+AAAWOQ				     660
+AAAWO0				     660
+AAAWPH				     660
+AAAWPM				     660
+AAAWPO				     660
+AAAWPV				     660
+AAAWPX				     660
+AAAWPq				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWPz				     660
+AAAWUC				     660
+AAAWUL				     660
+AAAWUV				     660
+AAAWUb				     660
+AAAWUi				     660
+AAAWVM				     660
+AAAWVV				     660
+AAAWVl				     660
+AAAWVy				     660
+AAAWV2				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWV8				     660
+AAAWYj				     660
+AAAWY8				     660
+AAAWZC				     660
+AAAWZZ				     660
+AAAWZx				     660
+AAAWZ3				     660
+AAAWcK				     660
+AAAWcM				     660
+AAAWcP				     660
+AAAWcQ				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWcR				     660
+AAAWca				     660
+AAAWcf				     660
+AAAWcj				     660
+AAAWc1				     660
+AAAWdI				     660
+AAAWdM				     660
+AAAWdN				     660
+AAAWdd				     660
+AAAWdm				     660
+AAAWdr				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWhR				     660
+AAAWhn				     660
+AAAWhy				     660
+AAAWh2				     660
+AAAWmL				     660
+AAAWmN				     660
+AAAWmU				     660
+AAAWmW				     660
+AAAWmf				     660
+AAAWm/				     660
+AAAWnC				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWnP				     660
+AAAWnX				     660
+AAAWnx				     660
+AAAWqg				     660
+AAAWq0				     660
+AAAWru				     660
+AAAWr5				     660
+AAAWuE				     660
+AAAWuU				     660
+AAAWuY				     660
+AAAWum				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWus				     660
+AAAWuv				     660
+AAAWu8				     660
+AAAWvM				     660
+AAAWvY				     660
+AAAWve				     660
+AAAWvv				     660
+AAAWvw				     660
+AAAWz4				     660
+AAAV8n				     660
+AAAV83				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV9a				     660
+AAAV+Q				     660
+AAAV/O				     660
+AAAV/U				     660
+AAAWCm				     660
+AAAWCs				     660
+AAAWCt				     660
+AAAWC5				     660
+AAAWDf				     660
+AAAWDg				     660
+AAAWDq				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWDz				     660
+AAAWD7				     660
+AAAWGT				     660
+AAAWGd				     660
+AAAWGj				     660
+AAAWGt				     660
+AAAWHF				     660
+AAAWHi				     660
+AAAWHm				     660
+AAAWKa				     660
+AAAWKt				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWLt				     660
+AAAWL0				     660
+AAAWOO				     660
+AAAWOS				     660
+AAAWOs				     660
+AAAWO2				     660
+AAAWPp				     660
+AAAWUQ				     660
+AAAWUW				     660
+AAAWUe				     660
+AAAWUr				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWVK				     660
+AAAWVL				     660
+AAAWVP				     660
+AAAWVk				     660
+AAAWVt				     660
+AAAWZD				     660
+AAAWZT				     660
+AAAWZk				     660
+AAAWcz				     660
+AAAWdF				     660
+AAAWdQ				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWde				     660
+AAAWds				     660
+AAAWd1				     660
+AAAWd4				     660
+AAAWd6				     660
+AAAWge				     660
+AAAWgo				     660
+AAAWhA				     660
+AAAWhH				     660
+AAAWhI				     660
+AAAWhJ				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWhs				     660
+AAAWmQ				     660
+AAAWma				     660
+AAAWm3				     660
+AAAWnE				     660
+AAAWnI				     660
+AAAWnT				     660
+AAAWnj				     660
+AAAWno				     660
+AAAWn8				     660
+AAAWqI				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWqP				     660
+AAAWqS				     660
+AAAWqY				     660
+AAAWqi				     660
+AAAWqv				     660
+AAAWqx				     660
+AAAWrL				     660
+AAAWrg				     660
+AAAWrn				     660
+AAAWr/				     660
+AAAWuG				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWuO				     660
+AAAWuS				     660
+AAAWut				     660
+AAAWu1				     660
+AAAWvA				     660
+AAAWvD				     660
+AAAWvs				     660
+AAAWv0				     660
+AAAWzs				     660
+AAAVzm				     660
+AAAVz8				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAV8L				     660
+AAAV9f				     660
+AAAV9p				     660
+AAAV95				     660
+AAAV96				     660
+AAAV/K				     660
+AAAV/b				     660
+AAAWCW				     660
+AAAWCr				     660
+AAAWCu				     660
+AAAWC8				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWDS				     660
+AAAWDy				     660
+AAAWD4				     660
+AAAWGp				     660
+AAAWG0				     660
+AAAWHh				     660
+AAAWHj				     660
+AAAWHw				     660
+AAAWKx				     660
+AAAWKz				     660
+AAAWLB				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWLL				     660
+AAAWLg				     660
+AAAWLk				     660
+AAAWL7				     660
+AAAWOW				     660
+AAAWOn				     660
+AAAWOo				     660
+AAAWO/				     660
+AAAWPK				     660
+AAAWPL				     660
+AAAWPm				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWP0				     660
+AAAWUM				     660
+AAAWUa				     660
+AAAWUg				     660
+AAAWU0				     660
+AAAWU2				     660
+AAAWVN				     660
+AAAWVX				     660
+AAAWVn				     660
+AAAWVw				     660
+AAAWV9				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWYb				     660
+AAAWYm				     660
+AAAWYr				     660
+AAAWYv				     660
+AAAWY2				     660
+AAAWZJ				     660
+AAAWZQ				     660
+AAAWZp				     660
+AAAWce				     660
+AAAWcy				     660
+AAAWc2				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWc4				     660
+AAAWda				     660
+AAAWgD				     660
+AAAWgh				     660
+AAAWgr				     660
+AAAWgy				     660
+AAAWhK				     660
+AAAWhL				     660
+AAAWhe				     660
+AAAWhg				     660
+AAAWmV				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWnq				     660
+AAAWnr				     660
+AAAWqT				     660
+AAAWqU				     660
+AAAWqr				     660
+AAAWq3				     660
+AAAWq/				     660
+AAAWrP				     660
+AAAWrf				     660
+AAAWrk				     660
+AAAWr2				     660
+
+BLOQUE			 TOTAL_REGISTROS
+------------------------ ---------------
+AAAWr8				     660
+AAAWuT				     660
+AAAWvH				     660
+AAAWvI				     660
+AAAWvT				     660
+AAAWvc				     660
+AAAWvn				     660
+AAAWv8				     660
+AAAWv9				     660
+
+1516 rows selected.
+
+
+
+
+------------------------------------------------------
+##COMENTARIOS Y CONCLUSIONES
+
+El ejercicio se centró en explorar el contenido de ROWIDs en la tabla t01_id mediante el script e-02-rowids.sql. 
+Se llevaron a cabo consultas específicas para comprender la estructura y características de los ROWIDs, abordando aspectos como la distribución 
+de datos en segmentos, data files y bloques de datos. Se destacó la generación automática de ROWIDs al agregar registros a una tabla,
+ y se planteó la cuestión de por qué el número de bloques necesarios para almacenar registros podría ser menor al número total asignado a la tabla, 
+ sugiriendo una investigación adicional sobre este comportamiento. En resumen, el ejercicio proporcionó una comprensión detallada del uso y
+  la interpretación de ROWIDs para localizar registros en una tabla. En general no se tuvieron complicaciones al realizarlo pues la documentación
+del módulo define muy bien el concepto de ROWID y como está compuesto. 
+
+
+
+
+
+
+
+

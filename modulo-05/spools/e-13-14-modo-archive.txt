@@ -1,0 +1,504 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-01-2024
+##Módulo 05. E-13-14 Redo logs consultas y manejo de grupos 
+-------------------------------------------
+
+##SCRIPT
+------------------------------------------------
+*******************e-12-archive-mode-dirs-.sh***************************
+#!/bin/bash
+##JORGE FRANCISCO PEREDA CEBALLOS
+##26-01-2024
+##Módulo 05. E-012- Modo Archive.  Generación de directorios donde se almacenaran los archive.
+
+echo "validar ORACLE_SID"
+if test "${ORACLE_SID}" == "" 
+then
+  echo "Variable ORACLE_SID no definida";
+  exit 1;
+fi;
+
+echo "Creando directorios para Archive Redo Logs";
+mkdir -p /unam-diplomado-bd/disk-041/archivelogs/"${ORACLE_SID}"/disk_a
+mkdir -p /unam-diplomado-bd/disk-042/archivelogs/"${ORACLE_SID}"/disk_b
+
+cd /unam-diplomado-bd/disk-041
+chown -R oracle:oinstall archivelogs
+chmod -R 750 archivelogs
+
+cd /unam-diplomado-bd/disk-042
+chown -R oracle:oinstall archivelogs
+chmod -R 750 archivelogs
+
+echo "Mostrando estructuras de directorios"
+tree /unam-diplomado-bd/disk-041 /unam-diplomado-bd/disk-042
+ls -l /unam-diplomado-bd/disk-041/archivelogs/"${ORACLE_SID}"/disk_a
+ls -l /unam-diplomado-bd/disk-042/archivelogs/"${ORACLE_SID}"/disk_b
+
+
+*******************e-13-archive-mode.sql***************************
+-JORGE FRANCISCO PEREDA CEBALLOS
+--26-01-2024
+--Módulo 05. E-013 Modo Archive. Respaldo de redologs
+-------------------------------------------
+
+set linesize window
+define syslogon='sys/system2 as sysdba'
+
+Prompt Habilitar archive mode 
+
+Prompt 1 respaldando spfile  a través del pfile.
+connect &syslogon
+create pfile from spfile;
+
+Prompt 2 configurando parámetros
+--procesos ARC
+alter system set log_archive_max_processes=5 scope=spfile;
+
+--configuración de directorios
+alter system set log_archive_dest_1='LOCATION=/unam-diplomado-bd/disk-041/archivelogs/jpcdip02/disk_a MANDATORY' scope=spfile;
+alter system set log_archive_dest_2='LOCATION=/unam-diplomado-bd/disk-042/archivelogs/jpcdip02/disk_b' scope=spfile;
+
+--formato del archivo
+alter system set log_archive_format='arch_jpcdip02_%t_%s_%r.arc' scope=spfile;
+
+--copias mínimas  para considerar el proceso como exitoso.
+alter system set log_archive_min_succeed_dest=1 scope=spfile;
+
+Prompt Mostrando parámetros antes de continuar.
+
+show spparameter log_archive_max_processes
+show spparameter log_archive_dest_1
+show spparameter log_archive_dest_2
+show spparameter log_archive_format
+show spparameter log_archive_min_succeed_dest
+
+Pause Revisar configuracion, [enter] para reiniciar instancia en modo mount
+
+shutdown immediate
+
+Prompt 3 iniciando en modo mount
+startup mount
+
+Prompt habilitar el modo archive
+alter database archivelog;
+
+Prompt 4 abrir la BD  para comprobar configuración
+alter database open;
+
+Prompt comprobando resultados
+archive log list
+
+Pause Revisar, [enter] para continuar
+
+Prompt 5 respaldando nuevamente el spfile 
+create pfile from spfile;
+
+Prompt mostrando procesos ARCn
+!ps -ef | grep ora_arc
+
+Prompt Listo.
+exit
+
+******************e-14-archive-mode-data-oracle.sql**************************************
+--JORGE FRANCISCO PEREDA CEBALLOS
+--26-01-2024
+--Módulo 05. E-014 Modo Archive. Respaldo de redologs. Datos.
+-------------------------------------------
+
+
+define syslogon='sys/system2 as sysdba'
+
+Prompt Mostrando datos del modo archive 
+
+set linesize window
+
+Prompt 1.  Datos de v$database
+select  name, log_mode,archivelog_compression 
+from v$database;
+
+Pause [enter] para continuar
+
+Prompt 2. Configuración archive Redo logs.
+col destination format a40
+col dest_name format a30
+select dest_id,dest_name,status,binding,destination
+from v$archive_dest
+where dest_name in ('LOG_ARCHIVE_DEST_1','LOG_ARCHIVE_DEST_2');
+
+Pause [enter] para continuar
+
+Prompt 3. Datos de los Redo Logs 
+select group#,thread#,sequence#,bytes,blocksize,members,archived,status,
+ first_change#,to_char(first_time,'dd/mm/yyyy hh24:mi:ss') first_time,
+ next_change#,to_char(next_time,'dd/mm/yyyy hh24:mi:ss') next_time
+from v$log;
+
+Pause [enter] para continuar
+
+Prompt 4.  Log switches
+select recid,stamp,thread#,sequence#,first_change#,
+  to_char(first_time,'dd/mm/yyyy hh24:mi:ss') first_time,
+  next_change#,resetlogs_change#,
+  to_char(resetlogs_time,'dd/mm/yyyy hh24:mi:ss') resetlogs_time
+from v$log_history
+where sequence#>=(select min(sequence#) from v$log)
+order by first_time;
+
+Pause [enter] para continuar
+
+Prompt 5. Registro de Archive Redo logs.
+col name format a70
+select recid,name,dest_id,sequence#,
+  to_char(first_time,'dd/mm/yyyy hh24:mi:ss') first_time,
+  status,to_char(completion_time,'dd/mm/yyyy hh24:mi:ss') completion_time
+from v$archived_log;
+
+Pause [enter] para continuar
+
+Prompt 6. Archive redo logs nivel S.O.
+!ls -l "/unam-diplomado-bd/disk-04*/archivelogs/jpcdip02/disk_*/*.arc"
+
+Prompt Listo
+exit 
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+*******************e-12-archive-mode-dirs-.sh***************************
+
+[oracle@pc-jpc modulo-05]$ ./e-12-archive-mode-dirs.sh 
+validar ORACLE_SID
+Creando directorios para Archive Redo Logs
+Mostrando estructuras de directorios
+/unam-diplomado-bd/disk-041
+└── archivelogs
+    └── jpcdip02
+        └── disk_a
+/unam-diplomado-bd/disk-042
+└── archivelogs
+    └── jpcdip02
+        └── disk_b
+
+6 directories, 0 files
+total 0
+total 0
+
+*******************e-13-archive-mode.sql***************************
+
+sys@jpcdip02> start e-13-archive-mode.sql
+Habilitar archive mode
+1 respaldando spfile  a través del pfile.
+Connected.
+
+File created.
+
+2 configurando parámetros
+
+System altered.
+
+
+System altered.
+
+
+System altered.
+
+
+System altered.
+
+
+System altered.
+
+Mostrando parámetros antes de continuar.
+
+SID	 NAME			       TYPE	   VALUE
+-------- ----------------------------- ----------- ----------------------------
+*	 log_archive_max_processes     integer	   5
+
+SID	 NAME			       TYPE	   VALUE
+-------- ----------------------------- ----------- ----------------------------
+*	 log_archive_dest_1	       string	   LOCATION=/unam-diplomado-bd/
+						   disk-041/archivelogs/jpcdip0
+						   2/disk_a MANDATORY
+*	 log_archive_dest_10	       string
+*	 log_archive_dest_11	       string
+*	 log_archive_dest_12	       string
+*	 log_archive_dest_13	       string
+*	 log_archive_dest_14	       string
+*	 log_archive_dest_15	       string
+*	 log_archive_dest_16	       string
+*	 log_archive_dest_17	       string
+*	 log_archive_dest_18	       string
+*	 log_archive_dest_19	       string
+
+SID	 NAME			       TYPE	   VALUE
+-------- ----------------------------- ----------- ----------------------------
+*	 log_archive_dest_2	       string	   LOCATION=/unam-diplomado-bd/
+						   disk-042/archivelogs/jpcdip0
+						   2/disk_b
+*	 log_archive_dest_20	       string
+*	 log_archive_dest_21	       string
+*	 log_archive_dest_22	       string
+*	 log_archive_dest_23	       string
+*	 log_archive_dest_24	       string
+*	 log_archive_dest_25	       string
+*	 log_archive_dest_26	       string
+*	 log_archive_dest_27	       string
+*	 log_archive_dest_28	       string
+*	 log_archive_dest_29	       string
+
+SID	 NAME			       TYPE	   VALUE
+-------- ----------------------------- ----------- ----------------------------
+*	 log_archive_format	       string	   arch_jpcdip02_%t_%s_%r.arc
+
+SID	 NAME			       TYPE	   VALUE
+-------- ----------------------------- ----------- ----------------------------
+*	 log_archive_min_succeed_dest  integer	   1
+Revisar configuracion, [enter] para reiniciar instancia en modo mount
+
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+3 iniciando en modo mount
+ORACLE instance started.
+
+Total System Global Area  490730848 bytes
+Fixed Size		    8897888 bytes
+Variable Size		  297795584 bytes
+Database Buffers	   71303168 bytes
+Redo Buffers		    7876608 bytes
+In-Memory Area		  104857600 bytes
+Database mounted.
+habilitar el modo archive
+
+Database altered.
+
+4 abrir la BD  para comprobar configuración
+
+Database altered.
+
+comprobando resultados
+Database log mode	       Archive Mode
+Automatic archival	       Enabled
+Archive destination	       /unam-diplomado-bd/disk-042/archivelogs/jpcdip02/disk_b
+Oldest online log sequence     129
+Next log sequence to archive   130
+Current log sequence	       130
+Revisar, [enter] para continuar
+
+5 respaldando nuevamente el spfile
+
+File created.
+
+mostrando procesos ARCn
+oracle     50501    3872  0 14:46 ?        00:00:00 ora_arc0_jpcdip02
+oracle     50525    3872  0 14:46 ?        00:00:00 ora_arc1_jpcdip02
+oracle     50527    3872  0 14:46 ?        00:00:00 ora_arc2_jpcdip02
+oracle     50529    3872  0 14:46 ?        00:00:00 ora_arc3_jpcdip02
+oracle     50531    3872  0 14:46 ?        00:00:00 ora_arc4_jpcdip02
+oracle     50762   48903  0 14:46 pts/1    00:00:00 /bin/bash -c ps -ef | grep ora_arc
+oracle     50764   50762  0 14:46 pts/1    00:00:00 grep ora_arc
+
+Listo.
+************e-14-archive-mode-data-oracle.sql
+Mostrando datos del modo archive
+1.  Datos de v$database
+
+NAME	  LOG_MODE     ARCHIVEL
+--------- ------------ --------
+JPCDIP02  ARCHIVELOG   DISABLED
+
+[enter] para continuar
+
+2. Configuración archive Redo logs.
+
+   DEST_ID DEST_NAME			  STATUS    BINDING   DESTINATION
+---------- ------------------------------ --------- --------- ----------------------------------------
+	 1 LOG_ARCHIVE_DEST_1		  VALID     MANDATORY /unam-diplomado-bd/disk-041/archivelogs/
+							      jpcdip02/disk_a
+
+	 2 LOG_ARCHIVE_DEST_2		  VALID     OPTIONAL  /unam-diplomado-bd/disk-042/archivelogs/
+							      jpcdip02/disk_b
+
+
+[enter] para continuar
+
+3. Datos de los Redo Logs
+
+    GROUP#    THREAD#  SEQUENCE#      BYTES  BLOCKSIZE	  MEMBERS ARC STATUS	       FIRST_CHANGE# FIRST_TIME 	 NEXT_CHANGE# NEXT_TIME
+---------- ---------- ---------- ---------- ---------- ---------- --- ---------------- ------------- ------------------- ------------ -------------------
+	 4	    1	     129   62914560	   512		3 YES INACTIVE		     2651540 26/01/2024 14:03:54      2757163 26/01/2024 14:45:41
+	 5	    1	     130   62914560	   512		3 NO  CURRENT		     2757163 26/01/2024 14:45:41   1.8447E+19
+	 6	    1	       0   62914560	   512		3 YES UNUSED			   0				    0
+
+[enter] para continuar
+
+4.  Log switches
+
+     RECID	STAMP	 THREAD#  SEQUENCE# FIRST_CHANGE# FIRST_TIME	      NEXT_CHANGE# RESETLOGS_CHANGE# RESETLOGS_TIME
+---------- ---------- ---------- ---------- ------------- ------------------- ------------ ----------------- -------------------
+	55 1154458522	       1	 55	  1304132 01/12/2023 17:07:49	   1315636		   1 26/11/2023 02:29:20
+	56 1154469623	       1	 56	  1315636 01/12/2023 18:55:22	   1335728		   1 26/11/2023 02:29:20
+	57 1154498404	       1	 57	  1335728 01/12/2023 22:00:23	   1365877		   1 26/11/2023 02:29:20
+	58 1154502361	       1	 58	  1365877 02/12/2023 06:00:04	   1376107		   1 26/11/2023 02:29:20
+	59 1154513183	       1	 59	  1376107 02/12/2023 07:06:01	   1390784		   1 26/11/2023 02:29:20
+	60 1154527587	       1	 60	  1390784 02/12/2023 10:06:23	   1406680		   1 26/11/2023 02:29:20
+	61 1154902954	       1	 61	  1406680 02/12/2023 14:06:27	   1511303		   1 26/11/2023 02:29:20
+	62 1154903222	       1	 62	  1511303 06/12/2023 22:22:34	   1523495		   1 26/11/2023 02:29:20
+	63 1154903229	       1	 63	  1523495 06/12/2023 22:27:02	   1524437		   1 26/11/2023 02:29:20
+	64 1154903235	       1	 64	  1524437 06/12/2023 22:27:09	   1525275		   1 26/11/2023 02:29:20
+	65 1154903241	       1	 65	  1525275 06/12/2023 22:27:15	   1526072		   1 26/11/2023 02:29:20
+	66 1154903249	       1	 66	  1526072 06/12/2023 22:27:21	   1527083		   1 26/11/2023 02:29:20
+	67 1154903257	       1	 67	  1527083 06/12/2023 22:27:29	   1528064		   1 26/11/2023 02:29:20
+	68 1154903265	       1	 68	  1528064 06/12/2023 22:27:37	   1528981		   1 26/11/2023 02:29:20
+	69 1154903273	       1	 69	  1528981 06/12/2023 22:27:45	   1529979		   1 26/11/2023 02:29:20
+	70 1154903280	       1	 70	  1529979 06/12/2023 22:27:53	   1530780		   1 26/11/2023 02:29:20
+	71 1154903288	       1	 71	  1530780 06/12/2023 22:28:00	   1531746		   1 26/11/2023 02:29:20
+	72 1154903295	       1	 72	  1531746 06/12/2023 22:28:08	   1532514		   1 26/11/2023 02:29:20
+	73 1154903304	       1	 73	  1532514 06/12/2023 22:28:15	   1533529		   1 26/11/2023 02:29:20
+	74 1154903312	       1	 74	  1533529 06/12/2023 22:28:24	   1534565		   1 26/11/2023 02:29:20
+	75 1154903321	       1	 75	  1534565 06/12/2023 22:28:32	   1535632		   1 26/11/2023 02:29:20
+	76 1154903328	       1	 76	  1535632 06/12/2023 22:28:41	   1536511		   1 26/11/2023 02:29:20
+	77 1154903339	       1	 77	  1536511 06/12/2023 22:28:48	   1537496		   1 26/11/2023 02:29:20
+	78 1154903394	       1	 78	  1537496 06/12/2023 22:28:59	   1545202		   1 26/11/2023 02:29:20
+	79 1154903403	       1	 79	  1545202 06/12/2023 22:29:54	   1551976		   1 26/11/2023 02:29:20
+	80 1157736030	       1	 80	  1551976 06/12/2023 22:30:03	   1662797		   1 26/11/2023 02:29:20
+	81 1157736040	       1	 81	  1662797 08/01/2024 17:20:30	   1664614		   1 26/11/2023 02:29:20
+	82 1157738335	       1	 82	  1664614 08/01/2024 17:20:40	   1767025		   1 26/11/2023 02:29:20
+	83 1157752815	       1	 83	  1767025 08/01/2024 17:58:55	   1813339		   1 26/11/2023 02:29:20
+	84 1157752848	       1	 84	  1813339 08/01/2024 22:00:15	   1825122		   1 26/11/2023 02:29:20
+	85 1157913226	       1	 85	  1825122 08/01/2024 22:00:48	   1939517		   1 26/11/2023 02:29:20
+	86 1157925631	       1	 86	  1939517 10/01/2024 18:33:46	   1959869		   1 26/11/2023 02:29:20
+	87 1158052892	       1	 87	  1959869 10/01/2024 22:00:31	   2083006		   1 26/11/2023 02:29:20
+	88 1158054530	       1	 88	  2083006 12/01/2024 09:21:32	   2087566		   1 26/11/2023 02:29:20
+	89 1158054531	       1	 89	  2087566 12/01/2024 09:48:50	   2088105		   1 26/11/2023 02:29:20
+	90 1158054532	       1	 90	  2088105 12/01/2024 09:48:51	   2088611		   1 26/11/2023 02:29:20
+	91 1158054533	       1	 91	  2088611 12/01/2024 09:48:52	   2089124		   1 26/11/2023 02:29:20
+	92 1158054534	       1	 92	  2089124 12/01/2024 09:48:53	   2089623		   1 26/11/2023 02:29:20
+	93 1158054538	       1	 93	  2089623 12/01/2024 09:48:54	   2090129		   1 26/11/2023 02:29:20
+	94 1158054539	       1	 94	  2090129 12/01/2024 09:48:58	   2090678		   1 26/11/2023 02:29:20
+	95 1158054540	       1	 95	  2090678 12/01/2024 09:48:59	   2091190		   1 26/11/2023 02:29:20
+	96 1158054541	       1	 96	  2091190 12/01/2024 09:49:00	   2091704		   1 26/11/2023 02:29:20
+	97 1158054543	       1	 97	  2091704 12/01/2024 09:49:01	   2092221		   1 26/11/2023 02:29:20
+	98 1158054544	       1	 98	  2092221 12/01/2024 09:49:03	   2092730		   1 26/11/2023 02:29:20
+	99 1158055335	       1	 99	  2092730 12/01/2024 09:49:04	   2095225		   1 26/11/2023 02:29:20
+       100 1158055336	       1	100	  2095225 12/01/2024 10:02:15	   2095775		   1 26/11/2023 02:29:20
+       101 1158055338	       1	101	  2095775 12/01/2024 10:02:16	   2096293		   1 26/11/2023 02:29:20
+       102 1158055339	       1	102	  2096293 12/01/2024 10:02:17	   2096813		   1 26/11/2023 02:29:20
+       103 1158055342	       1	103	  2096813 12/01/2024 10:02:19	   2097325		   1 26/11/2023 02:29:20
+
+     RECID	STAMP	 THREAD#  SEQUENCE# FIRST_CHANGE# FIRST_TIME	      NEXT_CHANGE# RESETLOGS_CHANGE# RESETLOGS_TIME
+---------- ---------- ---------- ---------- ------------- ------------------- ------------ ----------------- -------------------
+       104 1158055343	       1	104	  2097325 12/01/2024 10:02:22	   2097826		   1 26/11/2023 02:29:20
+       105 1158055345	       1	105	  2097826 12/01/2024 10:02:23	   2098371		   1 26/11/2023 02:29:20
+       106 1158055346	       1	106	  2098371 12/01/2024 10:02:25	   2098880		   1 26/11/2023 02:29:20
+       107 1158055347	       1	107	  2098880 12/01/2024 10:02:26	   2099394		   1 26/11/2023 02:29:20
+       108 1158055348	       1	108	  2099394 12/01/2024 10:02:27	   2099901		   1 26/11/2023 02:29:20
+       109 1158055350	       1	109	  2099901 12/01/2024 10:02:28	   2100406		   1 26/11/2023 02:29:20
+       110 1158055351	       1	110	  2100406 12/01/2024 10:02:30	   2100921		   1 26/11/2023 02:29:20
+       111 1158069623	       1	111	  2100921 12/01/2024 10:02:31	   2106997		   1 26/11/2023 02:29:20
+       112 1158100364	       1	112	  2106997 12/01/2024 14:00:23	   2132582		   1 26/11/2023 02:29:20
+       113 1158177980	       1	113	  2132582 12/01/2024 22:32:44	   2247963		   1 26/11/2023 02:29:20
+       114 1158178511	       1	114	  2247963 13/01/2024 20:06:20	   2255281		   1 26/11/2023 02:29:20
+       115 1158181734	       1	115	  2255281 13/01/2024 20:15:11	   2262562		   1 26/11/2023 02:29:20
+       116 1158181897	       1	116	  2262562 13/01/2024 21:08:54	   2264809		   1 26/11/2023 02:29:20
+       117 1158182027	       1	117	  2264809 13/01/2024 21:11:37	   2267564		   1 26/11/2023 02:29:20
+       118 1158681215	       1	118	  2267564 13/01/2024 21:13:47	   2375996		   1 26/11/2023 02:29:20
+       119 1158706127	       1	119	  2375996 19/01/2024 15:53:35	   2397789		   1 26/11/2023 02:29:20
+       120 1158707020	       1	120	  2397789 19/01/2024 22:48:47	   2411760		   1 26/11/2023 02:29:20
+       121 1159203748	       1	121	  2411760 19/01/2024 23:03:40	   2421122		   1 26/11/2023 02:29:20
+       122 1159203749	       1	122	  2421122 25/01/2024 17:02:28	   2422511		   1 26/11/2023 02:29:20
+       123 1159203794	       1	123	  2422511 25/01/2024 17:02:29	   2424439		   1 26/11/2023 02:29:20
+       124 1159203796	       1	124	  2424439 25/01/2024 17:03:14	   2425968		   1 26/11/2023 02:29:20
+       125 1159203800	       1	125	  2425968 25/01/2024 17:03:16	   2427214		   1 26/11/2023 02:29:20
+       126 1159208221	       1	126	  2427214 25/01/2024 17:03:20	   2530244		   1 26/11/2023 02:29:20
+       127 1159208259	       1	127	  2530244 25/01/2024 18:17:01	   2631312		   1 26/11/2023 02:29:20
+       128 1159279434	       1	128	  2631312 25/01/2024 18:17:39	   2651540		   1 26/11/2023 02:29:20
+       129 1159281941	       1	129	  2651540 26/01/2024 14:03:54	   2757163		   1 26/11/2023 02:29:20
+	 1 1153881351	       1	  1		1 26/11/2023 02:29:21	     19670		   1 26/11/2023 02:29:20
+	 2 1153881374	       1	  2	    19670 26/11/2023 02:35:51	     41988		   1 26/11/2023 02:29:20
+	 3 1153881413	       1	  3	    41988 26/11/2023 02:36:14	     87485		   1 26/11/2023 02:29:20
+	 4 1153881454	       1	  4	    87485 26/11/2023 02:36:53	    138496		   1 26/11/2023 02:29:20
+	 5 1153881482	       1	  5	   138496 26/11/2023 02:37:34	    158103		   1 26/11/2023 02:29:20
+	 6 1153881518	       1	  6	   158103 26/11/2023 02:38:02	    186036		   1 26/11/2023 02:29:20
+	 7 1153881548	       1	  7	   186036 26/11/2023 02:38:38	    217669		   1 26/11/2023 02:29:20
+	 8 1153881563	       1	  8	   217669 26/11/2023 02:39:08	    232964		   1 26/11/2023 02:29:20
+	 9 1153881586	       1	  9	   232964 26/11/2023 02:39:23	    257969		   1 26/11/2023 02:29:20
+	10 1153881626	       1	 10	   257969 26/11/2023 02:39:46	    284422		   1 26/11/2023 02:29:20
+	11 1153881638	       1	 11	   284422 26/11/2023 02:40:26	    292810		   1 26/11/2023 02:29:20
+	12 1153881653	       1	 12	   292810 26/11/2023 02:40:38	    303953		   1 26/11/2023 02:29:20
+	13 1153881675	       1	 13	   303953 26/11/2023 02:40:53	    325055		   1 26/11/2023 02:29:20
+	14 1153881775	       1	 14	   325055 26/11/2023 02:41:15	    338457		   1 26/11/2023 02:29:20
+	15 1153881812	       1	 15	   338457 26/11/2023 02:42:55	    378100		   1 26/11/2023 02:29:20
+	16 1153881899	       1	 16	   378100 26/11/2023 02:43:32	    399771		   1 26/11/2023 02:29:20
+	17 1153881947	       1	 17	   399771 26/11/2023 02:44:59	    406934		   1 26/11/2023 02:29:20
+	18 1153881989	       1	 18	   406934 26/11/2023 02:45:47	    413615		   1 26/11/2023 02:29:20
+	19 1153882021	       1	 19	   413615 26/11/2023 02:46:29	    424029		   1 26/11/2023 02:29:20
+	20 1153882112	       1	 20	   424029 26/11/2023 02:47:01	    439816		   1 26/11/2023 02:29:20
+	21 1153882157	       1	 21	   439816 26/11/2023 02:48:32	    466718		   1 26/11/2023 02:29:20
+	22 1153882423	       1	 22	   466718 26/11/2023 02:49:17	    487532		   1 26/11/2023 02:29:20
+	23 1153882629	       1	 23	   487532 26/11/2023 02:53:42	    508084		   1 26/11/2023 02:29:20
+
+     RECID	STAMP	 THREAD#  SEQUENCE# FIRST_CHANGE# FIRST_TIME	      NEXT_CHANGE# RESETLOGS_CHANGE# RESETLOGS_TIME
+---------- ---------- ---------- ---------- ------------- ------------------- ------------ ----------------- -------------------
+	24 1153882691	       1	 24	   508084 26/11/2023 02:57:08	    518912		   1 26/11/2023 02:29:20
+	25 1153882823	       1	 25	   518912 26/11/2023 02:58:11	    529795		   1 26/11/2023 02:29:20
+	26 1153924054	       1	 26	   529795 26/11/2023 03:00:23	    547712		   1 26/11/2023 02:29:20
+	27 1153924078	       1	 27	   547712 26/11/2023 14:27:34	    563416		   1 26/11/2023 02:29:20
+	28 1153931031	       1	 28	   563416 26/11/2023 14:27:58	    686315		   1 26/11/2023 02:29:20
+	29 1153931296	       1	 29	   686315 26/11/2023 16:23:51	    791682		   1 26/11/2023 02:29:20
+	30 1154009690	       1	 30	   791682 26/11/2023 16:28:16	    903369		   1 26/11/2023 02:29:20
+	31 1154028124	       1	 31	   903369 27/11/2023 14:14:50	    921536		   1 26/11/2023 02:29:20
+	32 1154028150	       1	 32	   921536 27/11/2023 19:22:04	    922035		   1 26/11/2023 02:29:20
+	33 1154028729	       1	 33	   922035 27/11/2023 19:22:30	    922940		   1 26/11/2023 02:29:20
+	34 1154098670	       1	 34	   922940 27/11/2023 19:32:08	    934238		   1 26/11/2023 02:29:20
+	35 1154098672	       1	 35	   934238 28/11/2023 14:57:50	    934881		   1 26/11/2023 02:29:20
+	36 1154098673	       1	 36	   934881 28/11/2023 14:57:52	    935563		   1 26/11/2023 02:29:20
+	37 1154098675	       1	 37	   935563 28/11/2023 14:57:53	    936243		   1 26/11/2023 02:29:20
+	38 1154098676	       1	 38	   936243 28/11/2023 14:57:55	    936840		   1 26/11/2023 02:29:20
+	39 1154098678	       1	 39	   936840 28/11/2023 14:57:56	    937436		   1 26/11/2023 02:29:20
+	40 1154098679	       1	 40	   937436 28/11/2023 14:57:58	    938031		   1 26/11/2023 02:29:20
+	41 1154098681	       1	 41	   938031 28/11/2023 14:57:59	    938342		   1 26/11/2023 02:29:20
+	42 1154098682	       1	 42	   938342 28/11/2023 14:58:01	    938707		   1 26/11/2023 02:29:20
+	43 1154098692	       1	 43	   938707 28/11/2023 14:58:02	    951236		   1 26/11/2023 02:29:20
+	44 1154098693	       1	 44	   951236 28/11/2023 14:58:12	    969554		   1 26/11/2023 02:29:20
+	45 1154098695	       1	 45	   969554 28/11/2023 14:58:13	    985668		   1 26/11/2023 02:29:20
+	46 1154098696	       1	 46	   985668 28/11/2023 14:58:15	    996762		   1 26/11/2023 02:29:20
+	47 1154098698	       1	 47	   996762 28/11/2023 14:58:16	   1006622		   1 26/11/2023 02:29:20
+	48 1154098719	       1	 48	  1006622 28/11/2023 14:58:18	   1015476		   1 26/11/2023 02:29:20
+	49 1154098752	       1	 49	  1015476 28/11/2023 14:58:39	   1032669		   1 26/11/2023 02:29:20
+	50 1154098766	       1	 50	  1032669 28/11/2023 14:59:12	   1045174		   1 26/11/2023 02:29:20
+	51 1154099965	       1	 51	  1045174 28/11/2023 14:59:26	   1068048		   1 26/11/2023 02:29:20
+	52 1154125079	       1	 52	  1068048 28/11/2023 15:19:25	   1186298		   1 26/11/2023 02:29:20
+	53 1154125200	       1	 53	  1186298 28/11/2023 22:17:59	   1200471		   1 26/11/2023 02:29:20
+	54 1154452069	       1	 54	  1200471 28/11/2023 22:20:00	   1304132		   1 26/11/2023 02:29:20
+
+129 rows selected.
+
+[enter] para continuar
+
+5. Registro de Archive Redo logs.
+
+     RECID NAME 								     DEST_ID  SEQUENCE# FIRST_TIME	    S COMPLETION_TIME
+---------- ---------------------------------------------------------------------- ---------- ---------- ------------------- - -------------------
+	 1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_129_1153880960.dbf 	   1	    129 26/01/2024 14:03:54 A 26/01/2024 14:45:41
+
+[enter] para continuar
+
+
+
+-----------------------------------------------------
+##Comentarios y conclusiones
+En resumen, los ejercicios abordaron la configuración y gestión del modo de archivado en Oracle Database.
+En el primer ejercicio, se crearon directorios simulando discos de respaldo y se configuraron permisos específicos.
+Luego, se implementaron cambios permanentes en el archivo de parámetros y se realizaron ajustes para activar el modo de archivado automático, 
+verificando su correcta habilitación.
+En el segundo ejercicio, se desarrolló un script que consultaba diversas vistas del diccionario de datos relacionadas con Archive Redo Logs.
+ Se obtuvieron detalles sobre la configuración, ubicaciones y estados de los Archive Redo Logs. Se analizaron los Redo Logs en términos de grupos,
+  ecuencias y columnas específicas. Además, se exploró el historial de log switches y se revisaron los archivos archivados a nivel del sistema operativo.
+Como aprendizajes clave, se destacó la importancia de la configuración precisa de permisos, la necesidad de comprender y manipular adecuadamente
+ los parámetros de configuración, y la vitalidad de la comprensión de la secuencia de eventos y el historial de log switches 
+ para el monitoreo efectivo de una base de datos Oracle. Un desafío destacado incluyó la solución de un error en la configuración 
+ del path en un script, que requería acciones como la creación de un spfile basado en un pfile de respaldo, para reiniciar la base de datos con éxito,
+ la corrección del script y volver a ejecutar el archive mode sin problemas.

@@ -1,0 +1,187 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##26-11-2023
+##Módulo 03. E-02- Modos restringidos, read-only.
+-------------------------------------------
+
+
+##SCRIPT
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 24/11/2023
+--@Descripción: Ejercicio 02 -módulo 03 . Modos de inicio de una instancia.
+prompt autenticando como sysdba
+connect sys/system2 as sysdba
+
+prompt Iniciando en modo restringido
+alter system enable restricted session;
+
+Prompt creando al usuario  user01
+create user user01 identified by user01 quota unlimited on users;
+grant create session, create table to user01;
+
+Prompt intentando abrir sesión con user01 
+connect user01/user01
+pause [¿Qué sucedió?, Enter para continuar]
+
+Prompt asignando el privilegio restricted session a user01
+connect system/system2 as sysdba
+grant restricted session to user01;
+
+Prompt intentando crear sesión con user01
+connect user01/user01
+pause [¿Qué sucedió ?, Enter para continuar]
+
+Prompt regresando al modo no restringido
+connect sys/system2 as sysdba
+alter system disable restricted session;
+
+pause [Enter para continuar]
+Prompt Abrir en modo read only, primero la bd debe detenerse.
+-- ESta es una desventaja del modo read only. La BD tiene que detenerse
+-- antes de pasarla a este modo. Activar y/o suspender evita tener que
+-- cerrarla, los usuarios no tienen que desconectarse.
+shutdown immediate 
+Prompt Abriendo la BD en modo read only.
+startup open read only;
+
+Prompt Conectando como user01, intentando crear una tabla
+connect user01/user01
+create table test(id number);
+pause [¿Qué sucedió ? Enter para continuar]
+
+Prompt Regresar al modo de escritura y lectura
+connect sys/system2 as sysdba
+shutdown immediate 
+startup open read write;
+
+Prompt Haciendo limpieza (borrar a user01)
+drop user user01 cascade;
+
+Prompt Listo!
+
+
+------------------------------------------
+
+
+##SALIDA DE EJECUCIÓN
+
+idle> start s-02-modos-inicio.sql
+autenticando como sysdba
+Connected.
+
+                                                                                
+
+Iniciando en modo restringido
+
+System altered.
+
+creando al usuario  user01
+
+User created.
+
+
+Grant succeeded.
+
+intentando abrir sesión con user01
+ERROR:
+ORA-01035: ORACLE only available to users with RESTRICTED SESSION privilege 
+
+
+Warning: You are no longer connected to ORACLE.
+[¿Qué sucedió?, Enter para continuar]
+
+asignando el privilegio restricted session a user01
+Connected.
+
+                                                                                
+
+
+Grant succeeded.
+
+intentando crear sesión con user01
+Connected.
+
+                                                                                
+
+[¿Qué sucedió ?, Enter para continuar]
+
+regresando al modo no restringido
+Connected.
+
+                                                                                
+
+
+System altered.
+
+[Enter para continuar]
+
+Abrir en modo read only, primero la bd debe detenerse.
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+Abriendo la BD en modo read only.
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes                                       
+Fixed Size                  8901696 bytes                                       
+Variable Size             671088640 bytes                                       
+Database Buffers          117440512 bytes                                       
+Redo Buffers                7872512 bytes                                       
+Database mounted.
+Database opened.
+Conectando como user01, intentando crear una tabla
+Connected.
+
+                                                                                
+
+create table test(id number)
+*
+ERROR at line 1:
+ORA-16000: database or pluggable database open for read-only access 
+
+
+[¿Qué sucedió ? Enter para continuar]
+
+Regresar al modo de escritura y lectura
+Connected.
+
+                                                                                
+
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes                                       
+Fixed Size                  8901696 bytes                                       
+Variable Size             671088640 bytes                                       
+Database Buffers          117440512 bytes                                       
+Redo Buffers                7872512 bytes                                       
+Database mounted.
+Database opened.
+Haciendo limpieza (borrar a user01)
+
+User dropped.
+
+Listo!
+sys@jpcdip02> spool off
+
+
+---------------------------------------------------------------------------------------
+
+#CONCLUSIONES
+
+Este ejercicio proporciona una experiencia práctica valiosa al explorar y entender los modos restringido y read-only en Oracle.
+Inicia con la creación de usuarios y asignación de privilegios específicos, seguido por una serie de interacciones que demuestran el
+comportamiento de la base de datos en diferentes estados.
+Se destaca la pregunta crucial sobre si es posible pasar al modo restringido con el usuario user01 en sesión. 
+Esto plantea la oportunidad de explorar las restricciones de inicio de modo restringido en el contexto de un usuario específico 
+y evaluar las acciones permitidas en este estado.
+La experiencia se amplía al intentar realizar operaciones como crear una tabla y realizar un commit en modo restringido. 
+Este paso permite comprender las limitaciones en la ejecución de transacciones durante este estado, subrayando la importancia de 
+entender y manejar adecuadamente las restricciones de seguridad.
+La inclusión de la autenticación con user02, la asignación de privilegios por parte del usuario sys y 
+la verificación del acceso exitoso de user02 añaden capas adicionales a la comprensión del manejo de usuarios 
+y privilegios en Oracle.
+La exploración de modos read-only ofrece una perspectiva adicional sobre la capacidad de la base de datos para permitir solo 
+operaciones de consulta. La pregunta sobre si es posible iniciar en modo read-only con el usuario user01 
+previamente conectado agrega un elemento intrigante y promueve la comprensión de las limitaciones de esta modalidad.

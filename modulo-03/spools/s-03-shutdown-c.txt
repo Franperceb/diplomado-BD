@@ -1,0 +1,537 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##26-11-2023
+##Módulo 03. E-03-Shutdown.
+-------------------------------------------
+
+##SCRIPT
+*****s-03-shutdown.sql
+
+define syslogon='sys/system2 as sysdba'
+
+set linesize window
+Prompt conectando como sys
+connect &syslogon
+
+declare
+  v_count number;
+begin
+  select count(*) into v_count from dba_users where username='USER01';
+  if v_count > 0 then
+    execute immediate 'drop user user01 cascade';
+  end if;
+end;
+/
+
+
+Prompt creando usuario de prueba
+create user user01 identified by user01 quota unlimited on users;
+grant create session, create table to user01;
+
+col username format a10
+alter session set nls_date_format='dd/mm/yyyy hh24:mi:ss';
+
+pause Realizar shutdown abort - Ejecutar scripts en terminales [Enter] para continuar
+Prompt mostrando datos de sesiones
+select s.sid,s.serial#,s.username,s.logon_time,t.xid,t.start_date
+from v$session s 
+left outer join v$transaction t
+  on s.saddr= t.ses_addr
+where username is not null;
+
+shutdown abort
+
+--------------------------------------
+Prompt iniciando nuevamente
+startup
+
+pause Realizar shutdown immediate - Ejecutar scripts en terminales [Enter] para continuar
+Prompt mostrando datos de sesiones
+select s.sid,s.serial#,s.username,s.logon_time,t.xid,t.start_date
+from v$session s 
+left outer join v$transaction t
+  on s.saddr= t.ses_addr
+where username is not null;
+
+shutdown immediate
+
+----------------------------------------
+Prompt iniciando nuevamente
+startup
+
+pause Realizar shutdown transactional - Ejecutar scripts en terminales [Enter] para continuar
+Prompt mostrando datos de sesiones
+select s.sid,s.serial#,s.username,s.logon_time,t.xid,t.start_date
+from v$session s 
+left outer join v$transaction t
+  on s.saddr= t.ses_addr
+where username is not null;
+
+Prompt ¿Qué cambios mínimos se tendrían que hacer para que shutdown transactional termine?
+shutdown transactional
+
+------------------------------------------
+Prompt iniciando nuevamente
+startup
+
+pause Realizar shutdown normal - Ejecutar scripts en terminales [Enter] para continuar
+Prompt mostrando datos de sesiones
+
+select s.sid,s.serial#,s.username,s.logon_time,t.xid,t.start_date
+from v$session s 
+left outer join v$transaction t
+  on s.saddr= t.ses_addr
+where username is not null;
+
+Prompt ¿Qué  cambios se tendrían que hacer para que shutdown normal termine?
+shutdown normal
+
+Prompt reiniciando para realizar limpieza
+startup
+drop user user01 cascade;
+
+
+Prompt Listo!
+
+*****s-03a-shutdown.sql
+
+connect user01/user01
+Prompt sesion que solo muestra la fecha
+select sysdate from dual;
+
+
+*****s-03b-shutdown.sql
+connect user01/user01
+
+declare
+  v_count number;
+begin
+  select count(*) into v_count from user_tables where table_name='TEST1';
+  if v_count > 0 then
+    execute immediate 'drop table test1';
+  else
+    execute immediate 'create table test1(id number)';
+  end if;
+end;
+/
+
+*****s-03c-shutdown.sql
+
+connect user01/user01
+
+set serveroutput on
+declare
+  v_count number;
+begin
+  select count(*) into v_count from user_tables where table_name='TEST2';
+  if v_count = 0 then
+    execute immediate 'create table test2(id number)';
+  else
+    dbms_output.put_line('La tabla existe');
+  end if;  
+end;
+/
+Prompt sesion que crea una tabla e inserta un registro sin hacer commit
+insert into test2 values(100);
+
+Prompt mostrando los datos de la tabla:
+select * from test2;
+
+*****s-03d-shutdown.sql
+connect user01/user01
+
+set serveroutput on
+declare
+  v_count number;
+begin
+  select count(*) into v_count from user_tables where table_name='TEST3';
+  if v_count = 0 then
+    execute immediate 'create table test3(id number)';
+  else
+    dbms_output.put_line('La tabla existe');
+  end if;  
+end;
+/
+
+Prompt sesion que crea una tabla e inserta un registro, hacer commit
+insert into test3 values(100);
+commit;
+
+Prompt mostrando los datos de la tabla:
+select * from test3;
+------------------------------------------
+
+
+##SALIDA DE EJECUCIÓN
+
+## Creación de usuario
+sys@jpcdip02> create user user01 identified by user01 quota unlimited on users;
+
+User created.
+
+sys@jpcdip02> grant create table, create procedure, create session to user01;
+
+Grant succeeded.
+
+
+
+## terminal 1
+idle> start s-03-shutdown.sql
+conectando como sys
+Connected.
+
+PL/SQL procedure successfully completed.
+
+creando usuario de prueba
+
+User created.
+
+
+Grant succeeded.
+
+
+Session altered.
+
+Realizar shutdown abort - Ejecutar scripts en terminales [Enter] para continuar
+
+mostrando datos de sesiones
+
+       SID    SERIAL# USERNAME	 LOGON_TIME	     XID	      START_DATE
+---------- ---------- ---------- ------------------- ---------------- -------------------
+       223	23940 USER01	 26/11/2023 16:27:22 0200100094010000 26/11/2023 16:27:24
+       433	 3656 USER01	 26/11/2023 16:27:02
+	79	50032 SYS	 26/11/2023 16:26:18
+	 1	38400 SYS	 26/11/2023 16:25:58
+       293	 7614 USER01	 26/11/2023 16:27:49
+       290	58677 USER01	 26/11/2023 16:26:36
+
+6 rows selected.
+
+ORACLE instance shut down.
+iniciando nuevamente
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes
+Fixed Size		    8901696 bytes
+Variable Size		  671088640 bytes
+Database Buffers	  117440512 bytes
+Redo Buffers		    7872512 bytes
+Database mounted.
+Database opened.
+Realizar shutdown immediate - Ejecutar scripts en terminales [Enter] para continuar
+
+mostrando datos de sesiones
+
+       SID    SERIAL# USERNAME	 LOGON_TIME	    XID 	     START_DATE
+---------- ---------- ---------- ------------------ ---------------- ------------------
+	 1	28280 SYS	 26-NOV-23
+       290	10219 SYS	 26-NOV-23
+
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+iniciando nuevamente
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes
+Fixed Size		    8901696 bytes
+Variable Size		  671088640 bytes
+Database Buffers	  117440512 bytes
+Redo Buffers		    7872512 bytes
+Database mounted.
+Database opened.
+Realizar shutdown transactional - Ejecutar scripts en terminales [Enter] para continuar
+
+mostrando datos de sesiones
+
+       SID    SERIAL# USERNAME	 LOGON_TIME	    XID 	     START_DATE
+---------- ---------- ---------- ------------------ ---------------- ------------------
+       223	 5480 USER01	 26-NOV-23	    0800170096010000 26-NOV-23
+	79	47049 USER01	 26-NOV-23
+	 1	37409 SYS	 26-NOV-23
+       293	18540 USER01	 26-NOV-23
+       290	15922 SYS	 26-NOV-23
+       152	 1560 USER01	 26-NOV-23
+
+6 rows selected.
+
+¿Qué cambios mínimos se tendrían que hacer para que shutdown transactional termine?
+--Completar la transacción que no ha hecho commit /rollback 
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+iniciando nuevamente
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes
+Fixed Size		    8901696 bytes
+Variable Size		  671088640 bytes
+Database Buffers	  117440512 bytes
+Redo Buffers		    7872512 bytes
+Database mounted.
+Database opened.
+Realizar shutdown normal - Ejecutar scripts en terminales [Enter] para continuar
+mostrando datos de sesiones
+
+       SID    SERIAL# USERNAME	 LOGON_TIME	    XID 	     START_DATE
+---------- ---------- ---------- ------------------ ---------------- ------------------
+       215	51404 SYS	 26-NOV-23
+       290	35443 SYS	 26-NOV-23
+
+¿Qué  cambios se tendrían que hacer para que shutdown normal termine?
+--Terminar todas las sesiones activas
+
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+reiniciando para realizar limpieza
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes
+Fixed Size		    8901696 bytes
+Variable Size		  671088640 bytes
+Database Buffers	  117440512 bytes
+Redo Buffers		    7872512 bytes
+Database mounted.
+Database opened.
+
+User dropped.
+
+Listo!
+
+
+
+
+## terminal 2
+
+idle> start s-03a-shutdown.sql
+Connected.
+sesion que solo muestra la fecha
+
+SYSDATE
+------------------
+26-NOV-23
+
+user01@jpcdip02> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-03]$ sqlplus /nolog
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sun Nov 26 16:26:26 2023
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+idle> start s-03a-shutdown.sql
+Connected.
+sesion que solo muestra la fecha
+
+SYSDATE
+------------------
+26-NOV-23
+
+user01@jpcdip02> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-03]$ sqlplus /nolog
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sun Nov 26 16:30:46 2023
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+idle> start s-03a-shutdown.sql
+Connected.
+sesion que solo muestra la fecha
+
+SYSDATE
+------------------
+26-NOV-23
+
+user01@jpcdip02> exit
+
+
+
+
+
+## terminal 3
+
+idle> start s-03b-shutdown.sql   
+Connected.
+
+PL/SQL procedure successfully completed.
+
+user01@jpcdip02> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-03]$ start s-03b-shutdown.sql
+bash: start: command not found...
+[jorge@pc-jpc modulo-03]$ sqlplus /nolog
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sun Nov 26 16:26:50 2023
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+idle> start s-03b-shutdown.sql
+Connected.
+
+PL/SQL procedure successfully completed.
+
+user01@jpcdip02> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-03]$ sqlplus /nolog
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sun Nov 26 16:30:41 2023
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+idle> start s-03b-shutdown.sql
+Connected.
+
+PL/SQL procedure successfully completed.
+
+user01@jpcdip02> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+
+
+## terminal 4
+
+idle> start s-03c-shutdown.sql
+Connected.
+
+PL/SQL procedure successfully completed.
+
+sesion que crea una tabla e inserta un registro sin hacer commit
+
+1 row created.
+
+mostrando los datos de la tabla:
+
+	ID
+----------
+       100
+
+user01@jpcdip02> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-03]$ sqlplus /nolog
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sun Nov 26 16:27:13 2023
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+idle> start s-03c-shutdown.sql
+Connected.
+
+PL/SQL procedure successfully completed.
+
+sesion que crea una tabla e inserta un registro sin hacer commit
+
+1 row created.
+
+mostrando los datos de la tabla:
+
+	ID
+----------
+       100
+
+user01@jpcdip02> exit 
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-03]$ sqlplus /nolog
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sun Nov 26 16:31:08 2023
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+idle> start s-03c-shutdown.sql
+Connected.
+La tabla existe
+
+PL/SQL procedure successfully completed.
+
+sesion que crea una tabla e inserta un registro sin hacer commit
+
+1 row created.
+
+mostrando los datos de la tabla:
+
+	ID
+----------
+       100
+
+user01@jpcdip02> commit
+  2  ;
+
+Commit complete.
+
+user01@jpcdip02> exit
+
+
+## terminal 5
+[jorge@pc-jpc modulo-03]$ sqlplus /nolog
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sun Nov 26 16:31:29 2023
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+idle> start s-03d-shutdown.sql
+Connected.
+La tabla existe
+
+PL/SQL procedure successfully completed.
+
+sesion que crea una tabla e inserta un registro, hacer commit
+
+1 row created.
+
+
+Commit complete.
+
+mostrando los datos de la tabla:
+
+	ID
+----------
+       100
+       100
+
+user01@jpcdip02> exit
+
+
+---------------------------------------------------------------------------------------
+
+#CONCLUSIONES
+
+Este ejercicio proporciona una visión práctica y profunda de los procedimientos asociados con el 
+comando shutdown en Oracle, centrándose en la gestión de sesiones, transacciones y bloqueos.
+A través de la creación de scripts específicos y su ejecución simultánea
+en diferentes terminales, se exploran diversas situaciones para evaluar la respuesta del sistema.
+
+La creación de usuarios y la asignación de privilegios en el script principal (s-03-shutdown.sql)
+establece el contexto para las actividades posteriores. La pausa estratégica permite la ejecución 
+secuencial de cuatro scripts que crean sesiones de usuario y realizan operaciones específicas como 
+mostrar la fecha actual, crear tablas y realizar transacciones.
+
+La inclusión de consultas en el script principal para mostrar información detallada sobre sesiones 
+y transacciones aporta claridad al estado del sistema en cada etapa. La ejecución del comando 
+shutdown con diferentes opciones, como abort, y la posterior revisión de posibles bloqueos, ofrece 
+una experiencia integral sobre el comportamiento del sistema al realizar cierres de instancia.
+
+La identificación y resolución de bloqueos, especialmente en el contexto de sesiones activas, 
+brinda una valiosa comprensión de cómo manejar situaciones de bloqueo y garantizar un cierre de 
+instancia sin contratiempos.
+
+La repetición de los pasos 2 a 8 con diferentes modos de comando shutdown —transactional y normal— 
+añade un elemento adicional de exploración, permitiendo comparar y contrastar el impacto de estas 
+opciones en la base de datos.
+
+Finalmente, la iniciativa de aplicar una limpieza al eliminar el usuario user01 destaca la 
+importancia de mantener un entorno de base de datos ordenado y libre de objetos innecesarios.
+

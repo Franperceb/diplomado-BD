@@ -1,0 +1,643 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##26-01-2024
+##Módulo 05. Backup de un control file. Comandos a utilizar
+-------------------------------------------
+
+
+
+-----------------
+##script
+---------------------
+--JORGE FRANCISCO PEREDA CEBALLOS
+--26-01-2024
+--Módulo 05. Backup de un control file. Comandos a utilizar
+-------------------------------------------
+
+
+
+-- T1
+define syslogon='sys/system2 as sysdba'
+
+Prompt 0. Conectar como sys
+conn &syslogon
+conn sys/system2 as sysdba
+
+Prompt 1. Realizar un backup 
+alter database backup controlfile to trace 
+  as '/home/oracle/backups/controlfile-ej11.bkp.sql';
+
+-- T2 (se puede en 1) 
+Prompt 2. Abrir y Analizar el archivo generado
+! cat /home/oracle/backups/controlfile-ej11.bkp.sql ;
+Pause Analizar el archivo [ENTER] para continuar
+
+-- T1
+prompt Validando status de la instancia
+col name format a80
+select status from v$instance;
+
+set linesize window;
+SELECT * FROM v$controlfile;
+SELECT * FROM v$controlfile_record_section;
+
+-- T2 
+Prompt 1. Mover una de las 3 copias 
+! mv /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/control01.ctl /home/oracle/backups/ ;
+pause [ENTER] para continuar
+
+-- T1
+connect jorge05/jorge05
+select table_name
+from user_tables;
+
+desc numeros
+insert into numeros (id) values (10001);
+commit;
+select *
+from numeros;
+conn sys/system2 as sysdba
+
+prompt creamos un checkpoint
+alter system checkpoint;
+
+prompt bajando la instancia , 
+prompt se espera un error de no detectar 
+prompt el control01.ctl y no da shutdown
+shutdown immediate
+
+-- T2 
+cd /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02
+--aqui esta control02.ctl, checar la hora y ver 
+--que estan desincronizados. Ya no sirve
+ls -lt 
+cd /home/oracle/backups/
+ls -lt
+cd /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/
+ls -lt
+
+-- T1
+--SOLUCIÓN que el spfile no apunte a la 3er copia
+
+!echo $ORACLE_SID
+conn jorge05/jorge05
+desc numeros
+insert into numeros (id) values (10002);
+commit;
+--la instancia sigue arriba
+
+prompt 3 Generamos un pfile
+conn sys/system2 as sysdba
+
+create pfile from spfile;
+exit
+
+prompt Con usuario oracle
+su -l oracle  o whoami
+-- T2
+prompt Modificar el pfile "$ORACLE_HOME/dbs/initjpcdip02.ora"
+-- con cd $ORACLE_HOME/dbs
+prompt se modifica el parametro con 
+prompt vi "*.control_files=" eliminando el controlfile que se movio
+prompt el control01.ctl
+pause [ENTER] para continuar
+
+cd $ORACLE_HOME/dbs
+export ORACLE_SID=jpcdip02
+sqlplus sys/system2 as sysdba
+prompt bajamos la instancia
+shutdown abort
+
+-- ora-00205 error en identifying control file
+startup
+
+-- aun mostrara el control01.ctl
+show parameter control_files
+
+-- No permite por ora-01033 oracle initialization or shutdown in progress
+connect jorge05/jorge05
+select *
+from numeros;
+
+insert into numeros (id) values (10003);
+commit;
+
+
+--Volver a los 3
+conn sys/system2 as sysdba
+shutdown immediate
+-- msg ora-01507 db not mounted, pero si da shutdown a instancia
+exit
+
+su -l oracle
+oracle
+cd /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/
+ls
+cp control02.ctl /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/control01.ctl
+
+cd $ORACLE_HOME/dbs
+
+vi initjpcdip02.ora
+--aumentamos archivo control01.dbf
+
+--T1
+echo $ORACLE_SID
+prompt iniciamos la instancia con el pfile
+sqlplus sys/system2 as sysdba
+  startup pfile=/u01/app/oracle/product/19.3.0/dbhome_1/dbs/initjpcdip02.ora;
+
+--Ya levanto y abrio
+
+prompt creamos un spfile
+create spfile from pfile;
+
+prompt bajamos la instancia 
+shutdown abort
+
+prompt iniciamos sin pfile 
+startup
+
+SELECT * FROM v$controlfile;
+show parameter control_files
+
+
+----------------------------------
+##salida de ejecución
+
+T1
+sys@jpcdip02> alter database backup controlfile to trace 
+  as '/home/oracle/backups/controlfile-ej11.bkp.sql';
+  2  
+Database altered.
+
+
+
+sys@jpcdip02> set linesize window
+sys@jpcdip02> run     
+  1* SELECT * FROM v$controlfile_record_section
+
+TYPE			     RECORD_SIZE RECORDS_TOTAL RECORDS_USED FIRST_INDEX LAST_INDEX LAST_RECID	  CON_ID
+---------------------------- ----------- ------------- ------------ ----------- ---------- ---------- ----------
+DATABASE			     316	     1		  1	      0 	 0	    0	       0
+CKPT PROGRESS			    8180	     4		  0	      0 	 0	    0	       0
+REDO THREAD			     256	     1		  1	      0 	 0	    0	       0
+REDO LOG			      72	    16		  3	      0 	 0	    3	       0
+DATAFILE			     520	  1024		 10	      0 	 0	  130	       0
+FILENAME			     524	  4146		 21	      0 	 0	    0	       0
+TABLESPACE			     180	  1024		  8	      0 	 0	   53	       0
+TEMPORARY FILENAME		      56	  1024		  1	      0 	 0	    1	       0
+RMAN CONFIGURATION		    1108	    50		  0	      0 	 0	    0	       0
+LOG HISTORY			      56	   292		125	      1        125	  125	       0
+OFFLINE RANGE			     200	  1063		  0	      0 	 0	    0	       0
+ARCHIVED LOG			     584	    28		  0	      0 	 0	    0	       0
+BACKUP SET			      96	  1022		  0	      0 	 0	    0	       0
+BACKUP PIECE			     780	  1006		  0	      0 	 0	    0	       0
+BACKUP DATAFILE 		     200	  1063		  0	      0 	 0	    0	       0
+BACKUP REDOLOG			      76	   215		  0	      0 	 0	    0	       0
+DATAFILE COPY			     736	  1000		  0	      0 	 0	    0	       0
+BACKUP CORRUPTION		      44	  1115		  0	      0 	 0	    0	       0
+COPY CORRUPTION 		      40	  1227		  0	      0 	 0	    0	       0
+DELETED OBJECT			      20	   818		  5	      1 	 5	    5	       0
+PROXY COPY			     928	  1004		  0	      0 	 0	    0	       0
+BACKUP SPFILE			     124	   131		  0	      0 	 0	    0	       0
+DATABASE INCARNATION		      56	   292		  1	      1 	 1	    1	       0
+FLASHBACK LOG			      84	  2048		  0	      0 	 0	    0	       0
+RECOVERY DESTINATION		     180	     1		  0	      0 	 0	    0	       0
+INSTANCE SPACE RESERVATION	      28	  1055		  1	      0 	 0	    0	       0
+REMOVABLE RECOVERY FILES	      32	  1000		  0	      0 	 0	    0	       0
+RMAN STATUS			     116	   141		  0	      0 	 0	    0	       0
+THREAD INSTANCE NAME MAPPING	      80	     1		  1	      0 	 0	    0	       0
+MTTR				     100	     1		  1	      0 	 0	    0	       0
+DATAFILE HISTORY		     568	    57		  0	      0 	 0	    0	       0
+STANDBY DATABASE MATRIX 	     400	   128		128	      0 	 0	    0	       0
+GUARANTEED RESTORE POINT	     256	  2048		  0	      0 	 0	    0	       0
+RESTORE POINT			     256	  2108		  0	      0 	 0	    0	       0
+DATABASE BLOCK CORRUPTION	      80	  8384		  0	      0 	 0	    0	       0
+ACM OPERATION			     104	    64		 11	      0 	 0	    0	       0
+FOREIGN ARCHIVED LOG		     604	  1002		  0	      0 	 0	    0	       0
+PDB RECORD			     780	    10		  0	      0 	 0	    0	       0
+AUXILIARY DATAFILE COPY 	     584	   128		  0	      0 	 0	    0	       0
+MULTI INSTANCE REDO APPLY	     556	     1		  0	      0 	 0	    0	       0
+PDBINC RECORD			     144	   113		  0	      0 	 0	    0	       0
+TABLESPACE KEY HISTORY		     108	   151		  0	      0 	 0	    0	       0
+
+
+
+sys@jpcdip02> connect jorge05/jorge05
+select table_name
+from user_tables;Connected.
+jorge05@jpcdip02>   2  
+
+TABLE_NAME
+--------------------------------------------------------------------------------
+T02_RANDOM_STR_0
+T01_ID
+T02_RANDOM_STR_50
+T04_EJEMPLO_EXTENSIONES
+EMPLEADO
+NUMEROS
+T03_ROW_CHAINING
+
+7 rows selected.
+
+
+
+
+
+      9991	 1992735094
+      9992	 -317557029
+      9993	 1033318166
+      9994	 -1.445E+09
+      9995	 -1.513E+09
+
+	ID NUMERO_ALEATORIO
+---------- ----------------
+      9996	 -774133560
+      9997	 1863003032
+      9998	 -1.060E+09
+      9999	  494740288
+     10000	 1596263686
+
+10001 rows selected.
+
+
+jorge05@jpcdip02> 
+prompt creamos un checkpoint
+alter system checkpoint;
+
+prompt bajando la instancia , 
+prompt se espera un error de no detectar 
+prompt el control01.ctl y no da shutdown
+shutdown immediate
+Connected.
+sys@jpcdip02> creamos un checkpoint
+sys@jpcdip02> 
+System altered.
+
+sys@jpcdip02> sys@jpcdip02> bajando la instancia ,
+sys@jpcdip02> se espera un error de no detectar
+sys@jpcdip02> el control01.ctl y no da shutdown
+sys@jpcdip02> ORA-00210: cannot open the specified control file
+ORA-00202: control file: '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/control01.ctl'
+ORA-27041: unable to open file
+Linux-x86_64 Error: 2: No such file or directory
+Additional information: 3
+
+
+
+sys@jpcdip02> prompt 3 Generamos un pfile
+conn sys/system2 as sysdba
+3 Generamos un pfile
+sys@jpcdip02> Connected.
+sys@jpcdip02> create pfile from spfile;
+exit
+File created.
+
+
+ORACLE instance shut down.
+sys@jpcdip02> startup
+^CORA-01013: user requested cancel of current operation
+
+sys@jpcdip02> startup pfile=/u01/app/oracle/product/19.3.0/dbhome_1/dbs/initjpcdip02.ora;
+ORA-01012: not logged on
+Process ID: 0
+Session ID: 0 Serial number: 0
+
+
+sys@jpcdip02> 
+sys@jpcdip02> shutdown immediate
+ORA-01507: database not mounted
+
+
+ORACLE instance shut down.
+sys@jpcdip02> startup pfile=/u01/app/oracle/product/19.3.0/dbhome_1/dbs/initjpcdip02.ora;
+
+ORACLE instance started.
+
+Total System Global Area  494925200 bytes
+Fixed Size		    8897936 bytes
+Variable Size		  327155712 bytes
+Database Buffers	   46137344 bytes
+Redo Buffers		    7876608 bytes
+In-Memory Area		  104857600 bytes
+Database mounted.
+Database opened.
+sys@jpcdip02> sys@jpcdip02> create spfile from pfile;
+
+File created.
+
+sys@jpcdip02> shutdown abort
+
+ORACLE instance shut down.
+sys@jpcdip02> sys@jpcdip02> startup
+ORACLE instance started.
+
+Total System Global Area  494925200 bytes
+Fixed Size		    8897936 bytes
+Variable Size		  327155712 bytes
+Database Buffers	   46137344 bytes
+Redo Buffers		    7876608 bytes
+In-Memory Area		  104857600 bytes
+Database mounted.
+Database opened.
+sys@jpcdip02> SELECT * FROM v$controlfile;
+
+
+
+sys@jpcdip02> col name format a40 
+sys@jpcdip02> run         
+  1* SELECT * FROM v$controlfile
+
+STATUS	NAME					 IS_ BLOCK_SIZE FILE_SIZE_BLKS	   CON_ID
+------- ---------------------------------------- --- ---------- -------------- ----------
+	/unam-diplomado-bd/disk-01/app/oracle/or NO	  16384 	  1134		0
+	adata/JPCDIP02/control01.ctl
+
+	/unam-diplomado-bd/disk-02/app/oracle/or NO	  16384 	  1134		0
+	adata/JPCDIP02/control02.ctl
+
+	/unam-diplomado-bd/disk-03/app/oracle/or NO	  16384 	  1134		0
+	adata/JPCDIP02/control03.ctl
+
+
+sys@jpcdip02> show parameter control_files
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+control_files			     string	 /unam-diplomado-bd/disk-01/app
+						 /oracle/oradata/JPCDIP02/contr
+						 ol01.ctl, /unam-diplomado-bd/d
+						 isk-02/app/oracle/oradata/JPCD
+						 IP02/control02.ctl, /unam-dipl
+						 omado-bd/disk-03/app/oracle/or
+						 adata/JPCDIP02/control03.ctl
+
+
+
+
+
+
+
+
+
+
+
+T2
+
+sys@jpcdip02> ! cat /home/oracle/backups/controlfile-ej11.bkp.sql ;
+Pause Analizar el archivo [ENTER] para continuar-- The following are current System-scope REDO Log Archival related
+-- parameters and can be included in the database initialization file.
+--
+-- LOG_ARCHIVE_DEST=''
+-- LOG_ARCHIVE_DUPLEX_DEST=''
+--
+-- LOG_ARCHIVE_FORMAT=%t_%s_%r.dbf
+--
+-- DB_UNIQUE_NAME="jpcdip02"
+--
+-- LOG_ARCHIVE_CONFIG='SEND, RECEIVE, NODG_CONFIG'
+-- LOG_ARCHIVE_MAX_PROCESSES=4
+-- STANDBY_FILE_MANAGEMENT=MANUAL
+-- FAL_CLIENT=''
+-- FAL_SERVER=''
+--
+-- LOG_ARCHIVE_DEST_1='LOCATION=/u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch'
+-- LOG_ARCHIVE_DEST_1='MANDATORY REOPEN=300 NODELAY'
+-- LOG_ARCHIVE_DEST_1='ARCH NOAFFIRM NOVERIFY SYNC'
+-- LOG_ARCHIVE_DEST_1='NOREGISTER'
+-- LOG_ARCHIVE_DEST_1='NOALTERNATE'
+-- LOG_ARCHIVE_DEST_1='NODEPENDENCY'
+-- LOG_ARCHIVE_DEST_1='NOMAX_FAILURE NOQUOTA_SIZE NOQUOTA_USED NODB_UNIQUE_NAME'
+-- LOG_ARCHIVE_DEST_1='VALID_FOR=(PRIMARY_ROLE,ONLINE_LOGFILES)'
+-- LOG_ARCHIVE_DEST_STATE_1=ENABLE
+
+--
+-- Below are two sets of SQL statements, each of which creates a new
+-- control file and uses it to open the database. The first set opens
+-- the database with the NORESETLOGS option and should be used only if
+-- the current versions of all online logs are available. The second
+-- set opens the database with the RESETLOGS option and should be used
+-- if online logs are unavailable.
+-- The appropriate set of statements can be copied from the trace into
+-- a script file, edited as necessary, and executed when there is a
+-- need to re-create the control file.
+--
+--     Set #1. NORESETLOGS case
+--
+-- The following commands will create a new control file and use it
+-- to open the database.
+-- Data used by Recovery Manager will be lost.
+-- Additional logs may be required for media recovery of offline
+-- Use this only if the current versions of all online logs are
+-- available.
+
+-- After mounting the created controlfile, the following SQL
+-- statement will place the database in the appropriate
+-- protection mode:
+--  ALTER DATABASE SET STANDBY DATABASE TO MAXIMIZE PERFORMANCE
+
+STARTUP NOMOUNT
+CREATE CONTROLFILE REUSE DATABASE "JPCDIP02" NORESETLOGS  NOARCHIVELOG
+    MAXLOGFILES 16
+    MAXLOGMEMBERS 3
+    MAXDATAFILES 1024
+    MAXINSTANCES 1
+    MAXLOGHISTORY 292
+LOGFILE
+  GROUP 1 (
+    '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo01a.log',
+    '/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo01b.log',
+    '/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo01c.log'
+  ) SIZE 50M BLOCKSIZE 512,
+  GROUP 2 (
+    '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo02a.log',
+    '/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo02b.log',
+    '/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo02c.log'
+  ) SIZE 50M BLOCKSIZE 512,
+  GROUP 3 (
+    '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo03a.log',
+    '/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo03b.log',
+    '/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo03c.log'
+  ) SIZE 50M BLOCKSIZE 512
+-- STANDBY LOGFILE
+DATAFILE
+  '/u01/app/oracle/oradata/JPCDIP02/system01.dbf',
+  '/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf',
+  '/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf',
+  '/u01/app/oracle/oradata/JPCDIP02/users01.dbf',
+  '/disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf',
+  '/disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf',
+  '/disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf',
+  '/disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf',
+  '/disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf',
+  '/disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf'
+CHARACTER SET AL32UTF8
+;
+
+-- Commands to re-create incarnation table
+-- Below log names MUST be changed to existing filenames on
+-- disk. Any one log file from each branch can be used to
+-- re-create incarnation records.
+-- ALTER DATABASE REGISTER LOGFILE '/u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1153880960.dbf';
+-- Recovery is required if any of the datafiles are restored backups,
+-- or if the last shutdown was not normal or immediate.
+RECOVER DATABASE
+
+-- Database can now be opened normally.
+ALTER DATABASE OPEN;
+
+-- Commands to add tempfiles to temporary tablespaces.
+-- Online tempfiles have complete space information.
+-- Other tempfiles may require adjustment.
+ALTER TABLESPACE TEMPTS1 ADD TEMPFILE '/u01/app/oracle/oradata/JPCDIP02/temp01.dbf'
+     SIZE 20971520  REUSE AUTOEXTEND ON NEXT 655360  MAXSIZE 32767M;
+-- End of tempfile additions.
+--
+--     Set #2. RESETLOGS case
+--
+-- The following commands will create a new control file and use it
+-- to open the database.
+-- Data used by Recovery Manager will be lost.
+-- The contents of online logs will be lost and all backups will
+-- be invalidated. Use this only if online logs are damaged.
+
+-- After mounting the created controlfile, the following SQL
+-- statement will place the database in the appropriate
+-- protection mode:
+--  ALTER DATABASE SET STANDBY DATABASE TO MAXIMIZE PERFORMANCE
+
+STARTUP NOMOUNT
+CREATE CONTROLFILE REUSE DATABASE "JPCDIP02" RESETLOGS  NOARCHIVELOG
+    MAXLOGFILES 16
+    MAXLOGMEMBERS 3
+    MAXDATAFILES 1024
+    MAXINSTANCES 1
+    MAXLOGHISTORY 292
+LOGFILE
+  GROUP 1 (
+    '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo01a.log',
+    '/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo01b.log',
+    '/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo01c.log'
+  ) SIZE 50M BLOCKSIZE 512,
+  GROUP 2 (
+    '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo02a.log',
+    '/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo02b.log',
+    '/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo02c.log'
+  ) SIZE 50M BLOCKSIZE 512,
+  GROUP 3 (
+    '/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo03a.log',
+    '/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo03b.log',
+    '/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo03c.log'
+  ) SIZE 50M BLOCKSIZE 512
+-- STANDBY LOGFILE
+DATAFILE
+  '/u01/app/oracle/oradata/JPCDIP02/system01.dbf',
+  '/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf',
+  '/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf',
+  '/u01/app/oracle/oradata/JPCDIP02/users01.dbf',
+  '/disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf',
+  '/disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf',
+  '/disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf',
+  '/disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf',
+  '/disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf',
+  '/disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf'
+CHARACTER SET AL32UTF8
+;
+
+-- Commands to re-create incarnation table
+-- Below log names MUST be changed to existing filenames on
+-- disk. Any one log file from each branch can be used to
+-- re-create incarnation records.
+-- ALTER DATABASE REGISTER LOGFILE '/u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1153880960.dbf';
+-- Recovery is required if any of the datafiles are restored backups,
+-- or if the last shutdown was not normal or immediate.
+RECOVER DATABASE USING BACKUP CONTROLFILE
+
+-- Database can now be opened zeroing the online logs.
+ALTER DATABASE OPEN RESETLOGS;
+
+-- Commands to add tempfiles to temporary tablespaces.
+-- Online tempfiles have complete space information.
+-- Other tempfiles may require adjustment.
+ALTER TABLESPACE TEMPTS1 ADD TEMPFILE '/u01/app/oracle/oradata/JPCDIP02/temp01.dbf'
+     SIZE 20971520  REUSE AUTOEXTEND ON NEXT 655360  MAXSIZE 32767M;
+-- End of tempfile additions.
+--
+
+
+
+
+
+[oracle@pc-jpc JPCDIP02]$ ls -lt 
+total 171772
+-rw-rw----. 1 oracle oinstall 18595840 Jan 25 17:50 control02.ctl
+-rw-rw----. 1 oracle oinstall 52429312 Jan 25 17:49 redo03b.log
+-rw-rw----. 1 oracle oinstall 52429312 Jan 25 17:03 redo02b.log
+-rw-rw----. 1 oracle oinstall 52429312 Jan 25 17:03 redo01b.log
+[oracle@pc-jpc JPCDIP02]$ cd /home/oracle/backups/
+[oracle@pc-jpc backups]$ ls -lt
+total 18176
+-rw-rw----. 1 oracle oinstall 18595840 Jan 25 17:44 control01.ctl
+-rw-rw-r--. 1 oracle oinstall     7494 Jan 25 17:35 controlfile-ej11.bkp.sql
+drwxr-xr-x. 2 oracle oinstall     4096 Nov 26 14:27 modulo-03
+-rw-r-----. 1 oracle oinstall     3584 Nov 24 13:21 orapwjpcdip01
+[oracle@pc-jpc backups]$ cd /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/
+[oracle@pc-jpc JPCDIP02]$ ls -lt
+total 171772
+-rw-rw----. 1 oracle oinstall 18595840 Jan 25 17:50 control03.ctl
+-rw-rw----. 1 oracle oinstall 52429312 Jan 25 17:49 redo03c.log
+-rw-rw----. 1 oracle oinstall 52429312 Jan 25 17:03 redo02c.log
+-rw-rw----. 1 oracle oinstall 52429312 Jan 25 17:03 redo01c.log
+
+
+[oracle@pc-jpc ~]$ cd $ORACLE_HOME/dbs
+[oracle@pc-jpc dbs]$ export ORACLE_SID=jpcdip02
+[oracle@pc-jpc dbs]$ 
+[oracle@pc-jpc dbs]$ sqlplus sys/system2 as sysdba
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Thu Jan 25 18:05:05 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip02> shutdown abort
+
+ORACLE instance shut down.
+sys@jpcdip02> sys@jpcdip02> startup
+
+ORACLE instance started.
+
+Total System Global Area  494925200 bytes
+Fixed Size		    8897936 bytes
+Variable Size		  327155712 bytes
+Database Buffers	   46137344 bytes
+Redo Buffers		    7876608 bytes
+In-Memory Area		  104857600 bytes
+ORA-00205: error in identifying control file, check alert log for more info
+
+
+sys@jpcdip02> sys@jpcdip02> show parameter control_files
+
+NAME				     TYPE
+------------------------------------ ---------------------------------
+
+
+----------------
+##Comentarios y conclusiones
+
+En este ejercicio centrado en la gestión del archivo de control en Oracle, se abordaron aspectos clave como el respaldo, 
+la simulación de pérdida y la recuperación. El procedimiento comenzó con la creación de un respaldo del archivo de control 
+utilizando la instrucción alter database backup controlfile to trace, generando un script de respaldo.
+Luego, se simuló la pérdida de una copia del control file, moviéndola a un directorio de respaldo. 
+Esta acción provocó un intento fallido de inicio de la instancia, resaltando la importancia de mantener múltiples copias para garantizar la disponibilidad. 
+La recuperación se llevó a cabo moviendo las copias restantes a su ubicación original, demostrando el proceso necesario para iniciar la base de datos con éxito.
+En un paso adicional, se creó una transacción con un usuario específico y se sugirió realizar procedimientos para que la base de datos iniciara con tres archivos 
+de control. Finalmente, se exploró el impacto de restaurar un archivo de control desde una ubicación de respaldo, verificando la existencia de registros insertados.
+Las sugerencias incluyen documentación detallada de procedimientos.
+El ejercicio resaltó la importancia de las pruebas de recuperación periódicas y el mantenimiento de copias de seguridad actualizadas para garantizar la eficacia
+ en situaciones críticas. En resumen, la práctica ofreció una valiosa comprensión de la administración del control file, resiliencia del sistema 
+ y procesos clave en la recuperación de bases de datos Oracle.

@@ -1,0 +1,161 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-01-2024
+##Módulo 05. Programas 1 y 2.
+-------------------------------------------
+
+##SCRIPT
+------------------------------------------------
+****programa-1************
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/01/2024
+--@Descripción: Ejercicio 07 - Módulo 05. programa 1
+
+
+whenever sqlerror exit rollback
+Prompt Conectando como Jorge05 para  crear tabla con datos.
+connect jorge05/jorge05
+set serveroutput on
+
+declare
+  v_query varchar2(1000);
+  v_index number;
+begin  
+  begin
+    execute immediate 'drop table numeros';
+  exception
+    when others then
+      if sqlcode = -942 then
+        dbms_output.put_line('La tabla  numeros no existe, se creará');
+      else
+        raise;
+      end if; 
+  end;
+
+  execute immediate 
+    'create table numeros(
+      id number constraint numeros_pk primary key,
+      numero_aleatorio number
+    )';
+  
+  --inserta 10,000 registros
+  for v_index in 1..10000 loop
+    execute immediate 'insert into numeros values(:id,:num_aleatorio)'
+      using v_index, dbms_random.random;
+  end loop;
+
+  commit;
+  dbms_output.put_line('Ok, '||v_index||' insertados');     
+end;
+/
+
+****programa-2*************
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/01/2024
+--@Descripción: Ejercicio 07 - Módulo 05. Programa 2
+
+
+whenever sqlerror exit rollback
+Prompt Conectando como jorge05 para  crear tabla con datos.
+connect jorge05/jorge05
+set serveroutput on
+
+--Programa 2
+declare
+  
+  v_total_blocks number;
+  v_total_bytes number;
+  v_unused_blocks  number;
+  v_unused_blocks_bytes number;
+  v_last_used_extent_file_id number;
+  v_last_used_extent_block_id number;
+  v_last_used_block number;
+
+begin
+
+/**
+   Parámetros del procedimiento
+    1. Nombre del esquema
+    2. Nombre del objeto
+    3. Tipo de objeto. Por ejemplo, TABLE.
+    4.  (out) Número total de bloques existentes en el segmento
+    5.  (out) Número total de bloques existentes en el segmento en bytes
+    6.  (out) Número de bloques que no han sido empleados
+    7.  (out) Número de bloques que no han sido empleados en bytes
+    8.  (out) Identificador del data file que contiene la última extensión
+              que contiene datos.
+    9.  (out) Identificador del primer bloque de datos que pertenece a la
+              última extensión que contiene datos.s
+    10. (out) Identificador del último bloque de datos que contiene datos.
+    11 y 12 no relevantes para el curso.
+ */
+  dbms_space.unused_space (
+   segment_owner              => 'JORGE05', 
+   segment_name               => 'NUMEROS',
+   segment_type               => 'TABLE',
+   total_blocks               => v_total_blocks,
+   total_bytes                => v_total_bytes,
+   unused_blocks              => v_unused_blocks,
+   unused_bytes               => v_unused_blocks_bytes,
+   last_used_extent_file_id   => v_last_used_extent_file_id,
+   last_used_extent_block_id  => v_last_used_extent_block_id,
+   last_used_block            => v_last_used_block, 
+   partition_name             => null);
+
+   dbms_output.put_line('v_total_blocks:                '||v_total_blocks);
+   dbms_output.put_line('v_total_bytes:                 '||v_total_bytes);
+   dbms_output.put_line('v_unused_blocks:               '||v_unused_blocks);
+   dbms_output.put_line('v_unused_blocks_bytes:         '||v_unused_blocks_bytes);
+   dbms_output.put_line('v_last_used_extent_file_id:    '||v_last_used_extent_file_id);
+   dbms_output.put_line('v_last_used_extent_block_id:   '||v_last_used_extent_block_id);
+   dbms_output.put_line('v_last_used_block:             '||v_last_used_block);
+
+end;
+/
+
+-----------------------------------------------------
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+idle> start e-programa1.sql
+Conectando como Jorge05 para  crear tabla con datos.
+Connected.
+La tabla  numeros no existe, se creará
+Ok,  insertados
+
+PL/SQL procedure successfully completed.
+
+jorge05@jpcdip02> start e-programa2.sql
+Conectando como jorge05 para  crear tabla con datos.
+Connected.
+v_total_blocks: 	       32
+v_total_bytes:		       262144
+v_unused_blocks:	       0
+v_unused_blocks_bytes:	       0
+v_last_used_extent_file_id:    4
+v_last_used_extent_block_id:   93800
+v_last_used_block:	       8
+
+PL/SQL procedure successfully completed.
+
+
+
+##Comentarios y conclusiones
+------------------------------------------------------
+Los ejercicios proporcionaron una oportunidad práctica para explorar y comprender el uso del procedimiento `dbms_space.unused_space` en Oracle.
+El primer programa se centró en la creación de una tabla llamada "numeros" y la inserción de 10,000 registros aleatorios en ella. 
+Además, el segundo programa hizo uso del procedimiento `dbms_space.unused_space` para obtener información detallada sobre el espacio no utilizado en la tabla 
+recién creada.
+La ejecución del primer programa involucró la manipulación de excepciones para gestionar la posible existencia previa de la tabla "numeros". 
+ A través de un bucle, se insertaron registros aleatorios,
+y al finalizar, se emitió un mensaje indicando el número de registros insertados.
+El segundo programa utilizó el procedimiento `dbms_space.unused_space` para obtener diversos parámetros relacionados 
+con el espacio no utilizado en la tabla "numeros". Estos parámetros incluyeron el número total de bloques y bytes, así como la información sobre los bloques no utilizados y la última extensión utilizada. 
+Los resultados fueron presentados en la salida, proporcionando una visión clara del estado del espacio en la tabla.
+En conclusión, estos ejercicios permitieron adquirir experiencia práctica en el uso de `dbms_space.unused_space` para evaluar el espacio 
+no utilizado en segmentos de base de datos. Como sugerencia, se recomienda documentar de manera explícita el propósito de cada segmento de código 
+y los resultados esperados, facilitando así la comprensión y revisión del código en el futuro.
+
+

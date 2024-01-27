@@ -1,0 +1,583 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##06-12-2023
+##Módulo 03. E-05-01 IM Column Store.
+-------------------------------------------
+
+##SCRIPT
+
+-- Ejercicio 2. Objetos en el IM Column Store
+
+Prompt Autenticando como sys
+connect sys/system2 as sysdba
+
+--whenever sqlerror exit rollback
+
+Prompt consulta 01
+set pagesize 100
+col title format a50
+
+explain plan 
+set statement_id ='q1' for
+select /*+ gather_plan_statistics */ title, trunc(duration/60,1) duration_hrs
+from user03imc.movie where upper(title) like '% WAR %';
+
+Prompt Visualizando el plan de ejecución sin IM Column store.
+select * from table(dbms_xplan.display(statement_id => 'q1'));
+pause Analizar plan de ejecución [Enter] para continuar.
+
+Prompt habilitando In Memory column store
+alter table user03imc.movie inmemory;
+
+col table_name format a20 
+Prompt Mostrando configuraciones asociadas con IM column store 
+select table_name,inmemory,inmemory_compression, inmemory_priority,
+  inmemory_distribute
+from dba_tables 
+where table_name='MOVIE'
+and owner='USER03IMC';
+pause Analizar resultados [Enter] para continuar
+
+Prompt Realizando consulta en v$im_segments previa al acceso
+col segment_name format a20 
+select segment_name, bytes/1024/1024 MBs, inmemory_size/1024/1024 inmemory_size_mb,
+  populate_status 
+from   v$im_segments 
+where  segment_name = 'MOVIE'
+and owner='USER03IMC';
+pause Analizar resultados [Enter] para continuar
+
+Prompt Realizando una consulta para provocar el poblado de la IM Column store
+select title, trunc(duration/60,1) duration_hrs
+from user03imc.movie where upper(title) like '% WAR %';
+pause ¿Cuántos registros se obtuvieron? [Enter] para continuar
+
+Prompt consultando nuevamente en v$im_segments
+select segment_name, bytes/1024/1024 MBs, inmemory_size/1024/1024 inmemory_size_mb,
+  populate_status 
+from   v$im_segments 
+where  segment_name = 'MOVIE';
+pause Analizar resultados [Enter] para continuar
+
+Prompt mostrando información de los IMCUs
+set pagesize 30
+col column_name format a20
+col minimum_value format a20
+col maximum_value format a50
+select column_number,column_name, minimum_value,maximum_value
+from v$im_col_cu cu, dba_objects o, dba_tab_cols c
+where cu.objd = o.data_object_id
+and o.object_name = c.table_name
+and cu.column_number = c.column_id 
+and o.object_name='MOVIE'
+and o.owner='USER03IMC'
+order by column_number,minimum_value;
+pause Analizar resultados [Enter] para continuar
+
+Prompt deshabilitando el uso de la IM C Store para mostrar estadísticas
+alter session  set inmemory_query=disable;
+select title, trunc(duration/60,1) duration_hrs
+from user03imc.movie where upper(title) like '% WAR %';
+
+Prompt mostrando estadísticas  del uso de la IM C Store  y sus IMCUs. inmemory_query=disable
+col display_name format a30
+select display_name,value
+from v$mystat m, v$statname n
+where m.statistic# = n.statistic#
+and display_name in (
+  'IM scan segments minmax eligible',
+  'IM scan CUs delta pruned',
+  'IM scan segments disk',
+  'IM scan bytes in-memory',
+  'IM scan bytes uncompressed',
+  'IM scan rows',
+  'IM scan blocks cache'
+);
+
+pause Analizar resultados [Enter] para continuar
+
+Prompt Habilitar nuevamente el uso de la IM C Store para mostrar estadísticas
+alter session  set inmemory_query=enable;
+
+prompt Ejecutando Consulta Nuevamente
+select title, trunc(duration/60,1) duration_hrs
+from user03imc.movie where upper(title) like '% WAR %';
+
+Prompt mostrando estadísticas  del uso de la IM C Store  y sus IMCUs. inmemory_query = enable
+select display_name,value
+from v$mystat m, v$statname n
+where m.statistic# = n.statistic#
+and display_name in (
+  'IM scan segments minmax eligible',
+  'IM scan CUs delta pruned',
+  'IM scan segments disk',
+  'IM scan bytes in-memory',
+  'IM scan bytes uncompressed',
+  'IM scan rows',
+  'IM scan blocks cache'
+);
+
+Pause analizar resultados, [Enter] para continuar
+Prompt Mostrando nuevamente plan de ejecución con IM COlumn habilitada
+explain plan
+set statement_id ='q2' for
+select title, trunc(duration/60,1) duration_hrs
+from user03imc.movie where upper(title) like '% WAR %';
+
+select * from table(dbms_xplan.display(statement_id => 'q2'));
+pause Analizar resultados [Enter] para continuar
+
+
+Prompt deshabilitando el uso de la IM column para que este script sea idempotente
+alter table user03imc.movie no inmemory;
+
+--la limpieza del usuario se realiza en el script s-10-column-store.sql
+prompt listo!, cerrando sesión
+
+disconnect
+
+--------------------------------------------
+
+
+## SALIDA DE EJECUCIÓN
+
+user03imc@jpcdip02> start s-12-objetos-inmemory.sql
+Autenticando como sys
+Connected.
+
+                                                                                
+
+1 row selected.
+
+consulta 01
+
+Explained.
+
+Visualizando el plan de ejecución sin IM Column store.
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+Plan hash value: 796634778                                                      
+                                                                                
+---------------------------------------------------------------------------     
+| Id  | Operation         | Name  | Rows  | Bytes | Cost (%CPU)| Time     |     
+---------------------------------------------------------------------------     
+|   0 | SELECT STATEMENT  |       |    36 | 72540 |   205   (1)| 00:00:01 |     
+|*  1 |  TABLE ACCESS FULL| MOVIE |    36 | 72540 |   205   (1)| 00:00:01 |     
+---------------------------------------------------------------------------     
+                                                                                
+Predicate Information (identified by operation id):                             
+---------------------------------------------------                             
+                                                                                
+   1 - filter(UPPER("TITLE") LIKE '% WAR %')                                    
+                                                                                
+Note                                                                            
+-----                                                                           
+   - dynamic statistics used: dynamic sampling (level=2)                        
+
+17 rows selected.
+
+Analizar plan de ejecución [Enter] para continuar.
+
+habilitando In Memory column store
+
+Table altered.
+
+Mostrando configuraciones asociadas con IM column store
+
+TABLE_NAME           INMEMORY INMEMORY_COMPRESS INMEMORY INMEMORY_DISTRI        
+-------------------- -------- ----------------- -------- ---------------        
+MOVIE                ENABLED  FOR QUERY LOW     NONE     AUTO                   
+
+1 row selected.
+
+Analizar resultados [Enter] para continuar
+
+Realizando consulta en v$im_segments previa al acceso
+
+no rows selected
+
+Analizar resultados [Enter] para continuar
+
+Realizando una consulta para provocar el poblado de la IM Column store
+
+TITLE                                              DURATION_HRS                 
+-------------------------------------------------- ------------                 
+Afganistan - The last war bus (Lultimo bus di guer          1.5                 
+ra)                                                                             
+                                                                                
+All This and World War II                                   1.4                 
+Apache War Smoke                                            1.1                 
+At War with the Army                                        1.5                 
+Beast of War The                                            1.8                 
+Bronx War The                                               1.5                 
+Fourth War The                                              1.5                 
+Fourth World War The                                        1.3                 
+Es war eine rauschende Ballnacht                            1.4                 
+Face of War A                                               1.2                 
+Chocolate War The                                           1.6                 
+Distributing a War Extra                                      0                 
+Dogs of War The                                             1.7                 
+Cul de Sac: A Suburban War Story                             .9                 
+Im Anfang war der Blick                                      .7                 
+Japanese War Bride                                          1.5                 
+Last Good War The                                            .2                 
+Klasse von 99 - Schule war gestern Leben ist jetzt          1.5                 
+ Die                                                                            
+                                                                                
+I Was a Male War Bride                                      1.7                 
+Is the Crown at War with Us?                                1.6                 
+GoBots: War of the Rock Lords                               1.2                 
+Going Hollywood: The War Years                              1.7                 
+Going Upriver: The Long War of John Kerry                   1.4                 
+Outfoxed: Rupert Murdochs War on Journalism                 1.4                 
+Oil Factor: Behind the War on Terror The                    1.5                 
+Moonshine War The                                           1.6                 
+Mann der Sherlock Holmes war Der                            1.8                 
+Milagro Beanfield War The                                   1.9                 
+Looking Glass War The                                       1.8                 
+Sauerbruch - Das war mein Leben                             1.7                 
+Secret War of Harry Frigg The                               1.8                 
+Private War of Major Benson The                             1.7                 
+World at War The                                            1.1                 
+Vietnam War Story: The Last Days                            1.5                 
+What Did You Do in the War Daddy?                           1.9                 
+Uncivil War Birds                                            .2                 
+Uncovered: The War on Iraq                                  1.4                 
+Time Out of War A                                            .3                 
+Suppose They Gave a War and Nobody Came?                    1.8                 
+Sweet Creek County War The                                  1.6                 
+
+40 rows selected.
+
+¿Cuántos registros se obtuvieron? [Enter] para continuar
+40
+consultando nuevamente en v$im_segments
+
+SEGMENT_NAME                MBS INMEMORY_SIZE_MB POPULATE_STAT                  
+-------------------- ---------- ---------------- -------------                  
+MOVIE                   5.84375             3.25 COMPLETED                      
+
+1 row selected.
+
+Analizar resultados [Enter] para continuar
+
+mostrando información de los IMCUs
+
+COLUMN_NUMBER COLUMN_NAME          MINIMUM_VALUE                                
+------------- -------------------- --------------------                         
+MAXIMUM_VALUE                                                                   
+--------------------------------------------------                              
+            1 ID                   C102                                         
+C3065859                                                                        
+                                                                                
+            2 TITLE                24                                           
+7858783A205374617465206F662074686520556E696F6E                                  
+                                                                                
+            3 M_YEAR               C2135E                                       
+C21506                                                                          
+                                                                                
+            4 DURATION             C102                                         
+C23515                                                                          
+                                                                                
+            5 BUDGET               80                                           
+C503                                                                            
+                                                                                
+            6 RATING               C102                                         
+C10B                                                                            
+                                                                                
+            7 VOTES                C106                                         
+C3104D09                                                                        
+                                                                                
+            8 R1                   80                                           
+C202                                                                            
+                                                                                
+            9 R2                   80                                           
+
+COLUMN_NUMBER COLUMN_NAME          MINIMUM_VALUE                                
+------------- -------------------- --------------------                         
+MAXIMUM_VALUE                                                                   
+--------------------------------------------------                              
+C15533                                                                          
+                                                                                
+           10 R3                   80                                           
+C15533                                                                          
+                                                                                
+           11 R4                   80                                           
+C202                                                                            
+                                                                                
+           12 R5                   80                                           
+C202                                                                            
+                                                                                
+           13 R6                   80                                           
+C15533                                                                          
+                                                                                
+           14 R7                   80                                           
+C202                                                                            
+                                                                                
+           15 R8                   80                                           
+C202                                                                            
+                                                                                
+           16 R9                   80                                           
+C202                                                                            
+                                                                                
+           17 R10                  80                                           
+C202                                                                            
+
+COLUMN_NUMBER COLUMN_NAME          MINIMUM_VALUE                                
+------------- -------------------- --------------------                         
+MAXIMUM_VALUE                                                                   
+--------------------------------------------------                              
+                                                                                
+           18 MPAA                 4E432D3137                                   
+52                                                                              
+                                                                                
+           19 M_ACTION             80                                           
+C102                                                                            
+                                                                                
+           20 COMEDY               80                                           
+C102                                                                            
+                                                                                
+           21 DRAMA                80                                           
+C102                                                                            
+                                                                                
+           22 DOCUMENTARY          80                                           
+C102                                                                            
+                                                                                
+           23 ROMANCE              80                                           
+C102                                                                            
+                                                                                
+           24 SHORT                80                                           
+C102                                                                            
+                                                                                
+
+24 rows selected.
+
+Analizar resultados [Enter] para continuar
+
+deshabilitando el uso de la IM C Store para mostrar estadísticas
+
+Session altered.
+
+
+TITLE                                              DURATION_HRS                 
+-------------------------------------------------- ------------                 
+Afganistan - The last war bus (Lultimo bus di guer          1.5                 
+ra)                                                                             
+                                                                                
+All This and World War II                                   1.4                 
+Apache War Smoke                                            1.1                 
+At War with the Army                                        1.5                 
+Beast of War The                                            1.8                 
+Bronx War The                                               1.5                 
+Fourth War The                                              1.5                 
+Fourth World War The                                        1.3                 
+Es war eine rauschende Ballnacht                            1.4                 
+Face of War A                                               1.2                 
+Chocolate War The                                           1.6                 
+Distributing a War Extra                                      0                 
+Dogs of War The                                             1.7                 
+Cul de Sac: A Suburban War Story                             .9                 
+Im Anfang war der Blick                                      .7                 
+Japanese War Bride                                          1.5                 
+Last Good War The                                            .2                 
+Klasse von 99 - Schule war gestern Leben ist jetzt          1.5                 
+ Die                                                                            
+                                                                                
+I Was a Male War Bride                                      1.7                 
+Is the Crown at War with Us?                                1.6                 
+GoBots: War of the Rock Lords                               1.2                 
+Going Hollywood: The War Years                              1.7                 
+Going Upriver: The Long War of John Kerry                   1.4                 
+
+TITLE                                              DURATION_HRS                 
+-------------------------------------------------- ------------                 
+Outfoxed: Rupert Murdochs War on Journalism                 1.4                 
+Oil Factor: Behind the War on Terror The                    1.5                 
+Moonshine War The                                           1.6                 
+Mann der Sherlock Holmes war Der                            1.8                 
+Milagro Beanfield War The                                   1.9                 
+Looking Glass War The                                       1.8                 
+Sauerbruch - Das war mein Leben                             1.7                 
+Secret War of Harry Frigg The                               1.8                 
+Private War of Major Benson The                             1.7                 
+World at War The                                            1.1                 
+Vietnam War Story: The Last Days                            1.5                 
+What Did You Do in the War Daddy?                           1.9                 
+Uncivil War Birds                                            .2                 
+Uncovered: The War on Iraq                                  1.4                 
+Time Out of War A                                            .3                 
+Suppose They Gave a War and Nobody Came?                    1.8                 
+Sweet Creek County War The                                  1.6                 
+
+40 rows selected.
+
+mostrando estadísticas  del uso de la IM C Store  y sus IMCUs. inmemory_query=disable
+
+DISPLAY_NAME                        VALUE                                       
+------------------------------ ----------                                       
+IM scan segments disk                   2                                       
+IM scan bytes in-memory                 0                                       
+IM scan bytes uncompressed              0                                       
+IM scan rows                            0                                       
+IM scan blocks cache                    0                                       
+IM scan CUs delta pruned                0                                       
+IM scan segments minmax eligib          0                                       
+le                                                                              
+                                                                                
+
+7 rows selected.
+
+Analizar resultados [Enter] para continuar
+
+Habilitar nuevamente el uso de la IM C Store para mostrar estadísticas
+
+Session altered.
+
+Ejecutando Consulta Nuevamente
+
+TITLE                                              DURATION_HRS                 
+-------------------------------------------------- ------------                 
+Afganistan - The last war bus (Lultimo bus di guer          1.5                 
+ra)                                                                             
+                                                                                
+All This and World War II                                   1.4                 
+Apache War Smoke                                            1.1                 
+At War with the Army                                        1.5                 
+Beast of War The                                            1.8                 
+Bronx War The                                               1.5                 
+Fourth War The                                              1.5                 
+Fourth World War The                                        1.3                 
+Es war eine rauschende Ballnacht                            1.4                 
+Face of War A                                               1.2                 
+Chocolate War The                                           1.6                 
+Distributing a War Extra                                      0                 
+Dogs of War The                                             1.7                 
+Cul de Sac: A Suburban War Story                             .9                 
+Im Anfang war der Blick                                      .7                 
+Japanese War Bride                                          1.5                 
+Last Good War The                                            .2                 
+Klasse von 99 - Schule war gestern Leben ist jetzt          1.5                 
+ Die                                                                            
+                                                                                
+I Was a Male War Bride                                      1.7                 
+Is the Crown at War with Us?                                1.6                 
+GoBots: War of the Rock Lords                               1.2                 
+Going Hollywood: The War Years                              1.7                 
+Going Upriver: The Long War of John Kerry                   1.4                 
+
+TITLE                                              DURATION_HRS                 
+-------------------------------------------------- ------------                 
+Outfoxed: Rupert Murdochs War on Journalism                 1.4                 
+Oil Factor: Behind the War on Terror The                    1.5                 
+Moonshine War The                                           1.6                 
+Mann der Sherlock Holmes war Der                            1.8                 
+Milagro Beanfield War The                                   1.9                 
+Looking Glass War The                                       1.8                 
+Sauerbruch - Das war mein Leben                             1.7                 
+Secret War of Harry Frigg The                               1.8                 
+Private War of Major Benson The                             1.7                 
+World at War The                                            1.1                 
+Vietnam War Story: The Last Days                            1.5                 
+What Did You Do in the War Daddy?                           1.9                 
+Uncivil War Birds                                            .2                 
+Uncovered: The War on Iraq                                  1.4                 
+Time Out of War A                                            .3                 
+Suppose They Gave a War and Nobody Came?                    1.8                 
+Sweet Creek County War The                                  1.6                 
+
+40 rows selected.
+
+mostrando estadísticas  del uso de la IM C Store  y sus IMCUs. inmemory_query = enable
+
+DISPLAY_NAME                        VALUE                                       
+------------------------------ ----------                                       
+IM scan segments disk                   2                                       
+IM scan bytes in-memory           2727145                                       
+IM scan bytes uncompressed        5094931                                       
+IM scan rows                        58788                                       
+IM scan blocks cache                    0                                       
+IM scan CUs delta pruned                0                                       
+IM scan segments minmax eligib          0                                       
+le                                                                              
+                                                                                
+
+7 rows selected.
+
+analizar resultados, [Enter] para continuar
+
+Mostrando nuevamente plan de ejecución con IM COlumn habilitada
+
+Explained.
+
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+Plan hash value: 796634778                                                      
+                                                                                
+--------------------------------------------------------------------------------
+----                                                                            
+                                                                                
+| Id  | Operation                  | Name  | Rows  | Bytes | Cost (%CPU)| Time  
+   |                                                                            
+                                                                                
+--------------------------------------------------------------------------------
+----                                                                            
+                                                                                
+|   0 | SELECT STATEMENT           |       |    36 | 72540 |     9  (12)| 00:00:
+01 |                                                                            
+                                                                                
+|*  1 |  TABLE ACCESS INMEMORY FULL| MOVIE |    36 | 72540 |     9  (12)| 00:00:
+01 |                                                                            
+                                                                                
+--------------------------------------------------------------------------------
+----                                                                            
+                                                                                
+                                                                                
+Predicate Information (identified by operation id):                             
+---------------------------------------------------                             
+                                                                                
+   1 - inmemory(UPPER("TITLE") LIKE '% WAR %')                                  
+       filter(UPPER("TITLE") LIKE '% WAR %')                                    
+                                                                                
+
+PLAN_TABLE_OUTPUT                                                               
+--------------------------------------------------------------------------------
+Note                                                                            
+-----                                                                           
+   - dynamic statistics used: dynamic sampling (level=2)                        
+
+18 rows selected.
+
+Analizar resultados [Enter] para continuar
+
+deshabilitando el uso de la IM column para que este script sea idempotente
+
+Table altered.
+
+listo!, cerrando sesión
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+&prompt_value> spool off
+
+--------------------------------------------
+
+## CONCLUSIONES
+
+
+En este ejercicio, se exploró y configuró el In-Memory Column Store (IM Column Store) en una base 
+de datos Oracle. Se llevaron a cabo diversas acciones para habilitar y evaluar el rendimiento del 
+IM Column Store.Se ejecutó una consulta específica sobre la tabla user03imc.movie para analizar 
+el plan de ejecución sin hacer uso de la cláusula inmemory.Se configuró la carga de datos en el 
+IM Column Store para la tabla movie, verificando los atributos asociados mediante la vista dba_tables.
+Se ejecutó nuevamente la consulta, provocando la carga de datos en el IM Column Store y 
+verificando la existencia de segmentos en la vista v$im_segments.
+Se generó una consulta para mostrar el número y nombre de columnas presentes en el IM Column Store.
+Se deshabilitó temporalmente el uso del IM Column Store, se ejecutó la consulta original y 
+se analizaron las estadísticas relacionadas con el IM Column Store.
+Se volvió a habilitar el IM Column Store y se ejecutaron las consultas nuevamente para comparar 
+los resultados con y sin su uso.
+El ejercicio proporcionó una comprensión práctica de la configuración y 
+el impacto del IM Column Store en el rendimiento de consultas. 
+No se identificaron problemas significativos durante la ejecución. 
+Como recomendación, se sugiere monitorear y ajustar parámetros en entornos de producción 
+según las necesidades específicas.

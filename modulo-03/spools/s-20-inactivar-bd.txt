@@ -1,0 +1,158 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##06-12-2023
+##Módulo 03. E-06-03 Inactivar una BD.
+-------------------------------------------
+
+##SCRIPT
+
+prompt conectando como sysdba
+connect sys/system2 as sysdba
+
+prompt creando usuarios
+create user user03_a1 identified by user03_a1 quota unlimited on users;
+grant create session, create table to user03_a1;
+
+create user user03_a2 identified by user03_a2 quota unlimited on users;
+grant create session, create table to user03_a2;
+
+create user user03_a3 identified by user03_a3 quota unlimited on users;
+grant create session, create table to user03_a3;
+
+prompt otorgando privilegio sysbackup al usuario user03_a1
+grant sysbackup to user03_a1;
+
+prompt Abrir 2 terminales T1 y T2. en T1 Autenticar user03_a1,
+prompt en T2 autenticar con el usuario user03_a2, crear una tabla y un registro.
+
+prompt Inactivando la base de datos, ¿Qué sucederá? 
+prompt En caso de ser necesario ejecutar s-21-terminar-sesione.sql 
+pause [Enter] para continuar
+--no se podrá inactivar debido a que user03_a2 está en sesión activa
+--se deberá ejecutar el script s-21-terminar-sesiones.sql, se espera que
+--solo se elimine la sesión activa del usuario user03_a2. La sesión del usuario
+--user03_a1 está inactiva.
+
+alter system quiesce restricted;
+
+prompt BD inactiva. 
+prompt Abrir  una terminal T3, intentar autenticar con user03_a3
+prompt Abrir una terminal T4, intentar autenticar con user03_a1 como sysbackup
+pause  ¿Qué sucederá? [Enter] para continuar
+-- el usuario user03_a3 no podrá autenticar porque la bd está inactiva
+--el usuario user03_a1 como sysbackup si podrá autenticar
+
+prompt mostrando el status de la BD (active_state)
+select active_state from v$instance;
+
+pause reactivando la BD ¿Qué sucederá? [Enter] para continuar
+-- la sesión de user03_a3 sale del modo de espera y autentica con éxito. 
+alter system unquiesce;
+
+prompt Cerrar las sesiones de los usuarios en todas las terminales
+pause [Enter] para terminar y realiza limpieza
+drop user user03_a1 cascade;
+drop user user03_a2 cascade;
+drop user user03_a3 cascade;
+
+---------------
+
+prompt conectando como sysdba
+connect sys/system2 as sysdba
+
+prompt eliminando sesiones que impiden inactivar una BD
+pause ¿Cuántas sesiones deberán eliminarse? [Enter] para comenzar
+set serveroutput on
+declare
+  cursor cur_sesiones is
+    select s.sid, s.serial#, s.username
+    from  v$blocking_quiesce b , v$session s
+    where b.sid = s.sid; 
+begin
+  for r in cur_sesiones loop 
+    dbms_output.put_line('Cerrando sesión para el usuario  '||r.username);
+    execute immediate 'alter system kill session '''||r.sid||','||r.serial#||'''';     
+  end loop;
+end;
+/
+
+
+-----------------------------------------------
+
+## SALIDA DE EJECUCIÓN
+
+sys@jpcdip02> start s-20-inactivar-bd.sql
+conectando como sysdba
+Connected.
+
+                                                                                                                                                                                                                   
+
+creando usuarios
+
+User created.
+
+
+Grant succeeded.
+
+
+User created.
+
+
+Grant succeeded.
+
+
+User created.
+
+
+Grant succeeded.
+
+otorgando privilegio sysbackup al usuario user03_a1
+
+Grant succeeded.
+
+Abrir 2 terminales T1 y T2. en T1 Autenticar user03_a1,
+en T2 autenticar con el usuario user03_a2, crear una tabla y un registro.
+Inactivando la base de datos, ¿Qué sucederá?
+En caso de ser necesario ejecutar s-21-terminar-sesione.sql
+[Enter] para continuar
+
+
+System altered.
+
+BD inactiva.
+Abrir  una terminal T3, intentar autenticar con user03_a3
+Abrir una terminal T4, intentar autenticar con user03_a1 como sysbackup
+¿Qué sucederá? [Enter] para continuar
+
+mostrando el status de la BD (active_state)
+
+ACTIVE_ST                                                                                                                                                                                                          
+---------                                                                                                                                                                                                          
+QUIESCED                                                                                                                                                                                                           
+
+reactivando la BD ¿Qué sucederá? [Enter] para continuar
+
+
+System altered.
+
+Cerrar las sesiones de los usuarios en todas las terminales
+[Enter] para terminar y realiza limpieza
+
+
+User dropped.
+
+
+User dropped.
+
+
+User dropped.
+
+sys@jpcdip02> spool off
+
+## CONCLUSIONES
+
+
+En este ejercicio, se realizaron acciones para inactivar y posteriormente reactivar una instancia
+ de base de datos Oracle. Se crearon usuarios con diferentes roles y se ejecutaron operaciones en sesiones concurrentes.
+Se exploró el impacto de la inactivación de la base de datos en sesiones activas y se implementó un script para terminar sesiones obstaculizadoras.
+ La reactivación de la instancia se llevó a cabo, observando los cambios en las terminales activas. Finalmente, se realizaron operaciones de limpieza,
+ destacando la manipulación efectiva de la actividad en la base de datos y la gestión de sesiones.

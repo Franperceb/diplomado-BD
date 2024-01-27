@@ -1,6 +1,6 @@
 --@Autor: Jorge Francisco Pereda Ceballos
 --@Fecha creación: 24/11/2023
---@Descripción: Ejercicio 01 -módulo 03 . Iniciando una instancia de base de datos.
+--@Descripción: Ejercicio 02 -módulo 03 . Modos de inicio de una instancia.
 prompt autenticando como sysdba
 connect sys/system2 as sysdba
 

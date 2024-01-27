@@ -1,0 +1,179 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##06-12-2023
+##Módulo 03. E-05-01 IM Column Store.
+-------------------------------------------
+
+##SCRIPT
+ -- Ejercicio 1. Habilitación del IM Column Store
+-- Crear un script `s-01-column-store.sql` que realice las siguientes acciones:
+
+-- Autenticar como `sysdba`.
+Prompt Autenticando como sys
+connect sys as sysdba
+
+whenever sqlerror exit rollback
+
+-- Asignar al parámetro `inmemory_size` un valor de por lo menos 100M.
+-- Recordar que se trata de un parámetro estático.
+Prompt Alterando parametro inmemory_size
+alter system set inmemory_size = 100M scope=spfile;
+
+-- Detener y reiniciar la base de datos.
+Prompt Reiniciando base de datos
+shutdown immediate
+startup
+
+-- Revisar el parámetro `inmemory_size` para comprobar que coincida con el
+-- valor previamente establecido.
+Prompt Mostrando parametro inmemory_size
+show parameter inmemory_size
+
+--elimina al usuario user03imc en caso de existir
+declare
+  v_count number;
+begin
+  select count(*) into v_count from dba_users where username='USER03IMC';
+  if v_count > 0 then 
+    execute immediate 'drop user user03imc cascade';
+  end if;
+end;
+/
+
+Prompt Creando usuario user03imc
+create user user03imc identified by user03imc quota unlimited on users;
+grant create session, create table to user03imc;
+
+Prompt Iniciando sesión como user03imc
+connect user03imc/user03imc
+
+--Datos de películas del sitio imdb.com
+Prompt creando tabla movie
+create table movie(
+  id number,
+  title varchar2(4000),
+  m_year number(4,0),
+  duration number(10,2),
+  budget number,
+  rating number(5,2),
+  votes number(10),
+  r1 number(10,2),
+  r2 number(10,2),
+  r3 number(10,2),
+  r4 number(10,2),
+  r5 number(10,2),
+  r6 number(10,2),
+  r7 number(10,2),
+  r8 number(10,2),
+  r9 number(10,2),
+  r10 number(10,2),
+  mpaa varchar2(50),
+  m_action number(1,0),
+  comedy number(1,0),
+  drama number(1,0),
+  Documentary number(1,0),
+  romance number(1,0),
+  short number(1,0)
+ );
+
+Pause Ejecutar script s-11-movie-carga-inicial.sql [Enter] para iniciar
+set feedback off 
+@@s-11-movie-carga-inicial.sql
+set feedback on
+
+Prompt Contando registros, se esperan 58788
+select count(*) from movie;
+Pause Revisar resultados [Enter] para hacer commit
+
+Prompt haciendo commit 
+commit;
+
+Prompt Listo!
+  
+
+
+--------------------------------------------
+
+
+## SALIDA DE EJECUCIÓN
+sys@jpcdip02> start s-10-column-store.sql
+Autenticando como sys
+Connected.
+
+                                                                                
+
+Alterando parametro inmemory_size
+
+System altered.
+
+Reiniciando base de datos
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes                                       
+Fixed Size                  8901696 bytes                                       
+Variable Size             624951296 bytes                                       
+Database Buffers           58720256 bytes                                       
+Redo Buffers                7872512 bytes                                       
+In-Memory Area            104857600 bytes                                       
+Database mounted.
+Database opened.
+Mostrando parametro inmemory_size
+
+NAME                                 TYPE        VALUE                          
+------------------------------------ ----------- ------------------------------ 
+inmemory_size                        big integer 100M                           
+
+PL/SQL procedure successfully completed.
+
+Creando usuario user03imc
+
+User created.
+
+
+Grant succeeded.
+
+Iniciando sesión como user03imc
+Connected.
+
+                                                                                
+
+creando tabla movie
+
+Table created.
+
+Ejecutar script s-11-movie-carga-inicial.sql [Enter] para iniciar
+
+Contando registros, se esperan 58788
+
+  COUNT(*)                                                                      
+----------                                                                      
+     58788                                                                      
+
+1 row selected.
+
+Revisar resultados [Enter] para hacer commit
+
+haciendo commit
+
+Commit complete.
+
+Listo!
+user03imc@jpcdip02> spool off
+
+--------------------------------------------
+
+## CONCLUSIONES
+
+En este ejercicio, se implementó y exploró la funcionalidad del In-Memory Column Store en una base 
+de datos Oracle. Las acciones incluyeron la configuración del parámetro inmemory_size, 
+la creación de un usuario, y la carga de datos en una tabla específica destinada a almacenar 
+información de películas de IMDb. A través de la ejecución del script s-11-movie-carga-inicial.sql,
+se poblaron alrededor de 58,000 registros en la tabla, seguido de un commit.
+El aprendizaje obtenido abarcó la comprensión de la configuración del In-Memory Column Store 
+y su impacto en el rendimiento de la base de datos. No se identificaron problemas significativos 
+durante la realización del ejercicio.
+Como recomendación, se sugiere realizar ajustes adicionales en los parámetros según las necesidades 
+específicas de la base de datos y monitorear continuamente el rendimiento para optimizar 
+el uso de la memoria in-memory en entornos más complejos.

@@ -1,0 +1,1185 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##26-01-2024
+##Módulo 05. Lab-01 Servicio 911
+-------------------------------------------
+
+##SCRIPT
+------------------------------------------------
+
+************ dir-servicio-911.sh****************************
+
+#!/bin/bash
+#1 OK
+echo "------------ Creando directorios para m05_911_ts"
+
+echo "------------ Creando directorios para datafiles"
+
+dirDatafiles="/disk-mod5"
+
+if [ -d "${dirDatafiles}" ]; then
+  read -p "El directorio no esta vacío [ENTER] para borrarlos, Ctrl+c para cancelar"
+  rm -rf "${dirDatafiles}"/*
+fi;
+
+echo "------------ Cambiando dueño y permisos"
+
+mkdir -p "${dirDatafiles}" #El directorio debe estar vacio
+chown oracle:oinstall ${dirDatafiles}
+chmod 750 "${dirDatafiles}"
+
+echo "------------ Creando directorios para REDO Logs y control files"
+
+pMontaje01="/u21/app/oracle/oradata/JPCDIP02"
+pMontaje02="/u22/app/oracle/oradata/JPCDIP02"
+pMontaje03="/u23/app/oracle/oradata/JPCDIP02"
+pMontaje04="/u24/app/oracle/oradata/JPCDIP02"
+pMontaje05="/u25/app/oracle/oradata/JPCDIP02"
+pMontaje06="/u31/app/oracle/oradata/JPCDIP02/"
+
+
+if [[ -d "${dirDatafiles}${pMontaje01}" || -d "${dirDatafiles}${pMontaje02}" || -d "${dirDatafiles}${pMontaje03}" || -d "${dirDatafiles}${pMontaje04}" || -d "${dirDatafiles}${pMontaje05}" ]]; then
+  read -p "Se encontraron directorios, [ENTER] para borrar, Ctrl-c para cancelar"
+  rm -rf "${dirDatafiles}"/*
+fi;
+
+mkdir -p "${dirDatafiles}${pMontaje01}"
+mkdir -p "${dirDatafiles}${pMontaje02}"
+mkdir -p "${dirDatafiles}${pMontaje03}"
+mkdir -p "${dirDatafiles}${pMontaje04}"
+mkdir -p "${dirDatafiles}${pMontaje05}"
+mkdir -p "${dirDatafiles}${pMontaje06}"
+
+
+echo "------------ Cambiando dueño y permisos"
+chown -R oracle:oinstall "${dirDatafiles}"/*
+
+chmod -R 750 "${dirDatafiles}"/*
+
+echo "------------ Verificando directorios creados"
+tree "${dirDatafiles}"
+
+echo "------------ Validando permisos"
+ls -la "${dirDatafiles}"
+
+
+*****************e-01-servicio-911.sql*************************
+
+
+
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Módulo 05. Laboratorio 01 - Servicio 911.
+
+
+
+Prompt Conectando como sys 
+define syslogon='sys/system2 as sysdba'
+define p_user='m05_911_user'
+define p_userlogon='&p_user/&p_user'
+
+conn &syslogon
+
+declare
+ v_count number;
+begin
+  select count(*) into v_count
+    from dba_data_files
+    where tablespace_name in ('M05_911_IX_TS');
+  if v_count>=1 then 
+    dbms_output.put_line('Eliminando TS M05_911_IX_TS');
+    execute immediate 'drop tablespace m05_911_ix_ts including contents and datafiles';
+  else
+    dbms_output.put_line('Se creara el TS M05_911_IX_TS por primera vez');
+  end if; 
+end;
+/
+
+declare
+ v_count number;
+begin
+  select count(*) into v_count
+    from dba_data_files
+    where tablespace_name in ('M05_911_TS');
+  if v_count>=1 then 
+    dbms_output.put_line('Eliminando TS M05_911_TS');
+    execute immediate 'drop tablespace m05_911_ts including contents and datafiles';
+  else
+    dbms_output.put_line('Se creara el TS M05_911_TS por primera vez');
+  end if; 
+end;
+/
+
+pause [ENTER] para continuar
+
+Prompt Creando tablespaces
+create tablespace  m05_911_ts
+datafile 
+  '/disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf' size 15M,
+  '/disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf' size 15M,
+  '/disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf' size 15M,
+  '/disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf' size 15M,
+  '/disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf' size 15M
+extent management local autoallocate
+segment space management auto;
+
+create tablespace m05_911_ix_ts
+datafile '/disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf' size 5M 
+  autoextend on next 1M maxsize 30M
+  extent management local autoallocate
+  segment space management auto;
+
+Prompt Creando directorio en el S.O. para la tabla externa
+! mkdir /home/oracle/911 ;
+
+
+
+declare
+ v_count number;
+begin
+  select count(*) into v_count from  all_users where username='&p_user';
+  if v_count =0 then 
+    dbms_output.put_line('Creando al usuario &p_user');
+  else
+    dbms_output.put_line('El usuario &p_user ya existe, se eliminara');
+    execute immediate 'drop user &p_user cascade';
+  end if; 
+end;
+/
+
+
+Prompt Creando directorio 'ext_tab_data' para tabla externa
+create or replace directory ext_tab_data as '/home/oracle/911';
+
+pause [ENTER] para continuar
+
+create user &p_user identified by &p_user
+quota unlimited on m05_911_ts 
+default tablespace m05_911_ts;
+grant create session, create table to &p_user;
+alter user &p_user quota unlimited on m05_911_ix_ts;
+grant all on directory ext_tab_data to &p_user;
+
+conn &p_userlogon
+
+declare v_count number;
+begin
+  select count(*) 
+  into v_count
+  from user_tables 
+  where table_name = 'LLAMADA_911';
+  if v_count > 0 then 
+    execute immediate ('drop table llamada_911');
+  end if;
+end;
+/
+
+Prompt Creando tabla externa 
+
+create table llamada_911_ext(
+  address varchar2(50),
+  type    varchar2(50),
+  call_ts  date,
+  latitude number(10,6),
+  longitude number(10,6),
+  report_location varchar2(40),
+  incident_number varchar2(12)
+)organization external (
+  type oracle_loader
+  default directory ext_tab_data
+  access parameters (
+    records delimited by newline
+    badfile ext_tab_data: 'llamada_911_bad.log'
+    logfile ext_tab_data: 'llamada_911_err.log'
+    fields terminated by ',' 
+    optionally enclosed by '"' 
+    date_format date mask "mm/dd/yyyy hh:mi:ss am"
+    lrtrim
+    missing field values are null
+    (
+      address,type,call_ts,latitude,longitude,report_location,incident_number
+    )
+  )
+  location ('calls-911-50m.csv') 
+)
+reject limit 100;
+
+Prompt Validando tabla externa
+
+select * from llamada_911_ext where rownum <=3;
+
+Pause  Analizar, [enter] para continuar;
+
+create table llamada_911(
+  address varchar2(50),
+  type    varchar2(50),
+  call_ts  date,
+  latitude number(10,6),
+  longitude number(10,6),
+  report_location varchar2(40),
+  incident_number varchar2(12)
+) nologging;
+
+prompt Crando un indices
+create index ix1_llamada_911_incident_number on llamada_911(incident_number) tablespace m05_911_ix_ts ;
+create index ix1_llamada_911_address on llamada_911(address) tablespace m05_911_ix_ts ;
+
+Prompt poblando tabla llamada_911 desde la tabla externa
+insert /*+ append */ into llamada_911 select * from llamada_911_ext;
+
+commit;
+
+********************e-02-servicio-911-consultas.sql*******************
+
+
+Prompt 0. Conectando como sys 
+define syslogon='sys/system2 as sysdba'
+define p_user='m05_911_user'
+define p_userlogon='&p_user/&p_user'
+
+conn &syslogon
+
+col SEGMENT_NAME format a35
+col FILE_NAME format a65
+
+Prompt 1. Mostrar el nombre del segmento, nombre del tablespace, número
+Prompt de extensiones y el total de espacio reservado en MB hasta el momento. 
+set linesize window 
+select segment_name,  tablespace_name, extent_id as num_ext ,  
+bytes/1024/1024 extent_size_mb, blocks , file_id, segment_type, block_id
+from dba_extents
+where segment_name='LLAMADA_911'
+and owner = 'M05_911_USER';
+
+Pause dba_extents [ENTER] para continuar
+
+prompt 1 Consultando segmentos
+select substr(rowid, 1, 6) segmento,
+count(*) as total_reg
+from &p_user..llamada_911
+group by substr(rowid, 1, 6);
+
+Pause rowid segmentos [ENTER] para continuar
+
+prompt 2. Mostrar el nombre del tablespace, id y nombre(path) del data file, tamaño 
+prompt en MB, total de bloques, online_status, bandera que indica crecimiento automático.
+
+select tablespace_name, file_id, file_name, bytes/(1024*1024) bytes_mb, 
+blocks, online_status, autoextensible
+from dba_data_files
+where tablespace_name in ('M05_911_IX_TS','M05_911_TS');
+
+Pause dba_data_files [ENTER] para continuar
+
+prompt 3. Mostrar el nombre del tablespace, nombre del segmento, nombre del data file(path)
+prompt y el total de extensiones que se han reservado para cada data file hasta el momento.
+select e.tablespace_name, e.segment_name, df.file_name
+from dba_extents e
+join dba_data_files df 
+  on e.tablespace_name = df.tablespace_name and df.tablespace_name in ('M05_911_IX_TS','M05_911_TS');
+
+Pause dba_extents, dba_data_files [ENTER] para continuar
+
+Prompt 3 Total de extensiones reservadas 
+select sum(bytes)/1024/1024 , count(*) 
+from user_extents
+where TABLESPACE_NAME in ('M05_911_IX_TS','M05_911_TS');
+
+Pause extensiones reservadas [ENTER] para continuar
+
+
+
+Prompt Validando tabla permanente 
+select * from llamada_911 where rownum <=3;
+
+
+select * from M05_911_USER.LLAMADA_911 where rownum <=3;
+
+
+
+*******************e-03-servicio-911-tareas-admin.sql******************
+-- Script que realiza tareas administrativas.
+Prompt 0. Conectando como sys 
+define syslogon='sys/system2 as sysdba'
+define p_user='m05_911_user'
+define p_userlogon='&p_user/&p_user'
+connect sys/system2 as sysdba
+
+--prompt 1. Poniendo Data file 1 en modo offline
+
+--alter database datafile '/disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf' offline;
+
+--prompt 2. Pasando tbs a modo offline.
+--select FILE_NAME, FILE_ID  from dba_data_files df 
+--where tablespace_name in ('M05_911_TS');
+
+--NOTA: En estos momentos si tengo habilitado el modo archive por lo que la operacion anterior 
+--me permite poner solo un data file offline, esto en el modo noarchive no lo permitiria y lanzaria un error.
+--Para proseguir con el script se colocan las operaciones necesarias para poder pasar el datafile a modo online
+--y poder pasar el tbs a modo offline.
+--recover datafile 5;
+--alter database datafile 5 online;
+alter tablespace m05_911_ts offline normal;
+
+--pause Consulta del usuario [Enter] para continuar
+--connect &p_userlogon
+--select count(*) from llamada_911;
+
+--prompt 3. No procede la consulta lanza error.
+
+col file_name format a70
+prompt 4. Consulta que muestra nombre, id y online_status de los datafiles
+select file_name, file_id, online_status
+from dba_data_files
+where tablespace_name = 'M05_911_TS';
+
+prompt 5. Reasingacion de ubicaciones.
+
+!mv /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_a.dbf
+!mv /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_b.dbf
+!mv /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_c.dbf
+!mv /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_d.dbf
+!mv /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_e.dbf
+
+
+alter tablespace m05_911_ts rename datafile 
+	'/disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf',
+	'/disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf',
+	'/disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf',
+	'/disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf',
+	'/disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf'
+to 
+	'/disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_a.dbf',
+	'/disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_b.dbf',
+	'/disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_c.dbf',
+	'/disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_d.dbf',
+	'/disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_e.dbf';
+
+prompt colocando en modo online el tbs m05_911_ts
+alter tablespace m05_911_ts online;
+
+pause [Enter para continuar]
+
+prompt 7. Renombrando pero en modo online
+
+alter database move datafile '/disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_a.dbf' to '/disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf';
+alter database move datafile '/disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_b.dbf' to '/disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf';
+alter database move datafile '/disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_c.dbf' to '/disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf';
+alter database move datafile '/disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_d.dbf' to '/disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf';
+alter database move datafile '/disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_e.dbf' to '/disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf';
+
+--prompt 8. Reconstruyendo indices.
+--alter index m05_911_user.ix1_llamada_911_incident_number rebuild;
+--alter index m05_911_user.ix1_llamada_911_address rebuild;
+
+prompt 9. Consultando registros para verificar integridad de la base.
+
+select count(*) from m05_911_user.llamada_911;
+
+
+------------------------------------------------------------
+**************dir-servicio-911************************
+
+[root@pc-jpc 911]# ./dir-servicio-911.sh
+------------ Creando directorios para m05_911_ts
+------------ Creando directorios para datafiles
+------------ Cambiando dueño y permisos
+------------ Creando directorios para REDO Logs y control files
+------------ Cambiando dueño y permisos
+------------ Verificando directorios creados
+/disk-mod5
+├── u21
+│   └── app
+│       └── oracle
+│           └── oradata
+│               └── JPCDIP02
+├── u22
+│   └── app
+│       └── oracle
+│           └── oradata
+│               └── JPCDIP02
+├── u23
+│   └── app
+│       └── oracle
+│           └── oradata
+│               └── JPCDIP02
+├── u24
+│   └── app
+│       └── oracle
+│           └── oradata
+│               └── JPCDIP02
+├── u25
+│   └── app
+│       └── oracle
+│           └── oradata
+│               └── JPCDIP02
+└── u31
+    └── app
+        └── oracle
+            └── oradata
+                └── JPCDIP02
+
+30 directories, 0 files
+------------ Validando permisos
+total 32
+drwxr-x---.  8 oracle oinstall 4096 Jan 25 16:53 .
+dr-xr-xr-x. 21 root   root     4096 Jan 25 16:53 ..
+drwxr-x---.  3 oracle oinstall 4096 Jan 25 16:53 u21
+drwxr-x---.  3 oracle oinstall 4096 Jan 25 16:53 u22
+drwxr-x---.  3 oracle oinstall 4096 Jan 25 16:53 u23
+drwxr-x---.  3 oracle oinstall 4096 Jan 25 16:53 u24
+drwxr-x---.  3 oracle oinstall 4096 Jan 25 16:53 u25
+drwxr-x---.  3 oracle oinstall 4096 Jan 25 16:53 u31
+
+
+
+*********** e-01-servicio-911.sql ******************
+
+m05_911_user@jpcdip02> start e-01-servicio-911.sql
+Conectando como sys
+Connected.
+
+PL/SQL procedure successfully completed.
+
+
+PL/SQL procedure successfully completed.
+
+[ENTER] para continuar
+
+Creando tablespaces
+
+Tablespace created.
+
+Tablespace created.
+
+Creando directorio en el S.O. para la tabla externa
+mkdir: cannot create directory ‘/home/oracle/911’: File exists
+
+old   4:   select count(*) into v_count from  all_users where username='&p_user';
+new   4:   select count(*) into v_count from  all_users where username='m05_911_user';
+old   6:     dbms_output.put_line('Creando al usuario &p_user');
+new   6:     dbms_output.put_line('Creando al usuario m05_911_user');
+old   8:     dbms_output.put_line('El usuario &p_user ya existe, se eliminara');
+new   8:     dbms_output.put_line('El usuario m05_911_user ya existe, se eliminara');
+old   9:     execute immediate 'drop user &p_user cascade';
+new   9:     execute immediate 'drop user m05_911_user cascade';
+
+PL/SQL procedure successfully completed.
+
+Creando directorio 'ext_tab_data' para tabla externa
+
+Directory created.
+
+[ENTER] para continuar
+
+old   1: create user &p_user identified by &p_user
+new   1: create user m05_911_user identified by m05_911_user
+create user m05_911_user identified by m05_911_user
+            *
+ERROR at line 1:
+ORA-01920: user name 'M05_911_USER' conflicts with another user or role name
+
+
+old   1: grant create session, create table to &p_user
+new   1: grant create session, create table to m05_911_user
+
+Grant succeeded.
+
+old   1: alter user &p_user quota unlimited on m05_911_ix_ts
+new   1: alter user m05_911_user quota unlimited on m05_911_ix_ts
+
+User altered.
+
+old   1: grant all on directory ext_tab_data to &p_user
+new   1: grant all on directory ext_tab_data to m05_911_user
+
+Grant succeeded.
+
+Connected.
+
+PL/SQL procedure successfully completed.
+
+Creando tabla externa
+create table llamada_911_ext(
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object
+
+
+Validando tabla externa
+
+ADDRESS 					   TYPE 					      CALL_TS		   LATITUDE  LONGITUDE REPORT_LOCATION				INCIDENT_NUM
+-------------------------------------------------- -------------------------------------------------- ------------------ ---------- ---------- ---------------------------------------- ------------
+904 7th Av					   Car Fire					      22-MAY-19 	    47.6069 -122.32905 POINT (-122.329051 47.6069)		F190051945
+9610 53rd Av S					   Aid Response 				      22-MAY-19 	  47.515984 -122.26653 POINT (-122.266529 47.515984)		F190051946
+106 Pike St					   Aid Response 				      22-MAY-19 	  47.608849 -122.33995 POINT (-122.339945 47.608849)		F190051950
+
+Analizar, [enter] para continuar
+
+
+Table created.
+
+Crando un indices
+
+Index created.
+
+
+Index created.
+
+poblando tabla llamada_911 desde la tabla externa
+
+449999 rows created.
+
+
+Commit complete.
+
+
+
+------------------------------------------------------
+
+
+**********************e-02-servicio-911-consultas.sql******************************
+
+m05_911_user@jpcdip02> start e-02-servicio-911-consultas.sql
+0. Conectando como sys
+Connected.
+1. Mostrar el nombre del segmento, nombre del tablespace, número
+de extensiones y el total de espacio reservado en MB hasta el momento.
+
+SEGMENT_NAME			    TABLESPACE_NAME		      NUM_EXT EXTENT_SIZE_MB	 BLOCKS    FILE_ID SEGMENT_TYPE 	BLOCK_ID
+----------------------------------- ------------------------------ ---------- -------------- ---------- ---------- ------------------ ----------
+LLAMADA_911			    M05_911_TS				   17		   1	    128 	 5 TABLE		     128
+LLAMADA_911			    M05_911_TS				   22		   1	    128 	 5 TABLE		     256
+LLAMADA_911			    M05_911_TS				   27		   1	    128 	 5 TABLE		     384
+LLAMADA_911			    M05_911_TS				   32		   1	    128 	 5 TABLE		     512
+LLAMADA_911			    M05_911_TS				   37		   1	    128 	 5 TABLE		     640
+LLAMADA_911			    M05_911_TS				   42		   1	    128 	 5 TABLE		     768
+LLAMADA_911			    M05_911_TS				   47		   1	    128 	 5 TABLE		     896
+LLAMADA_911			    M05_911_TS				   52		   1	    128 	 5 TABLE		    1024
+LLAMADA_911			    M05_911_TS				   57		   1	    128 	 5 TABLE		    1152
+LLAMADA_911			    M05_911_TS				   62		   1	    128 	 5 TABLE		    1280
+LLAMADA_911			    M05_911_TS				   16		   1	    128 	 6 TABLE		     128
+LLAMADA_911			    M05_911_TS				   21		   1	    128 	 6 TABLE		     256
+LLAMADA_911			    M05_911_TS				   26		   1	    128 	 6 TABLE		     384
+LLAMADA_911			    M05_911_TS				   31		   1	    128 	 6 TABLE		     512
+LLAMADA_911			    M05_911_TS				   36		   1	    128 	 6 TABLE		     640
+LLAMADA_911			    M05_911_TS				   41		   1	    128 	 6 TABLE		     768
+LLAMADA_911			    M05_911_TS				   46		   1	    128 	 6 TABLE		     896
+LLAMADA_911			    M05_911_TS				   51		   1	    128 	 6 TABLE		    1024
+LLAMADA_911			    M05_911_TS				   56		   1	    128 	 6 TABLE		    1152
+LLAMADA_911			    M05_911_TS				   61		   1	    128 	 6 TABLE		    1280
+LLAMADA_911			    M05_911_TS				    0	       .0625	      8 	 7 TABLE		     128
+LLAMADA_911			    M05_911_TS				    1	       .0625	      8 	 7 TABLE		     136
+LLAMADA_911			    M05_911_TS				    2	       .0625	      8 	 7 TABLE		     144
+LLAMADA_911			    M05_911_TS				    3	       .0625	      8 	 7 TABLE		     152
+LLAMADA_911			    M05_911_TS				    4	       .0625	      8 	 7 TABLE		     160
+LLAMADA_911			    M05_911_TS				    5	       .0625	      8 	 7 TABLE		     168
+LLAMADA_911			    M05_911_TS				    6	       .0625	      8 	 7 TABLE		     176
+LLAMADA_911			    M05_911_TS				    7	       .0625	      8 	 7 TABLE		     184
+LLAMADA_911			    M05_911_TS				    8	       .0625	      8 	 7 TABLE		     192
+LLAMADA_911			    M05_911_TS				    9	       .0625	      8 	 7 TABLE		     200
+LLAMADA_911			    M05_911_TS				   10	       .0625	      8 	 7 TABLE		     208
+LLAMADA_911			    M05_911_TS				   11	       .0625	      8 	 7 TABLE		     216
+LLAMADA_911			    M05_911_TS				   12	       .0625	      8 	 7 TABLE		     224
+LLAMADA_911			    M05_911_TS				   13	       .0625	      8 	 7 TABLE		     232
+LLAMADA_911			    M05_911_TS				   14	       .0625	      8 	 7 TABLE		     240
+LLAMADA_911			    M05_911_TS				   15	       .0625	      8 	 7 TABLE		     248
+LLAMADA_911			    M05_911_TS				   20		   1	    128 	 7 TABLE		     256
+LLAMADA_911			    M05_911_TS				   25		   1	    128 	 7 TABLE		     384
+LLAMADA_911			    M05_911_TS				   30		   1	    128 	 7 TABLE		     512
+LLAMADA_911			    M05_911_TS				   35		   1	    128 	 7 TABLE		     640
+LLAMADA_911			    M05_911_TS				   40		   1	    128 	 7 TABLE		     768
+LLAMADA_911			    M05_911_TS				   45		   1	    128 	 7 TABLE		     896
+LLAMADA_911			    M05_911_TS				   50		   1	    128 	 7 TABLE		    1024
+LLAMADA_911			    M05_911_TS				   55		   1	    128 	 7 TABLE		    1152
+LLAMADA_911			    M05_911_TS				   60		   1	    128 	 7 TABLE		    1280
+LLAMADA_911			    M05_911_TS				   65		   1	    128 	 7 TABLE		    1408
+LLAMADA_911			    M05_911_TS				   19		   1	    128 	 8 TABLE		     128
+LLAMADA_911			    M05_911_TS				   24		   1	    128 	 8 TABLE		     256
+LLAMADA_911			    M05_911_TS				   29		   1	    128 	 8 TABLE		     384
+LLAMADA_911			    M05_911_TS				   34		   1	    128 	 8 TABLE		     512
+LLAMADA_911			    M05_911_TS				   39		   1	    128 	 8 TABLE		     640
+
+SEGMENT_NAME			    TABLESPACE_NAME		      NUM_EXT EXTENT_SIZE_MB	 BLOCKS    FILE_ID SEGMENT_TYPE 	BLOCK_ID
+----------------------------------- ------------------------------ ---------- -------------- ---------- ---------- ------------------ ----------
+LLAMADA_911			    M05_911_TS				   44		   1	    128 	 8 TABLE		     768
+LLAMADA_911			    M05_911_TS				   49		   1	    128 	 8 TABLE		     896
+LLAMADA_911			    M05_911_TS				   54		   1	    128 	 8 TABLE		    1024
+LLAMADA_911			    M05_911_TS				   59		   1	    128 	 8 TABLE		    1152
+LLAMADA_911			    M05_911_TS				   64		   1	    128 	 8 TABLE		    1280
+LLAMADA_911			    M05_911_TS				   18		   1	    128 	 9 TABLE		     128
+LLAMADA_911			    M05_911_TS				   23		   1	    128 	 9 TABLE		     256
+LLAMADA_911			    M05_911_TS				   28		   1	    128 	 9 TABLE		     384
+LLAMADA_911			    M05_911_TS				   33		   1	    128 	 9 TABLE		     512
+LLAMADA_911			    M05_911_TS				   38		   1	    128 	 9 TABLE		     640
+LLAMADA_911			    M05_911_TS				   43		   1	    128 	 9 TABLE		     768
+LLAMADA_911			    M05_911_TS				   48		   1	    128 	 9 TABLE		     896
+LLAMADA_911			    M05_911_TS				   53		   1	    128 	 9 TABLE		    1024
+LLAMADA_911			    M05_911_TS				   58		   1	    128 	 9 TABLE		    1152
+LLAMADA_911			    M05_911_TS				   63		   1	    128 	 9 TABLE		    1280
+
+66 rows selected.
+
+dba_extents [ENTER] para continuar
+
+1 Consultando segmentos
+old   3: from &p_user..llamada_911
+new   3: from m05_911_user.llamada_911
+
+SEGMENTO		  TOTAL_REG
+------------------------ ----------
+AAAOzR			     449999
+
+rowid segmentos [ENTER] para continuar
+
+2. Mostrar el nombre del tablespace, id y nombre(path) del data file, tamaño
+en MB, total de bloques, online_status, bandera que indica crecimiento automático.
+
+TABLESPACE_NAME 		  FILE_ID FILE_NAME							      BYTES_MB	   BLOCKS ONLINE_ AUT
+------------------------------ ---------- ----------------------------------------------------------------- ---------- ---------- ------- ---
+M05_911_TS				5 /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf		    15	     1920 ONLINE  NO
+M05_911_TS				6 /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf		    15	     1920 ONLINE  NO
+M05_911_TS				7 /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf		    15	     1920 ONLINE  NO
+M05_911_TS				8 /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf		    15	     1920 ONLINE  NO
+M05_911_TS				9 /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf		    15	     1920 ONLINE  NO
+M05_911_IX_TS			       10 /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf	    26	     3328 ONLINE  YES
+
+6 rows selected.
+
+dba_data_files [ENTER] para continuar
+
+3. Mostrar el nombre del tablespace, nombre del segmento, nombre del data file(path)
+y el total de extensiones que se han reservado para cada data file hasta el momento.
+
+TABLESPACE_NAME 	       SEGMENT_NAME			   FILE_NAME
+------------------------------ ----------------------------------- -----------------------------------------------------------------
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+
+TABLESPACE_NAME 	       SEGMENT_NAME			   FILE_NAME
+------------------------------ ----------------------------------- -----------------------------------------------------------------
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+
+TABLESPACE_NAME 	       SEGMENT_NAME			   FILE_NAME
+------------------------------ ----------------------------------- -----------------------------------------------------------------
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+
+TABLESPACE_NAME 	       SEGMENT_NAME			   FILE_NAME
+------------------------------ ----------------------------------- -----------------------------------------------------------------
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+
+TABLESPACE_NAME 	       SEGMENT_NAME			   FILE_NAME
+------------------------------ ----------------------------------- -----------------------------------------------------------------
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+
+TABLESPACE_NAME 	       SEGMENT_NAME			   FILE_NAME
+------------------------------ ----------------------------------- -----------------------------------------------------------------
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+
+TABLESPACE_NAME 	       SEGMENT_NAME			   FILE_NAME
+------------------------------ ----------------------------------- -----------------------------------------------------------------
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf
+M05_911_TS		       LLAMADA_911			   /disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_INCIDENT_NUMBER	   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+
+TABLESPACE_NAME 	       SEGMENT_NAME			   FILE_NAME
+------------------------------ ----------------------------------- -----------------------------------------------------------------
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+M05_911_IX_TS		       IX1_LLAMADA_911_ADDRESS		   /disk-mod5/u31/app/oracle/oradata/JPCDIP02/m05_911_ix_ts_05.dbf
+
+383 rows selected.
+
+dba_extents, dba_data_files [ENTER] para continuar
+
+3 Total de extensiones reservadas
+
+SUM(BYTES)/1024/1024   COUNT(*)
+-------------------- ----------
+			      0
+
+extensiones reservadas [ENTER] para continuar
+
+Validando tabla permanente
+select * from llamada_911 where rownum <=3
+              *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+
+ADDRESS 					   TYPE 					      CALL_TS		   LATITUDE  LONGITUDE REPORT_LOCATION				INCIDENT_NUM
+-------------------------------------------------- -------------------------------------------------- ------------------ ---------- ---------- ---------------------------------------- ------------
+904 7th Av					   Car Fire					      22-MAY-19 	    47.6069 -122.32905 POINT (-122.329051 47.6069)		F190051945
+9610 53rd Av S					   Aid Response 				      22-MAY-19 	  47.515984 -122.26653 POINT (-122.266529 47.515984)		F190051946
+106 Pike St					   Aid Response 				      22-MAY-19 	  47.608849 -122.33995 POINT (-122.339945 47.608849)		F190051950
+
+
+
+----------------------------------------------------------
+
+
+*************************e-03-servicio-911-tareas-admin,sql*******************************************
+
+sys@jpcdip02> start e-03-servicio-911-tareas-admin.sql
+0. Conectando como sys
+Connected.
+
+Tablespace altered.
+
+4. Consulta que muestra nombre, id y online_status de los datafiles
+
+FILE_NAME								  FILE_ID ONLINE_
+---------------------------------------------------------------------- ---------- -------
+/disk-mod5/u21/app/oracle/oradata/JPCDIP02/m05_911_ts_01.dbf			5 OFFLINE
+/disk-mod5/u22/app/oracle/oradata/JPCDIP02/m05_911_ts_02.dbf			6 OFFLINE
+/disk-mod5/u23/app/oracle/oradata/JPCDIP02/m05_911_ts_03.dbf			7 OFFLINE
+/disk-mod5/u24/app/oracle/oradata/JPCDIP02/m05_911_ts_04.dbf			8 OFFLINE
+/disk-mod5/u25/app/oracle/oradata/JPCDIP02/m05_911_ts_05.dbf			9 OFFLINE
+
+5. Reasingacion de ubicaciones.
+
+
+
+
+
+
+Tablespace altered.
+
+colocando en modo online el tbs m05_911_ts
+
+Tablespace altered.
+
+[Enter para continuar]
+
+7. Renombrando pero en modo online
+
+Database altered.
+
+
+Database altered.
+
+
+Database altered.
+
+
+Database altered.
+
+
+Database altered.
+
+9. Consultando registros para verificar integridad de la base.
+
+  COUNT(*)
+----------
+    449999
+
+
+
+
+----------------
+##Comentarios y conclusiones
+
+
+En este ejercicio, se abordaron diversas tareas relacionadas con la administración de tablespaces, data files e índices en Oracle, 
+utilizando un caso de estudio centrado en el almacenamiento de datos de llamadas al servicio 911.
+Se creó un tablespace principal (m05_911_ts) y un tablespace para índices (m05_911_ix_ts), con configuraciones específicas de data files 
+y crecimiento automático. 
+Se cargaron datos desde un archivo CSV utilizando una tabla externa, deshabilitando la generación de datos REDO y empleando carga directa con el 
+hint /* append */ para mejorar la eficiencia.
+Posteriormente, se realizaron consultas para mostrar información detallada sobre tablespaces, data files, segmentos y extensiones. 
+Además, se exploró la reubicación de data files utilizando el modo offline y, posteriormente, se corrigió para realizar la reubicación sin interrupciones.
+El ejercicio proporcionó una comprensión práctica de la gestión de tablespaces, carga de datos eficiente, reubicación de data files 
+y mantenimiento de índices en Oracle. 
+También destacó la importancia de entender las implicaciones y precauciones al realizar tareas administrativas, como el modo offline.
+Como sugerencias, se podría enfatizar la importancia de realizar copias de seguridad antes de realizar operaciones críticas 
+y explorar alternativas para minimizar el impacto en la disponibilidad de datos durante las tareas de mantenimiento. 
+ En términos de aprendizaje, el ejercicio proporcionó una valiosa experiencia práctica en la administración de bases de datos Oracle.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

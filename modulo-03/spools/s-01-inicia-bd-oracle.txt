@@ -1,0 +1,244 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##26-11-2023
+##Módulo 03. E-01-Iniciar una base de datos.
+-------------------------------------------
+
+
+##SCRIPT
+
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 24/11/2023
+--@Descripción: Ejercicio 01 -módulo 03 . Iniciando una instancia de base de datos.
+
+connect sys/system2 as sysdba
+
+Prompt 1.Deteniendo instancia
+shutdown immediate
+
+define backup_dir='/home/oracle/backups/modulo-03'
+Prompt 2.Creando directorio de respaldos
+!mkdir -p &backup_dir
+
+--verificar nombres de spfile y pfile
+Prompt Moviendo spfile y pfile
+!mv  $ORACLE_HOME/dbs/spfilejpcdip02.ora &backup_dir
+!mv  $ORACLE_HOME/dbs/initjpcdip02.ora  &backup_dir
+
+Prompt Moviendo un solo archivo de control
+!mv /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/control01.ctl &backup_dir
+
+
+Prompt Moviendo un archivo redo log de cada grupo
+!mv /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo01a.log &backup_dir
+!mv /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo01b.log &backup_dir
+!mv /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo01c.log &backup_dir
+
+Prompt Moviendo  datafiles
+!mv $ORACLE_BASE/oradata/JPCDIP02/system01.dbf &backup_dir
+!mv $ORACLE_BASE/oradata/JPCDIP02/users01.dbf &backup_dir
+
+Prompt mostrando archivos en el directorio de respaldos ( verificar 8 archivos)
+!ls -lh &backup_dir
+
+Pause [Archivos en directorio de respaldos, enter para continuar]
+
+Prompt intentando iniciar instancia modo nomount
+startup nomount
+
+Pause [Enter para corregir y reintentar]
+Prompt restaurando archivos de parámetros
+!mv  &backup_dir/spfilejpcdip02.ora  $ORACLE_HOME/dbs
+!mv  &backup_dir/initjpcdip02.ora  $ORACLE_HOME/dbs
+
+Prompt iniciando instancia
+startup nomount
+pause [¿ Se corrigió el error? Enter para continuar]
+
+Prompt Intentando pasar al modo mount
+alter database mount;
+
+pause [Enter para corregir y reintentar]
+Prompt restaurando el archivo de control
+!mv &backup_dir/control01.ctl /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/
+
+Prompt cambiando al modo mount
+alter database mount;
+Pause [¿ Se corrigió el error? Enter para continuar]
+
+prompt intentar pasar al modo open
+alter database open;
+
+pause [Enter para restaurar datafile del tablespace system]
+prompt restaurando datafile para el tablespace system 
+!mv &backup_dir/system01.dbf  $ORACLE_BASE/oradata/JPCDIP02/
+
+prompt intentando abrir nuevamente 
+alter database open;
+
+pause [¿Se corrigió el error? Enter para restaurar datafile del TS users]
+!mv &backup_dir/users01.dbf  $ORACLE_BASE/oradata/JPCDIP02/
+
+prompt intentando abrir nuevamente 
+alter database open;
+
+pause [¿Se corrigió el error?, Revisar alert Log!, Enter - Restaurar Redo Logs]
+prompt restaurando redo logs 
+!mv &backup_dir/redo01a.log  /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/
+!mv &backup_dir/redo01b.log  /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/
+!mv &backup_dir/redo01c.log  /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/
+
+prompt intentando iniciar nuevamente en modo OPEN, requiere autenticar y volver a iniciar
+connect sys/system2 as sysdba
+startup open; 
+
+prompt Mostrando status
+select status from v$instance;
+
+Pause [¿La Base ha regresado a la normalidad ? Enter para terminar]
+
+------------------------------------------
+
+
+##SALIDA DE EJECUCIÓN
+idle> start s-01-inicia-bd-oracle.sql
+Connected.
+1.Deteniendo instancia
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+2.Creando directorio de respaldos
+
+Moviendo spfile y pfile
+
+
+Moviendo un solo archivo de control
+
+Moviendo un archivo redo log de cada grupo
+
+
+
+Moviendo  datafiles
+
+
+mostrando archivos en el directorio de respaldos ( verificar 8 archivos)
+total 1.4G
+-rw-rw----. 1 oracle oinstall  18M Nov 26 14:24 control01.ctl
+-rw-r--r--. 1 oracle oinstall  272 Nov 26 02:26 initjpcdip02.ora
+-rw-rw----. 1 oracle oinstall  51M Nov 26 03:00 redo01a.log
+-rw-rw----. 1 oracle oinstall  51M Nov 26 03:00 redo01b.log
+-rw-rw----. 1 oracle oinstall  51M Nov 26 03:00 redo01c.log
+-rw-rw----. 1 oracle oinstall 2.5K Nov 26 03:00 spfilejpcdip02.ora
+-rw-rw----. 1 oracle oinstall 701M Nov 26 14:24 system01.dbf
+-rw-rw----. 1 oracle oinstall 501M Nov 26 14:24 users01.dbf
+
+[Archivos en directorio de respaldos, enter para continuar]
+
+intentando iniciar instancia modo nomount
+ORA-01078: failure in processing system parameters
+LRM-00109: could not open parameter file '/u01/app/oracle/product/19.3.0/dbhome_1/dbs/initjpcdip02.ora'
+[Enter para corregir y reintentar]
+
+restaurando archivos de parámetros
+
+
+iniciando instancia
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes
+Fixed Size		    8901696 bytes
+Variable Size		  666894336 bytes
+Database Buffers	  121634816 bytes
+Redo Buffers		    7872512 bytes
+[¿ Se corrigió el error? Enter para continuar]
+
+Intentando pasar al modo mount
+alter database mount
+*
+ERROR at line 1:
+ORA-00205: error in identifying control file, check alert log for more info
+
+
+[Enter para corregir y reintentar]
+
+restaurando el archivo de control
+
+cambiando al modo mount
+
+Database altered.
+
+[¿ Se corrigió el error? Enter para continuar]
+
+intentar pasar al modo open
+alter database open
+*
+ERROR at line 1:
+ORA-01157: cannot identify/lock data file 1 - see DBWR trace file
+ORA-01110: data file 1: '/u01/app/oracle/oradata/JPCDIP02/system01.dbf'
+
+
+[Enter para restaurar datafile del tablespace system]
+    
+restaurando datafile para el tablespace system
+
+intentando abrir nuevamente
+alter database open
+*
+ERROR at line 1:
+ORA-01157: cannot identify/lock data file 4 - see DBWR trace file
+ORA-01110: data file 4: '/u01/app/oracle/oradata/JPCDIP02/users01.dbf'
+
+
+[¿Se corrigió el error? Enter para restaurar datafile del TS users]
+
+
+intentando abrir nuevamente
+alter database open
+*
+ERROR at line 1:
+ORA-03113: end-of-file on communication channel
+Process ID: 33327
+Session ID: 75 Serial number: 49370
+
+
+[¿Se corrigió el error?, Revisar alert Log!, Enter - Restaurar Redo Logs]
+
+restaurando redo logs
+
+
+
+intentando iniciar nuevamente en modo OPEN, requiere autenticar y volver a iniciar
+Connected to an idle instance.
+ORACLE instance started.
+
+Total System Global Area  805303360 bytes
+Fixed Size		    8901696 bytes
+Variable Size		  666894336 bytes
+Database Buffers	  121634816 bytes
+Redo Buffers		    7872512 bytes
+Database mounted.
+Database opened.
+Mostrando status
+
+STATUS
+------------
+OPEN
+
+[¿La Base ha regresado a la normalidad ? Enter para terminar]
+
+---------------------------------------------------------------------------------------
+
+#CONCLUSIONES
+
+El ejercicio se centra en simular situaciones críticas al iniciar una base de datos en Oracle.
+A través de un script bien estructurado, se detiene la instancia, se crea un directorio de respaldos
+y se mueven archivos esenciales, como SPFILE, PFILE, REDO logs y datafiles de tablespaces clave.
+La pregunta sobre qué archivos REDO logs mover fomenta la reflexión sobre la arquitectura de REDO logs
+y su impacto en la operación de la base de datos.
+La fortaleza del ejercicio radica en su enfoque práctico. Al simular pérdidas y presentar errores 
+esperados, se proporciona una oportunidad efectiva para aprender a manejar situaciones adversas. 
+La iteración continua del ciclo de pérdida y recuperación permite una asimilación gradual de los 
+conceptos.
+Una mejora potencial podría estar en la simplificación de la autenticación, 
+haciendo que la ejecución del script sea más fluida. 
+Además, la claridad sobre qué archivos REDO logs mover podría mejorarse para facilitar una 
+comprensión más rápida.

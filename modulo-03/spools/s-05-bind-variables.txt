@@ -1,0 +1,199 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##29-11-2023
+##Módulo 03. E-04- Bind Variables.
+-------------------------------------------
+
+##SCRIPT
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 27 /11/2023
+--@Descripción: Ejercicio 05 -módulo 03 . Bind Variables.
+
+connect sys/system2 as sysdba
+
+prompt creando usuario user01
+create user user01 identified by user01 quota unlimited on users;
+grant create session, create table to user01;
+
+Prompt creando tabla de prueba
+create table user01.test(id number) segment creation immediate;
+
+Prompt removiendo información del shared pool
+alter system flush shared_pool;
+
+
+prompt 2. Sentencias SQL sin bind variables
+
+begin
+  for i in 1..100000 loop
+    execute immediate 'insert into user01.test (id) values ('||i||')';
+  end loop;
+end;
+/
+
+prompt 1. Sentencias SQL con bind variables
+set timing on 
+
+begin
+  for i in 1..100000 loop
+    execute immediate 'insert into user01.test (id) values (:ph1)' using i;
+  end loop;
+end;
+/
+
+
+Prompt mostrando datos de la sentencia SQL sin bind variables
+select  count(*) t_rows, sum(executions) executions,sum(loads) loads,
+  sum(parse_calls) parse_calls, sum(disk_reads) disk_reads,
+  sum(buffer_gets) buffer_gets, sum(cpu_time)/1000 cpu_time_ms ,
+  sum(elapsed_time)/1000 elapsed_time_ms
+from v$sqlstats
+where sql_text  like 'insert into user01.test (id) values (%)'
+and sql_text  <> 'insert into user01.test (id) values (:ph1)';
+
+Prompt mostrando datos de la sentencia SQL con bind variables
+select  executions,loads,parse_calls,disk_reads,buffer_gets,
+  cpu_time/1000 cpu_time_ms,elapsed_time/1000 elapsed_time_ms
+from v$sqlstats
+where sql_text  = 'insert into user01.test (id) values (:ph1)';
+
+set timing off
+
+Prompt limpieza
+connect sys/system2 as sysdba
+drop user user01 cascade;
+
+
+
+
+
+
+
+
+--------------------------------------------------------------
+##SALIDA DE EJECUCIÓN
+
+
+sys@jpcdip02> start s-05-bind-variables.sql
+Connected.
+
+                                                                                                                               
+
+creando usuario user01
+
+User created.
+
+
+Grant succeeded.
+
+creando tabla de prueba
+
+Table created.
+
+removiendo información del shared pool
+
+System altered.
+
+1. Sentencias SQL con bind variables
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:01.04
+2. Sentencias SQL sin bind variables
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:23.71
+mostrando datos de la sentencia SQL sin bind variables
+
+    T_ROWS EXECUTIONS      LOADS PARSE_CALLS DISK_READS BUFFER_GETS CPU_TIME_MS ELAPSED_TIME_MS                                
+---------- ---------- ---------- ----------- ---------- ----------- ----------- ---------------                                
+      1454        749       1454         749          0        1522     166.537         166.319                                
+
+Elapsed: 00:00:00.02
+mostrando datos de la sentencia SQL con bind variables
+
+no rows selected
+
+Elapsed: 00:00:00.01
+limpieza
+Connected.
+
+                                                                                                                               
+
+
+User dropped.
+
+sys@jpcdip02> start s-05-bind-variables
+Connected.
+
+                                                                                                                               
+
+creando usuario user01
+
+User created.
+
+
+Grant succeeded.
+
+creando tabla de prueba
+
+Table created.
+
+removiendo información del shared pool
+
+System altered.
+
+2. Sentencias SQL sin bind variables
+
+PL/SQL procedure successfully completed.
+
+1. Sentencias SQL con bind variables
+
+PL/SQL procedure successfully completed.
+
+Elapsed: 00:00:00.91
+mostrando datos de la sentencia SQL sin bind variables
+
+    T_ROWS EXECUTIONS      LOADS PARSE_CALLS DISK_READS BUFFER_GETS CPU_TIME_MS ELAPSED_TIME_MS                                
+---------- ---------- ---------- ----------- ---------- ----------- ----------- ---------------                                
+      1468        756       1468         756          0        1535      166.48         166.765                                
+
+Elapsed: 00:00:00.02
+mostrando datos de la sentencia SQL con bind variables
+
+EXECUTIONS      LOADS PARSE_CALLS DISK_READS BUFFER_GETS CPU_TIME_MS ELAPSED_TIME_MS                                           
+---------- ---------- ----------- ---------- ----------- ----------- ---------------                                           
+    100000          1           1          0      102921     447.212         528.883                                           
+
+Elapsed: 00:00:00.01
+limpieza
+Connected.
+
+                                                                                                                               
+
+
+User dropped.
+
+sys@jpcdip02> spool off
+
+
+---------------------------------------------------------------------------------------
+
+#CONCLUSIONES
+
+
+En este ejercicio, se ejecutó el script s-05-bind-variables.sql para analizar el rendimiento de 
+sentencias SQL con y sin el uso de bind variables. Se realizaron acciones como la creación de un 
+usuario, la eliminación del shared pool, la inserción de registros en una tabla mediante 
+bloques PL/SQL con y sin bind variables, y la consulta de estadísticas de ejecución en la vista 
+v$sqlstats. Se llevó a cabo una comparación y análisis de los tiempos de ejecución y las estadísticas
+ obtenidas, explorando el impacto del uso de bind variables en el rendimiento de las consultas SQL.
+
+
+
+
+
+
+
+
+

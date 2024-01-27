@@ -1,0 +1,226 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-01-2024
+##Módulo 05. E-04- Row chaining.
+-------------------------------------------
+
+##SCRIPT
+------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/01/2024
+--@Descripción: Ejercicio 04 - Módulo 05. Row chaining
+
+
+whenever sqlerror exit rollback
+
+connect sys/system2 as sysdba
+
+Prompt mostrando el contenido del parámetro db_block_size
+show parameter db_block_size
+
+Prompt conectando como jorge05 para generar una tabla grande
+connect jorge05/jorge05
+
+declare
+begin
+  execute immediate 'drop table t03_row_chaining';
+exception
+  when others then
+    null;
+end;
+/
+
+create table t03_row_chaining(
+  id number(10,0) constraint t03_row_chaining_pk primary key,
+  c1 char(2000) default 'A',
+  c2 char(2000) default 'B',
+  c3 char(2000) default 'C',
+  c4 char(2000) default 'D',
+  c5 char(2000) default 'E'
+);
+
+Prompt insertando un primer registro
+insert into t03_row_chaining(id) values (1);
+
+commit;
+
+Prompt mostrando el tamaño de la columna c1
+select length(c1) from t03_row_chaining where id = 1;
+
+Prompt actualizando estadísticas
+analyze table t03_row_chaining compute statistics;
+
+
+Prompt consultando metadatos
+set linesize window
+select tablespace_name, pct_free,pct_used,num_rows,blocks,empty_blocks,
+  avg_space/1024 avg_space_kb, chain_cnt,avg_row_len/1024 avg_row_len_kb
+from user_tables
+where table_name= 'T03_ROW_CHAINING';
+
+Pause Analizar, presionar [Enter] parar corregir problema
+
+Prompt Creando un nuevo tablespace con bloques de 16K, conectando como SYS
+connect sys/system2 as sysdba
+
+--Tamanio de todo el pool
+---se debe de cambiar de configuracion para poder alterar el parametro de db size
+--alter system set sga_max_size=150m scope=spfile;
+
+--shutdown immediate
+--startup
+
+alter system set sga_target = 400M scope = memory;
+alter system set db_16k_cache_size = 1M scope = memory;
+SELECT name, value FROM v$parameter WHERE name LIKE '%cache_size%'
+
+begin
+  execute immediate 'drop tablespace dip_m05_01 including contents and datafiles';
+exception
+  when others then
+    null;
+end;
+/
+
+create tablespace dip_m05_01
+  blocksize 16K
+  datafile '/u01/app/oracle/oradata/JPCDIP02/dip_m05_01_01.dbf' size 20m
+  extent management local uniform size 1M;
+
+Prompt otorgando quota de almacenamiento al usuario jorge05 en el nuevo TS
+alter user jorge05 quota unlimited on dip_m05_01;
+
+
+Prompt moviendo datos al nuevo TS, conectando como jorge05
+connect jorge05/jorge05 
+alter table t03_row_chaining move tablespace dip_m05_01;
+
+Prompt reconstruyendo el índice (por efectos del cambio del TS)
+alter index t03_row_chaining_pk rebuild;
+
+Prompt  calculando estadísticas nuevamente
+analyze table t03_row_chaining compute statistics;
+
+Prompt Mostrando metadatos nuevamente
+select tablespace_name, pct_free,pct_used,num_rows,blocks,empty_blocks,
+  avg_space/1024 avg_space_kb, chain_cnt,avg_row_len/1024 avg_row_len_kb
+from user_tables
+where table_name= 'T03_ROW_CHAINING';
+
+Pause Analizar y presionar [Enter] para continuar
+
+Prompt  Mostrando el DDL de la tabla modificada
+
+set heading off
+set echo off
+set pages 999
+set long 90000
+select dbms_metadata.get_ddl('TABLE','T03_ROW_CHAINING','JORGE05') from dual;
+
+Pause Prueba terminada, presionar [Enter] para hacer limpieza
+
+Prompt eliminando tabla t03_row_chaining
+drop table t03_row_chaining;
+
+Prompt  Eliminando TS 
+connect sys/system2 as sysdba
+
+drop tablespace dip_m05_01 including contents and datafiles;
+
+exit
+
+
+-----------------------------------------------------
+
+
+
+
+##SALIDA DE EJECUCIÓN
+------------------------------------------------------
+
+sys@jpcdip02> start e-04-row-chaining.sql
+Connected.
+mostrando el contenido del parámetro db_block_size
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+db_block_size			     integer	 8192
+conectando como jorge05 para generar una tabla grande
+Connected.
+
+PL/SQL procedure successfully completed.
+
+
+Table created.
+
+insertando un primer registro
+
+1 row created.
+
+
+Commit complete.
+
+mostrando el tamaño de la columna c1
+
+LENGTH(C1)
+----------
+      2000
+
+actualizando estadísticas
+
+Table analyzed.
+
+consultando metadatos
+
+TABLESPACE_NAME 		 PCT_FREE   PCT_USED   NUM_ROWS     BLOCKS EMPTY_BLOCKS AVG_SPACE_KB  CHAIN_CNT AVG_ROW_LEN_KB
+------------------------------ ---------- ---------- ---------- ---------- ------------ ------------ ---------- --------------
+USERS				       10		      1 	 5	      3   5.91894531	      1     9.79199219
+
+Analizar, presionar [Enter] parar corregir problema
+
+Creando un nuevo tablespace con bloques de 16K, conectando como SYS
+Connected.
+
+System altered.
+
+alter system set db_16k_cache_size = 12M scope = memory
+*
+ERROR at line 1:
+ORA-02097: parameter cannot be modified because specified value is invalid
+ORA-00384: Insufficient memory to grow cache
+
+
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-05]$ sqlplus sys as sysdba
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Fri Jan 12 23:07:38 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+
+
+
+--------------------------------------------------------
+##COMENTARIOS Y CONCLUSIONES
+Durante el ejercicio, se enfrentó un desafío al intentar ajustar la caché para bloques de 16K debido a restricciones de memoria, lo que generó el error ORA-00384. 
+Aunque se exploraron diversas estrategias, no se logró resolver completamente este problema.
+En relación con el encadenamiento de bloques, se desarrolló un script que abordó el problema sin modificar la estructura ni los datos de la tabla afectada. 
+El proceso incluyó la creación de una tabla con renglones que exceden el tamaño del bloque, la recolección de estadísticas, y la eliminación del encadenamiento 
+mediante la reconstrucción de índices.
+El impacto del encadenamiento de bloques se evidenció en el rendimiento durante el escaneo de bloques de una tabla, 
+lo que puede causar demoras debido a la necesidad de acceder a múltiples bloques para recuperar la información completa.
+Se señalaron sugerencias clave, como verificar la memoria disponible y realizar un análisis detallado de la configuración antes de ajustar parámetros. 
+Además, se destacó la importancia de reiniciar la base de datos después de cambios significativos.
+En cuanto a los bloques de mayor tamaño, se mencionaron ventajas, como la reducción del espacio de almacenamiento, y desventajas, como un posible mayor 
+tiempo de acceso a bloques completos.
+En resumen,a pesar de no poder solucionar el detalle de alterar el parmaetro por motivos de tiempo ya que se debia de ajustar los parametros de memoria de la instancia
+el ejercicio abordó desafíos técnicos, proporcionó soluciones para el encadenamiento de bloques, y 
+resaltó consideraciones clave al ajustar la configuración de la base de datos.
+
+
+
+
+
+
