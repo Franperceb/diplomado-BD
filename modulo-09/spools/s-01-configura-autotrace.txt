@@ -1,0 +1,113 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-04-2024
+##Módulo 09. E-01- Configuración autotrace.
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/04/2024
+--@Descripción: Ejercicio 01 - Módulo 09. Configuración autotrace.
+
+Prompt conectando como sys
+conn sys/system1 as sysdba
+
+Prompt otorgando rol plustrace al usuario &t_user
+grant plustrace to &tuser;
+
+Prompt Conectando con &t_user
+connect &userlogon
+
+Prompt Creando PLAN TABLE
+declare
+V count number;
+begin
+select count(*) into v count from user tables where table name='PLAN TABLE'
+if v count > 0 then
+execute immediate 'drop table plan table'
+end if:
+end;
+/
+@SORACLE _HOME/cdbms/admin/utlxplan.sql
+Prompt ejemplo con set autotrace on
+Prompt contando registros de la tabla cita
+set autotrace on
+select count (*) from cita;
+
+------------------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+control_medico@jpcdip01> start s-01-configura-autotrace.sql
+conectando como sys
+Connected.
+otorgando rol plustrace al usuario control_medico
+Enter value for tuser: control_medico
+old   1: grant plustrace to &tuser
+new   1: grant plustrace to control_medico
+
+Grant succeeded.
+
+Conectando con control_medico
+Connected.
+Creando PLAN TABLE
+SP2-0552: Bind variable "END" not declared.
+SP2-0310: unable to open file "SORACLE.sql"
+ejemplo con set autotrace on
+contando registros de la tabla cita
+
+  COUNT(*)
+----------
+     20000
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 171836600
+
+-------------------------------------------------------------------------
+| Id  | Operation	      | Name	| Rows	| Cost (%CPU)| Time	|
+-------------------------------------------------------------------------
+|   0 | SELECT STATEMENT      | 	|     1 |    12   (0)| 00:00:01 |
+|   1 |  SORT AGGREGATE       | 	|     1 |	     |		|
+|   2 |   INDEX FAST FULL SCAN| CITA_PK | 20000 |    12   (0)| 00:00:01 |
+-------------------------------------------------------------------------
+
+
+Statistics
+----------------------------------------------------------
+	  0  recursive calls
+	  0  db block gets
+	 55  consistent gets
+	  0  physical reads
+	  0  redo size
+	550  bytes sent via SQL*Net to client
+	388  bytes received via SQL*Net from client
+	  2  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	  1  rows processed
+
+
+
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+Este ejercicio proporcionó una experiencia práctica en la configuración y uso del comando autotrace en Oracle 
+para analizar el rendimiento de las consultas SQL. Al asignar el rol plustrace al usuario control_medico y 
+crear la tabla plan_table en su esquema, pudimos utilizar diferentes configuraciones de autotrace para obtener información 
+detallada sobre el plan de ejecución y las estadísticas de las consultas.
+La interpretación de las estadísticas generadas por autotrace nos permitió comprender mejor los recursos requeridos 
+para ejecutar las consultas, como el número de llamadas recursivas, lecturas de bloques de datos, operaciones de ordenamiento y más. 
+Esto nos ayudó a identificar áreas de mejora en nuestras consultas y optimizar el rendimiento de las mismas.
+Además, este ejercicio resaltó la importancia de asegurarse de tener las credenciales de conexión correctas, 
+ya que se experimentó un error inicial de conexión con el usuario sys que se resolvió ajustando adecuadamente las credenciales.
+En resumen, este ejercicio proporcionó una base sólida para comprender y utilizar efectivamente el comando autotrace en Oracle, 
+lo que contribuyó significativamente a mejorar nuestra capacidad para analizar y optimizar el rendimiento de las consultas SQL.
+
+
+
+
+

@@ -1,0 +1,208 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 23/02/2024
+##@Descripción: Ejercicio 03 - Módulo 07 -  Clonar una PDB a partir de una CDB remota
+-------------------------------------------
+**SCRIPT
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 23/02/2024
+--@Descripción: Ejercicio 03 - Módulo 07. Clonar una PDB a partir de una CDB remota
+
+--   EJERCICIO
+--   Completar el script en las secciones marcadas con TODO
+--
+spool /unam-diplomado-bd/modulos/modulo-07/e-crea-pdbs/s-033-crea-pdb-spool.txt
+
+prompt Hacer Clon jpcdip03_s1 -> jpcdip04_s2  Ahora con DB links
+
+prompt Iniciando jpcdip03
+!sh s-030-start-cdb.sh jpcdip03 system3
+
+prompt Iniciando jpcdip04
+!sh s-030-start-cdb.sh jpcdip04 system4
+
+prompt conectando a jpcdip03
+connect sys/system3@jpcdip03 as sysdba
+
+-- TODO: Crear un usuario en común (nivel CDB) para realizar conexiones a través
+-- de un DB link
+prompt creando usuario en jpcdip03
+create user c##jorge_remote identified by jorge container=ALL;
+grant create session, create pluggable database to c##jorge_remote container=ALL;
+
+prompt conectando a jpcdip04 para crear DB Link
+--TODO:  realizar la conexión
+Pause cambiar ORACLE_SID a nueva cdb [Enter] para continuar
+
+conn sys/system4 as sysdba 
+
+--TODO: Crear el DB Link, agregar el alias de servicio de ser necesario
+create database link clone_link
+  connect to c##jorge_remote identified by jorge
+  using 'jpcdip03';
+
+prompt Creando pdb jpcdip04_s2
+--TODO:  clonar la PDB en  jpcdip04_s2
+create pluggable database jpcdip04_s2
+  from jpcdip03_s1@clone_link
+  file_name_convert=(
+    '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1', 
+    '/u01/app/oracle/oradata/JPCDIP04/jpcdip04_s2'
+  );
+
+prompt Abriendo y verificando la nueva pdb
+alter pluggable database jpcdip04_s2 open read write;
+show pdbs
+
+Prompt mostrando datafiles de la CDB
+set linesize window
+col file_name format A60
+select file_id, file_name from cdb_data_files;
+
+pause Analizar resultados, [Enter] para continuar con Limpieza
+
+prompt borrar PDB
+alter pluggable database jpcdip04_s2 close;
+drop  pluggable database jpcdip04_s2 including datafiles;
+
+drop database link clone_link;
+
+prompt eliminando usuario en jpcdip03
+connect sys/system3@jpcdip03 as sysdba
+
+--TODO: ELiminar al usuario 
+drop user c##jorge_remote cascade;
+
+spool off
+exit
+
+
+------------------------------------------------------------
+**SALIDA DE EJECUCIÓN
+
+
+sys@jpcdip04> start s-033-crea-pdb.sql
+Hacer Clon jpcdip03_s1 -> jpcdip04_s2  Ahora con DB links
+Iniciando jpcdip03
+Iniciando jpcdip03
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Fri Feb 16 19:59:50 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip03> ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip03> USER is "SYS"
+sys@jpcdip03> Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+Iniciando jpcdip04
+Iniciando jpcdip04
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Fri Feb 16 19:59:51 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip04> ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip04> USER is "SYS"
+sys@jpcdip04> Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+conectando a jpcdip03
+Connected.
+creando usuario en jpcdip03
+
+User created.
+
+
+Grant succeeded.
+
+conectando a jpcdip04 para crear DB Link
+cambiar ORACLE_SID a nueva cdb [Enter] para continuar
+
+Connected.
+
+Database link created.
+
+Creando pdb jpcdip04_s2
+
+Pluggable database created.
+
+Abriendo y verificando la nueva pdb
+
+Pluggable database altered.
+
+
+    CON_ID CON_NAME			  OPEN MODE  RESTRICTED
+---------- ------------------------------ ---------- ----------
+	 2 PDB$SEED			  READ ONLY  NO
+	 3 JPCDIP04_S			  READ WRITE NO
+	 4 JPCDIP04_S2			  READ WRITE NO
+mostrando datafiles de la CDB
+
+   FILE_ID FILE_NAME
+---------- ------------------------------------------------------------
+	 1 /u01/app/oracle/oradata/JPCDIP04/datafile/o1_mf_system_lwzrf
+	   mrh_.dbf
+
+	 3 /u01/app/oracle/oradata/JPCDIP04/datafile/o1_mf_sysaux_lwzrg
+	   py1_.dbf
+
+	 4 /u01/app/oracle/oradata/JPCDIP04/datafile/o1_mf_undotbs1_lwz
+	   rhj3g_.dbf
+
+	 7 /u01/app/oracle/oradata/JPCDIP04/datafile/o1_mf_users_lwzrhk
+	   7p_.dbf
+
+	12 /u01/app/oracle/oradata/JPCDIP04/jpcdip04_s2/system01.dbf
+	13 /u01/app/oracle/oradata/JPCDIP04/jpcdip04_s2/sysaux01.dbf
+	14 /u01/app/oracle/oradata/JPCDIP04/jpcdip04_s2/undotbs01.dbf
+	15 /u01/app/oracle/oradata/JPCDIP04/jpcdip04_s2/users01.dbf
+	 9 /u01/app/oracle/oradata/JPCDIP04/118896D318AD3605E0630100007
+	   FE5EE/datafile/o1_mf_system_lwzsr54v_.dbf
+
+	10 /u01/app/oracle/oradata/JPCDIP04/118896D318AD3605E0630100007
+	   FE5EE/datafile/o1_mf_sysaux_lwzsr551_.dbf
+
+	11 /u01/app/oracle/oradata/JPCDIP04/118896D318AD3605E0630100007
+	   FE5EE/datafile/o1_mf_undotbs1_lwzsr551_.dbf
+
+
+11 rows selected.
+
+Analizar resultados, [Enter] para continuar con Limpieza
+
+borrar PDB
+
+Pluggable database altered.
+
+
+Pluggable database dropped.
+
+
+Database link dropped.
+
+eliminando usuario en jpcdip03
+Connected.
+
+User dropped.
+
+**CONCLUSIONES
+Este ejercicio demuestra cómo clonar una Pluggable Database (PDB) a partir de una CDB remota utilizando un database link. 
+Se inicia iniciando las CDBs involucradas y creando un usuario común en la CDB origen para realizar la conexión a través del database link. 
+Luego, se crea el database link en la CDB destino y se clona la PDB remota en la CDB destino utilizando este enlace de base de datos. 
+Después de abrir y verificar la nueva PDB, se realiza la limpieza eliminando la PDB clonada, el database link y el usuario común.
+Este ejercicio ilustra cómo utilizar database links para clonar PDBs entre diferentes CDBs, 
+lo que puede ser útil en entornos distribuidos o para propósitos de replicación de datos. 
+Además, resalta la importancia de tener usuarios y permisos adecuados para establecer la conexión a través del database link 
+y realizar las operaciones de clonación de manera segura y eficiente.

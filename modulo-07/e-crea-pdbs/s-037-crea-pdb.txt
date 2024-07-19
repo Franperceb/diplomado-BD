@@ -1,0 +1,296 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 23/02/2024
+##@Descripción: Ejercicio 07 - Módulo 07.Crear una PDB  - E07 Proxy  PDBs 
+
+-------------------------------------------
+**SCRIPT
+
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 23/02/2024
+--@Descripción: Ejercicio 07 - Módulo 07.Crear una PDB  - E07 Proxy  PDBs 
+
+
+--   EJERCICIO
+--   Completar el script en las secciones marcadas con TODO
+--
+spool /unam-diplomado-bd/modulos/modulo-07/e-crea-pdbs/s-037-crea-pdb-spool.txt
+Prompt Creando proxy PDB
+
+Prompt iniciar jpcdip03
+!sh s-030-start-cdb.sh jpcdip03 system3
+
+Prompt iniciar jpcdip04
+!sh s-030-start-cdb.sh jpcdip04 system4
+
+Prompt Preparando jpcdip03_s2
+
+connect sys/system3@jpcdip03 as sysdba
+
+prompt creando common user 
+create user c##jorge_remote identified by jorge container=all;
+grant create session,create pluggable database to c##jorge_remote
+  container=all;
+
+Prompt Abriendo PDB
+alter pluggable database jpcdip03_s2 open read write;
+
+alter session set container=jpcdip03_s2;
+
+--TODO Crear un tablespace de prueba
+create tablespace test_proxy_ts
+  datafile '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/test_proxy01.dbf'
+  size 1M autoextend on next 1M;
+
+
+
+
+Prompt Creando un usuario de prueba
+create user jorge_proxy identified by jorge 
+ default tablespace test_proxy_ts
+ quota unlimited on test_proxy_ts;
+
+grant create session, create table to jorge_proxy;
+
+Prompt creando tabla  test_proxy
+
+create table jorge_proxy.test_proxy(id number);
+
+Prompt insertando datos de prueba
+
+insert into jorge_proxy.test_proxy values (1);
+commit;
+
+select * from jorge_proxy.test_proxy;
+
+pause Revisar datos, [Enter] para continuar
+
+Prompt conectando  a jpcdip04 para crear liga y proxy PDB
+connect sys/system4@jpcdip04 as sysdba
+
+Prompt creando liga
+--TODO: Crear  liga
+create database link clone_link
+  connect to c##jorge_remote identified by jorge
+  using 'JPCDIP03_S2';
+
+
+Prompt creando Proxy PDB
+-- TODO: Creando proxy PDB
+create pluggable database jpcdip04_p1 as proxy
+  from jpcdip03_s2@clone_link
+  file_name_convert=(
+    '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2',
+    '/u01/app/oracle/oradata/JPCDIP04/jpcdip04_p1'
+  );
+pause Probando proxy PDB [Enter] para continuar
+
+Prompt abrir la proxy PDB
+alter pluggable database jpcdip04_p1 open read write;
+
+Prompt accediendo a jpcdip03_s2 a través de la Proxy PDB
+connect jorge_proxy/jorge@jpcdip04_p1
+
+Prompt mostrando dastos desde proxy
+--TODO: Mostrar los datos desde proxy
+select * from test_proxy; 
+
+Prompt insertando datos desde proxy
+--TODO: Insetar los datos desde proxy
+insert into test_proxy values(2);
+commit;
+
+Prompt validando en jpcdip03_s2
+connect sys/system3@jpcdip03_s2 as sysdba
+
+select * from jorge_proxy.test_proxy;
+
+pause Analizar resultados [Enter] para hacer limpieza
+
+prompt limpieza en jpcdip03_s2
+alter session set container=cdb$root;
+drop user c##jorge_remote cascade;
+
+--eliminar tablespace
+alter session set container=jpcdip03_s2;
+drop tablespace test_proxy_ts including contents and datafiles;
+
+--eliminar al usuario jorge_proxy
+drop user jorge_proxy cascade;
+
+Prompt limpieza en jpcdip04
+connect sys/system4@jpcdip04 as sysdba
+
+alter pluggable database jpcdip04_p1 close immediate;
+drop pluggable database jpcdip04_p1 including datafiles;
+
+drop database link clone_link;
+------------------------------------------------------------
+**SALIDA DE EJECUCIÓN
+sys@jpcdip04> start s-037-crea-pdb.sql
+Creando proxy PDB
+iniciar jpcdip03
+Iniciando jpcdip03
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Wed Mar 6 23:08:33 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip03> ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip03> USER is "SYS"
+sys@jpcdip03> Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+iniciar jpcdip04
+Iniciando jpcdip04
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Wed Mar 6 23:08:34 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip04> ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip04> USER is "SYS"
+sys@jpcdip04> Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+Preparando jpcdip03_s2
+Connected.
+creando common user
+
+User created.
+
+
+Grant succeeded.
+
+Abriendo PDB
+alter pluggable database jpcdip03_s2 open read write
+*
+ERROR at line 1:
+ORA-65019: pluggable database JPCDIP03_S2 already open
+
+
+
+Session altered.
+
+
+Tablespace created.
+
+Creando un usuario de prueba
+
+User created.
+
+
+Grant succeeded.
+
+creando tabla  test_proxy
+
+Table created.
+
+insertando datos de prueba
+
+1 row created.
+
+
+Commit complete.
+
+
+	ID
+----------
+	 1
+
+Revisar datos, [Enter] para continuar
+
+conectando  a jpcdip04 para crear liga y proxy PDB
+Connected.
+creando liga
+
+Database link created.
+
+creando Proxy PDB
+
+Pluggable database created.
+
+Probando proxy PDB [Enter] para continuar
+
+abrir la proxy PDB
+
+Pluggable database altered.
+
+accediendo a jpcdip03_s2 a través de la Proxy PDB
+Connected.
+mostrando dastos desde proxy
+
+	ID
+----------
+	 1
+
+insertando datos desde proxy
+
+1 row created.
+
+
+Commit complete.
+
+validando en jpcdip03_s2
+Connected.
+
+	ID
+----------
+	 1
+	 2
+
+Analizar resultados [Enter] para hacer limpieza
+
+limpieza en jpcdip03_s2
+
+Session altered.
+
+
+User dropped.
+
+
+Session altered.
+
+
+Tablespace dropped.
+
+
+User dropped.
+
+limpieza en jpcdip04
+Connected.
+
+Pluggable database altered.
+
+
+Pluggable database dropped.
+
+
+Database link dropped.
+
+
+-----------------------------------------------------------------------------------
+**CONCLUSIONES
+Este ejercicio introduce el concepto de Proxy Pluggable Databases (PDBs), que actúan como una capa intermedia para ejecutar 
+sentencias SQL en una PDB remota. 
+Comienza con la preparación de una PDB en una CDB y la creación de un usuario común y una tabla de prueba en esa PDB. 
+Luego, se establece una conexión entre dos CDBs utilizando un Database Link y se crea la Proxy PDB en la CDB destino, 
+enlazada a la PDB origen a través del Database Link. 
+Después de abrir la Proxy PDB, se accede a ella y se ejecutan consultas y operaciones DML en la tabla de prueba.
+Estos cambios se reflejan en la PDB origen, lo que demuestra la capacidad de la Proxy PDB para enviar y recibir 
+datos entre diferentes bases de datos de forma transparente.
+Finalmente, se realizan las operaciones de limpieza necesarias para eliminar los objetos creados durante el ejercicio, 
+como el usuario común, la tabla y el tablespace, así como la Proxy PDB y el Database Link.
+Este ejercicio destaca la utilidad de las Proxy PDBs para simplificar y optimizar el acceso a datos distribuidos en 
+entornos de bases de datos múltiples.

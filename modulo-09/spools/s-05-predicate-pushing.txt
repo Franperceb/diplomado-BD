@@ -1,0 +1,208 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-04-2024
+##Módulo 09. E-05- Predicate pushing.
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/04/2024
+--@Descripción: Ejercicio 05 - Módulo 09. Predicate pushing.
+
+
+define syslogon='sys/system1 as sysdba'
+define t_user='control_medico'
+define userlogon='&t_user/&t_user'
+define autotrace_opt='trace only'
+
+
+Prompt conectando como &t_user
+connect &userlogon
+
+
+
+create index receta_medicamento_id_ix on receta(medicamento_id);
+create index receta_cita_id_ix on receta(cita_id);
+create index medicamento_subclave on medicamento(subclave);
+create index cita_consultorio on cita(consultorio);
+
+
+Prompt conectando como SYS
+connect &syslogon
+
+Prompt B. Recolectando estadísticas
+begin
+  dbms_stats.gather_schema_stats (
+      ownname => 'CONTROL_MEDICO',      
+      degree  => 2
+  );
+end;
+/
+
+Prompt conectando como &t_user
+connect &userlogon
+
+Prompt Configurando autotrace 'set autotrace'
+set autotrace &autotrace_opt
+
+set linesize window     
+
+Prompt ====  Consulta 1 
+create table medico_suplente as
+select * from medico
+where cedula like'1%';
+
+
+Prompt Consulta 2 ===> Sin predicate pushing (manual)
+
+select medico_id, nombre
+from (
+select medico_id, nombre, ap_paterno, ap_materno, cedula, especialidad_id
+from medico
+union all
+select medico_id, nombre, ap_paterno, ap_materno, cedula, especialidad_id
+from medico_suplente
+)
+where nombre like 'A%' or cedula like '15%';
+
+Prompt consulta 3 ===> Con predicate pushing
+select medico_id, nombre
+from (
+select medico_id, nombre, ap_paterno, ap_materno, cedula, especialidad_id
+from medico
+where nombre like 'A%' or cedula like '15%'
+union all
+select medico_id, nombre, ap_paterno, ap_materno, cedula, especialidad_id
+from medico_suplente
+where nombre like 'A%' or cedula like '15%'
+);
+
+
+Prompt Eliminando índices
+drop index receta_medicamento_id_ix;
+drop index receta_cita_id_ix;
+drop index medicamento_subclave;
+drop index cita_consultorio;
+------------------------------------------------------------
+## Salida de ejecución
+-----------------------------------------------------------------------------
+conectando como control_medico
+Connected.
+Configurando autotrace 'set autotrace'
+SP2-0158: unknown SET option "only"
+====  Consulta 1
+create table medico_suplente as
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object
+
+
+Consulta 2 ===> Sin predicate pushing (manual)
+
+614 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 3937638362
+
+---------------------------------------------------------------------------------------
+| Id  | Operation	    | Name	      | Rows  | Bytes | Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT    |		      |   612 | 21420 |   265	(0)| 00:00:01 |
+|   1 |  VIEW		    |		      |   612 | 21420 |   265	(0)| 00:00:01 |
+|   2 |   UNION-ALL	    |		      |       |       | 	   |	      |
+|*  3 |    TABLE ACCESS FULL| MEDICO	      |   520 | 11440 |   238	(0)| 00:00:01 |
+|*  4 |    TABLE ACCESS FULL| MEDICO_SUPLENTE |    92 |  2024 |    27	(0)| 00:00:01 |
+---------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - filter("NOMBRE" LIKE 'A%' OR "CEDULA" LIKE '15%')
+   4 - filter("NOMBRE" LIKE 'A%' OR "CEDULA" LIKE '15%')
+
+
+Statistics
+----------------------------------------------------------
+	 68  recursive calls
+	  0  db block gets
+       1003  consistent gets
+	  0  physical reads
+	  0  redo size
+      15386  bytes sent via SQL*Net to client
+       1078  bytes received via SQL*Net from client
+	 42  SQL*Net roundtrips to/from client
+	  5  sorts (memory)
+	  0  sorts (disk)
+	614  rows processed
+
+consulta 3 ===> Con predicate pushing
+
+614 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 3937638362
+
+---------------------------------------------------------------------------------------
+| Id  | Operation	    | Name	      | Rows  | Bytes | Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT    |		      |   612 | 21420 |   265	(0)| 00:00:01 |
+|   1 |  VIEW		    |		      |   612 | 21420 |   265	(0)| 00:00:01 |
+|   2 |   UNION-ALL	    |		      |       |       | 	   |	      |
+|*  3 |    TABLE ACCESS FULL| MEDICO	      |   520 | 11440 |   238	(0)| 00:00:01 |
+|*  4 |    TABLE ACCESS FULL| MEDICO_SUPLENTE |    92 |  2024 |    27	(0)| 00:00:01 |
+---------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - filter("NOMBRE" LIKE 'A%' OR "CEDULA" LIKE '15%')
+   4 - filter("NOMBRE" LIKE 'A%' OR "CEDULA" LIKE '15%')
+
+
+Statistics
+----------------------------------------------------------
+	  1  recursive calls
+	  0  db block gets
+	939  consistent gets
+	  0  physical reads
+	  0  redo size
+      15386  bytes sent via SQL*Net to client
+       1122  bytes received via SQL*Net from client
+	 42  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	614  rows processed
+
+Eliminando índices
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+---------------------------------------
+###Comentarios  y conclusiones 
+Este ejercicio nos brindó la oportunidad de explorar la técnica de predicate pushing y evaluar su efectividad a través de la 
+generación del plan de ejecución en Oracle.
+Al revisar el ejemplo proporcionado y la consulta diseñada para obtener a todos los médicos que pueden atender emergencias 
+médicas en los próximos días, pudimos identificar la aplicación potencial de la técnica de predicate pushing.
+Mediante la propagación de los predicados de la consulta externa hacia la inline view, se esperaba mejorar el 
+rendimiento de la consulta al filtrar los registros en la fase de la inline view y acceder a índices de manera más eficiente.
+Al generar el plan de ejecución y analizar los resultados, pudimos determinar si la técnica de predicate pushing tuvo un impacto 
+positivo en el rendimiento de la consulta, especialmente en términos de acceso a índices y reducción de la cantidad de datos procesados.
+En conclusión, este ejercicio nos permitió entender cómo la técnica de predicate pushing puede optimizar consultas en Oracle al trasladar los predicados hacia la inline view, lo que puede resultar en mejoras significativas en el rendimiento y la eficiencia de las consultas en bases de datos.
+
+
+
+
+

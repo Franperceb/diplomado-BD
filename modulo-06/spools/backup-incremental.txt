@@ -1,0 +1,301 @@
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Ejercicio 03 Módulo 06. Backup incremental
+
+
+**Script
+------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Ejercicio 01 - Módulo 06. Backup incremental.
+
+CONNECT user06bk/user06bk 
+
+Prompt Creando tabla prueba
+CREATE TABLE prueba (
+    id  NUMBER(9,0),
+    datos VARCHAR2(40)
+);
+
+Prompt Creando secuencia para tabla
+create sequence  prueba_id_seq
+    start with 0
+    increment by 1 
+    minvalue 0;
+
+Prompt creando procedimiento para insertar registros
+CREATE OR REPLACE PROCEDURE insertar_registros (
+    cantidad_registros IN NUMBER
+) AS
+BEGIN
+    FOR i IN 1..cantidad_registros LOOP
+        INSERT INTO prueba VALUES (prueba_id_seq.nextval, 'Registro ' || i);
+    END LOOP;
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Se insertaron ' || cantidad_registros || ' registros en la tabla prueba.');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+END;
+/
+
+Prompt Insertando 10 registros
+exec insertar_registros(10);
+
+
+Prompt Validando cantidad de registros
+select count(*) from prueba;
+
+Pause Realizar backup nivel 0. [Enter] para continuar 
+
+
+Prompt Insertando más registros a la tabla prueba
+exec insertar_registros(500);
+
+Prompt Validando registros insertados
+select count(*) from prueba;
+
+
+Pause Realizar backup incremental diferencial. [Enter] para continuar 
+
+
+Prompt Modificando los primeros 500 registros de la tabla
+update prueba set datos = 'Dato modificado' where id <=500; --validar que los ids no se repitan con un seq y ya
+
+
+Pause Realizar backup incremental cumulativo. [Enter] para continuar 
+
+
+Prompt Insertando más registros a la tabla prueba
+exec insertar_registros(500);
+
+Prompt Validando registros insertados
+select count(*) from prueba;
+
+Pause Realizar backup incremental diferencial. [Enter] para continuar 
+
+Prompt Realizar backup incremental full nivel 0
+
+Prompt Eliminando tabla prueba
+drop table prueba;
+drop sequence prueba_id_seq;
+
+
+
+*Salidas de ejecución
+---------------------------------------------------------
+**********Terminal-1 backuṕ-inc-registros.sql*************************
+idle> start backup-inc-registros.sql
+Connected.
+Creando tabla prueba
+
+Table created.
+
+Creando secuencia para tabla
+
+Sequence created.
+
+creando procedimiento para insertar registros
+
+Procedure created.
+
+Insertando 10 registros
+
+PL/SQL procedure successfully completed.
+
+Validando cantidad de registros
+
+  COUNT(*)
+----------
+	10
+
+Realizar backup nivel 0. [Enter] para continuar
+
+Insertando más registros a la tabla prueba
+
+PL/SQL procedure successfully completed.
+
+Validando registros insertados
+
+  COUNT(*)
+----------
+       510
+
+Realizar backup incremental diferencial. [Enter] para continuar
+
+Modificando los primeros 500 registros de la tabla
+Realizar backup incremental cumulativo. [Enter] para continuar
+
+Insertando más registros a la tabla prueba
+
+PL/SQL procedure successfully completed.
+
+Validando registros insertados
+
+  COUNT(*)
+----------
+      1010
+
+Realizar backup incremental diferencial. [Enter] para continuar
+
+
+
+**********Terminal-2 RMAN*************************
+RMAN> backup incremental level 0 database tag 'Primer_backup';
+
+Starting backup at 07-FEB-24
+using target database control file instead of recovery catalog
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=436 device type=DISK
+channel ORA_DISK_1: starting incremental level 0 datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00004 name=/u01/app/oracle/oradata/JPCDIP02/users01.dbf
+input datafile file number=00001 name=/u01/app/oracle/oradata/JPCDIP02/system01.dbf
+input datafile file number=00002 name=/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+input datafile file number=00003 name=/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+input datafile file number=00005 name=/u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+channel ORA_DISK_1: starting piece 1 at 07-FEB-24
+channel ORA_DISK_1: finished piece 1 at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_07/o1_mf_nnnd0_PRIMER_BACKUP_lw8fvpsw_.bkp tag=PRIMER_BACKUP comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:15
+Finished backup at 07-FEB-24
+
+Starting Control File and SPFILE Autobackup at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_02_07/o1_mf_s_1160338086_lw8fw6k6_.bkp comment=NONE
+Finished Control File and SPFILE Autobackup at 07-FEB-24
+
+RMAN> backup incremental level 1 database tag 'primero_despues_de_datos_diff';
+
+Starting backup at 07-FEB-24
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting incremental level 1 datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00004 name=/u01/app/oracle/oradata/JPCDIP02/users01.dbf
+input datafile file number=00001 name=/u01/app/oracle/oradata/JPCDIP02/system01.dbf
+input datafile file number=00002 name=/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+input datafile file number=00003 name=/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+input datafile file number=00005 name=/u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+channel ORA_DISK_1: starting piece 1 at 07-FEB-24
+channel ORA_DISK_1: finished piece 1 at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_07/o1_mf_nnnd1_PRIMERO_DESPUES_DE_D_lw8fy0r7_.bkp tag=PRIMERO_DESPUES_DE_DATOS_DIFF comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 07-FEB-24
+
+Starting Control File and SPFILE Autobackup at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_02_07/o1_mf_s_1160338146_lw8fy2ns_.bkp comment=NONE
+Finished Control File and SPFILE Autobackup at 07-FEB-24
+
+
+RMAN> backup incremental level 1 cumulative database tag 'diff_cumulative_update';
+
+Starting backup at 07-FEB-24
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting incremental level 1 datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00004 name=/u01/app/oracle/oradata/JPCDIP02/users01.dbf
+input datafile file number=00001 name=/u01/app/oracle/oradata/JPCDIP02/system01.dbf
+input datafile file number=00002 name=/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+input datafile file number=00003 name=/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+input datafile file number=00005 name=/u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+channel ORA_DISK_1: starting piece 1 at 07-FEB-24
+channel ORA_DISK_1: finished piece 1 at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_07/o1_mf_nnnd1_DIFF_CUMULATIVE_UPDA_lw8g0k2z_.bkp tag=DIFF_CUMULATIVE_UPDATE comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 07-FEB-24
+
+Starting Control File and SPFILE Autobackup at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_02_07/o1_mf_s_1160338226_lw8g0lsl_.bkp comment=NONE
+Finished Control File and SPFILE Autobackup at 07-FEB-24
+
+
+RMAN> backup incremental level 1 database tag 'segundo_incr_diff';
+
+Starting backup at 07-FEB-24
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting incremental level 1 datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00004 name=/u01/app/oracle/oradata/JPCDIP02/users01.dbf
+input datafile file number=00001 name=/u01/app/oracle/oradata/JPCDIP02/system01.dbf
+input datafile file number=00002 name=/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+input datafile file number=00003 name=/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+input datafile file number=00005 name=/u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+channel ORA_DISK_1: starting piece 1 at 07-FEB-24
+channel ORA_DISK_1: finished piece 1 at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_07/o1_mf_nnnd1_SEGUNDO_INCR_DIFF_lw8g2qbq_.bkp tag=SEGUNDO_INCR_DIFF comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:01
+Finished backup at 07-FEB-24
+
+Starting Control File and SPFILE Autobackup at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_02_07/o1_mf_s_1160338296_lw8g2s15_.bkp comment=NONE
+Finished Control File and SPFILE Autobackup at 07-FEB-24
+
+RMAN> backup incremental level 0 database;
+
+Starting backup at 07-FEB-24
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting incremental level 0 datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00004 name=/u01/app/oracle/oradata/JPCDIP02/users01.dbf
+input datafile file number=00001 name=/u01/app/oracle/oradata/JPCDIP02/system01.dbf
+input datafile file number=00002 name=/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+input datafile file number=00003 name=/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+input datafile file number=00005 name=/u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+channel ORA_DISK_1: starting piece 1 at 07-FEB-24
+channel ORA_DISK_1: finished piece 1 at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_07/o1_mf_nnnd0_TAG20240207T201237_lw8g4of8_.bkp tag=TAG20240207T201237 comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:25
+Finished backup at 07-FEB-24
+
+Starting Control File and SPFILE Autobackup at 07-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_02_07/o1_mf_s_1160338384_lw8g5n3s_.bkp comment=NONE
+Finished Control File and SPFILE Autobackup at 07-FEB-24
+
+RMAN> list backup summary;
+
+
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time #Pieces #Copies Compressed Tag
+------- -- -- - ----------- --------------- ------- ------- ---------- ---
+4       B  A  A DISK        27-JAN-24       1       1       NO         INICIAL_FULL_BK1
+5       B  A  A DISK        27-JAN-24       1       1       NO         INICIAL_FULL_BK1
+6       B  F  A DISK        27-JAN-24       1       1       NO         TAG20240127T132052
+7       B  A  A DISK        27-JAN-24       1       1       NO         INICIAL_FULL_BK1
+8       B  F  A DISK        27-JAN-24       1       1       NO         TAG20240127T132109
+9       B  F  A DISK        27-JAN-24       1       1       NO         BK_TBSP_BS
+10      B  F  A DISK        27-JAN-24       1       1       NO         TAG20240127T134917
+11      B  0  A DISK        07-FEB-24       1       1       NO         TAG20240207T142141
+12      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T142156
+13      B  1  A DISK        07-FEB-24       1       1       NO         DIFF_CINCREMENTAL
+14      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T143444
+15      B  1  A DISK        07-FEB-24       1       1       NO         DIF_CUMULATIVE
+16      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T143601
+17      B  1  A DISK        07-FEB-24       1       1       NO         DIFF_AFTER_MORE_DATA
+18      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T143848
+19      B  0  A DISK        07-FEB-24       1       1       NO         FULL_LEVEL_0_AFTER_EDITED_ALL
+20      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T144004
+21      B  0  A DISK        07-FEB-24       1       1       NO         PRIMER_BACKUP
+22      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T200806
+23      B  1  A DISK        07-FEB-24       1       1       NO         PRIMERO_DESPUES_DE_DATOS_DIFF
+24      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T200906
+25      B  1  A DISK        07-FEB-24       1       1       NO         DIFF_CUMULATIVE_UPDATE
+26      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T201026
+27      B  1  A DISK        07-FEB-24       1       1       NO         SEGUNDO_INCR_DIFF
+28      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T201136
+29      B  0  A DISK        07-FEB-24       1       1       NO         TAG20240207T201237
+30      B  F  A DISK        07-FEB-24       1       1       NO         TAG20240207T201304
+
+--------------------------
+##CONCLUSIONES
+En este ejercicio se llevó a cabo un backup incremental, una técnica eficiente para respaldar los datos de una base de datos de manera incremental y optimizada. 
+Se comenzó creando una tabla de prueba en el tablespace tbsp_bk y el usuario user06bk, con la inserción de 10 registros para demostrar la manipulación de datos 
+durante el proceso de respaldo.
+Inicialmente, se realizó un backup completo de nivel 0 para establecer una base sólida para los backups incrementales posteriores. 
+Se observó el tamaño del backup generado y se agregaron más datos a la tabla para simular cambios en la base de datos.
+Luego, se realizó un backup incremental diferencial después de modificar los datos existentes en la tabla. Se verificó el tamaño del backup generado 
+y se procedió a realizar un backup incremental cumulativo. Se repitió el proceso de inserción de datos y se llevó a cabo un backup incremental diferencial
+adicional para observar su tamaño. Finalmente, se completó el ejercicio realizando un backup incremental completo de nivel 0.
+Este ejercicio proporcionó una comprensión práctica de cómo implementar backups incrementales en un entorno de base de datos,
+ lo que es fundamental para garantizar la integridad y disponibilidad de los datos en caso de pérdida o corrupción. En general no se presentaron dificultades al realizarlo
+ y las instrucciones del ejercicio fueron muy claras. 
+

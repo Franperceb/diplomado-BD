@@ -1,0 +1,184 @@
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Ejercicio 05 Módulo 06. Recovery TS.
+
+
+**Salida de ejecución
+------------------------------------------
+************ Terminal-1 **************************************+
+sys@jpcdip02> conn user06bk/user06bk
+Connected.
+user06bk@jpcdip02> create table prueba_ts(campo number);
+
+Table created.
+
+user06bk@jpcdip02> insert into prueba_ts values(1000);
+
+1 row created.
+
+user06bk@jpcdip02> insert into prueba_ts values(2000);
+
+1 row created.
+
+user06bk@jpcdip02> commit;
+
+Commit complete.
+
+user06bk@jpcdip02> insert into prueba_ts values(3000);        
+
+1 row created.
+
+user06bk@jpcdip02> insert into prueba_ts values(4000);    
+
+1 row created.
+
+user06bk@jpcdip02> commit;
+
+Commit complete.
+
+user06bk@jpcdip02> select * from prueba_ts;
+select * from prueba_ts
+*
+ERROR at line 1:
+ORA-03135: connection lost contact
+Process ID: 14784
+Session ID: 83 Serial number: 7165
+
+
+user06bk@jpcdip02> 
+user06bk@jpcdip02> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-06]$ sqlplus user06bk/user06bk
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Wed Feb 7 22:21:49 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+Last Successful login time: Wed Feb 07 2024 22:10:17 -06:00
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+user06bk@jpcdip02> select * from prueba_ts;
+
+     CAMPO
+----------
+      1000
+      2000
+      3000
+      4000
+
+user06bk@jpcdip02> 
+
+
+******************************Terminal-2****************************************
+
+sys@jpcdip02> shutdown immediate
+ORA-24324: service handle not initialized
+ORA-01041: internal error. hostdef extension doesn't exist
+sys@jpcdip02> shutdown abort
+ORA-24324: service handle not initialized
+ORA-01041: internal error. hostdef extension doesn't exist
+sys@jpcdip02> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-06]$ sqlplus sys/system2 as sysdba
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Wed Feb 7 22:18:30 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+Connected to an idle instance.
+
+idle> startup
+ORACLE instance started.
+
+Total System Global Area  486536496 bytes
+Fixed Size		    8897840 bytes
+Variable Size		  318767104 bytes
+Database Buffers	   46137344 bytes
+Redo Buffers		    7876608 bytes
+In-Memory Area		  104857600 bytes
+Database mounted.
+ORA-01157: cannot identify/lock data file 5 - see DBWR trace file
+ORA-01110: data file 5: '/u01/app/oracle/oradata/JPCDIP02/tbsp_bk'
+
+
+idle> alter database open;^[[A
+  2  
+idle> alter database open;
+
+Database altered.
+
+idle> select  status ,database_status from v$instance;
+
+STATUS	     DATABASE_STATUS
+------------ -----------------
+OPEN	     ACTIVE
+
+idle> select tablespace_name from dba_tablespaces;
+
+TABLESPACE_NAME
+------------------------------
+SYSTEM
+SYSAUX
+UNDOTBS1
+TEMPTS1
+USERS
+TBSP_BK
+
+6 rows selected.
+
+
+*******************************Terminal-3********************************************
+
+[oracle@pc-jpc JPCDIP02]$ rman target /
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Wed Feb 7 22:18:55 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: JPCDIP02 (DBID=3728965376, not open)
+
+RMAN> restore tablespace tbsp_bk;    
+
+Starting restore at 07-FEB-24
+using target database control file instead of recovery catalog
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=360 device type=DISK
+
+channel ORA_DISK_1: starting datafile backup set restore
+channel ORA_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_DISK_1: restoring datafile 00005 to /u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+channel ORA_DISK_1: reading from backup piece /unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_07/o1_mf_nnnd0_TAG20240207T201237_lw8g4of8_.bkp
+channel ORA_DISK_1: piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_07/o1_mf_nnnd0_TAG20240207T201237_lw8g4of8_.bkp tag=TAG20240207T201237
+channel ORA_DISK_1: restored backup piece 1
+channel ORA_DISK_1: restore complete, elapsed time: 00:00:01
+Finished restore at 07-FEB-24
+
+RMAN> recover tablespace tbsp_bk;
+
+Starting recover at 07-FEB-24
+using channel ORA_DISK_1
+
+starting media recovery
+media recovery complete, elapsed time: 00:00:00
+
+Finished recover at 07-FEB-24
+--------------------------------------------------------
+##Conclusiones
+En este ejercicio, se exploró el proceso de recuperación de un tablespace después de haber sido eliminado. 
+Se simularon diferentes etapas, desde la eliminación del tablespace hasta la restauración utilizando RMAN. 
+Se destacó la importancia de seguir un procedimiento estructurado para restaurar la integridad de la base de datos después de un incidente.
+Este ejercicio resalta la capacidad de RMAN para gestionar la recuperación de tablespaces y asegurar la disponibilidad y 
+consistencia de los datos en la base de datos. En general no se tuvo problemas al realizar el ejercicio pues fue muy claro las indicaciones y RMAN
+es muy práctico de manejar para establecer procesos de  restore y recover.
+
+
+
+

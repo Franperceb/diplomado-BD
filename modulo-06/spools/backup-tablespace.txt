@@ -1,3 +1,9 @@
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Ejercicio 02 Módulo 06. Backup parcial de tablespace.
+
+**Ejecución de comandos
+-------------------------------------------------------------------------
 _--creacion de tablespace
 
 sys@jpcdip02> run
@@ -169,3 +175,17 @@ Modification Time BS Key  S #Pieces #Copies Compressed Tag
         ├── [  60M]  o1_mf_lv8mmmg4_.flb
         ├── [  60M]  o1_mf_lv8mmnyx_.flb
         └── [  60M]  o1_mf_lvbk5j4t_.flb
+
+--------------------------------------------------------------------------------------
+##CONCLUSIONES
+
+En este ejercicio, se llevó a cabo un backup parcial específicamente del tablespace, datafile y archive log, 
+lo cual es una práctica común para realizar copias de seguridad de manera eficiente y según las necesidades de la base de datos.
+Se comenzó obteniendo la ruta donde se encuentran los datafiles y se procedió a crear un nuevo tablespace llamado tbsp_bk con una capacidad de 
+300 megabytes en esa ubicación. Se verificó la creación exitosa del tablespace y se creó un nuevo usuario llamado user06bk, asignándolo al tablespace tbsp_bk 
+y otorgándole los permisos necesarios para crear tablas.
+Acto seguido, se utilizó el usuario user06bk para crear la tabla tablebk con el atributo "name" e insertar tres datos, confirmando que la operación se realizó
+correctamente. Luego, se llevó a cabo un backup del tablespace utilizando un tipo de backup set específico.
+Finalmente, se verificó el tamaño del backup generado, lo cual proporciona información valiosa sobre los recursos requeridos y 
+la planificación necesaria para almacenar y administrar las copias de seguridad de la base de datos. Este ejercicio demostró 
+la importancia de realizar backups parciales y cómo llevarlos a cabo de manera efectiva para garantizar la integridad y disponibilidad de los datos.

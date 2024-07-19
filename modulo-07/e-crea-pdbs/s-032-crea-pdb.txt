@@ -1,0 +1,203 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 23/02/2024
+##@Descripción: Ejercicio 02 - Módulo 07 - Clonar una PDB a partir de otra
+-------------------------------------------
+**SCRIPT
+
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 23/02/2024
+--@Descripción: Ejercicio 2 - Módulo 07. Clonar una PDB a partir de otra
+
+--   EJERCICIO
+--   Completar el script en las secciones marcadas con TODO
+--
+spool /unam-diplomado-bd/modulos/modulo-07/e-crea-pdbs/s-032-crea-pdbs-spool.txt
+
+Prompt creando PDB a partir de otra 
+
+Prompt conectar a jpcdip03_s1 para insertar datos de prueba
+--TODO, conectar como sys a la PDB
+conn sys/system3@jpcdip03_s1 as sysdba
+
+Prompt creando un usuario de prueba
+declare
+  v_count number;
+begin
+   select count(*) into v_count from dba_users where username='JORGE07';
+   if v_count > 0 then
+     execute immediate 'drop user JORGE07 cascade';
+   end if;
+end;
+/
+
+Prompt creando usuario y tabla de prueba
+create user jorge07 identified by jorge quota unlimited on users;
+grant create session, create table to jorge07;
+
+create table jorge07.test(id number);
+insert into jorge07.test values(1);
+insert into jorge07.test values(2);
+insert into jorge07.test values(3);
+commit;
+
+Prompt conectando a cdb$root;
+--TODO conectar a root. ¿es posible con alter session?
+alter session set container=cdb$root;
+
+Prompt clonando jpcdip03_s3 a partir de jpcdip03_s1
+--TODO:  clonar la PDB a partir de jpcdip03_s1
+create pluggable database jpcdip03_s3 from jpcdip03_s1
+  path_prefix='/u01/app/oracle/oradata/JPCDIP03'
+  file_name_convert=(
+    '/jpcdip03_s1','/jpcdip03_s3/'
+  );
+
+Prompt Mostrando los datos de las PDBs con SQL*Plus
+col file_name format A60
+show pdbs
+pause [Enter] para continuar
+
+Prompt abrir pdb nueva
+--TODO Abrir la nueva PDB
+alter pluggable database jpcdip03_s3 open;
+
+Prompt mostrando datafiles de la CDB
+set linesize window
+select file_id, file_name from cdb_data_files;
+pause [Enter] para continuar
+
+Prompt verificando los datos clonados
+--TODO Agregar instrucciones para validar los datos
+-- ¿Qué sucedería con esta instrucción: connect jorge07/jorge@jpcdip03_s3 ?
+-- no funciona porque usa un alias de servicio de una pdb nueva no creado
+alter session set container=jpcdip03_s3;
+select * from  jorge07.test;
+
+
+pause Revisar datos clonados, [Enter] para continuar
+
+Prompt Limpieza
+alter session set container=cdb$root;
+
+prompt eliminando jpcdip03_s3
+--TODO, cerrar jpcdip03_s3 y eliminarla
+alter pluggable database jpcdip03_s3 close;
+drop pluggable database jpcdip03_s3 including datafiles;
+
+spool off
+exit
+
+
+------------------------------------------------------------
+**SALIDA DE EJECUCIÓN
+
+sys@jpcdip03> start s-032-crea-pdb.sql
+creando PDB a partir de otra
+conectar a jpcdip03_s1 para insertar datos de prueba
+Connected.
+creando un usuario de prueba
+
+PL/SQL procedure successfully completed.
+
+creando usuario y tabla de prueba
+
+User created.
+
+
+Grant succeeded.
+
+
+Table created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+1 row created.
+
+
+Commit complete.
+
+conectando a cdb$root
+
+Session altered.
+
+clonando jpcdip03_s3 a partir de jpcdip03_s1
+
+Pluggable database created.
+
+Mostrando los datos de las PDBs con SQL*Plus
+
+    CON_ID CON_NAME			  OPEN MODE  RESTRICTED
+---------- ------------------------------ ---------- ----------
+	 2 PDB$SEED			  READ ONLY  NO
+	 3 JPCDIP03_S1			  READ WRITE NO
+	 4 JPCDIP03_S2			  READ WRITE NO
+	 5 JPCDIP03_S3			  MOUNTED
+[Enter] para continuar
+
+abrir pdb nueva
+
+Pluggable database altered.
+
+mostrando datafiles de la CDB
+
+   FILE_ID FILE_NAME
+---------- ------------------------------------------------------------
+	23 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/system01.dbf
+	24 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/sysaux01.dbf
+	25 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/undotbs01.dbf
+	26 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/users01.dbf
+	 1 /u01/app/oracle/oradata/JPCDIP03/system01.dbf
+	 3 /u01/app/oracle/oradata/JPCDIP03/sysaux01.dbf
+	 4 /u01/app/oracle/oradata/JPCDIP03/undotbs01.dbf
+	 7 /u01/app/oracle/oradata/JPCDIP03/users01.dbf
+	 9 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/system01.dbf
+	10 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/sysaux01.dbf
+	11 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/undotbs01.dbf
+	12 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/users01.dbf
+	13 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/system01.dbf
+	14 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/sysaux01.dbf
+	15 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/undotbs01.dbf
+	16 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/users01.dbf
+
+16 rows selected.
+
+[Enter] para continuar
+
+verificando los datos clonados
+
+Session altered.
+
+
+	ID
+----------
+	 1
+	 2
+	 3
+
+Revisar datos clonados, [Enter] para continuar
+
+Limpieza
+
+Session altered.
+
+eliminando jpcdip03_s3
+
+Pluggable database altered.
+
+
+Pluggable database dropped.
+------------------------------------------------------------------------
+**CONCLUSIONES
+
+Este ejercicio aborda el proceso de clonación de una Pluggable Database (PDB) en Oracle. 
+Se inicia estableciendo una conexión a una PDB existente, donde se crean datos de prueba y se prepara la PDB para el proceso de clonación. 
+Luego, se conecta a la CDB Root para realizar la clonación de una nueva PDB a partir de la PDB existente. 
+Después de completar la clonación, se abren y verifican los datos de la nueva PDB. Finalmente, se realiza la limpieza, cerrando y eliminando la PDB clonada.
+Este ejercicio demuestra cómo clonar una PDB de manera eficiente y segura, lo que puede ser útil para crear entornos de prueba y desarrollo. 
+Además, destaca la importancia de comprender los pasos necesarios para realizar una clonación correctamente, incluida la preparación previa de la PDB origen 
+y la verificación posterior de la PDB clonada.

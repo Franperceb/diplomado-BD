@@ -230,3 +230,8 @@ Version 19.3.0.0.0
 
 -----------------------------------------------------------------------------------------------------------------------------------
 ##Comentarios y conclusiones
+
+En este ejercicio sobre Flashback Version Query, se exploraron las capacidades de Oracle para recuperar versiones históricas de los datos en una tabla específica.
+Después de crear la tabla fb_version y realizar diversas operaciones como inserciones, actualizaciones y eliminaciones, 
+se utilizaron las funciones VERSIONS BETWEEN SCN para consultar el historial de cambios en la tabla. 
+Esto proporciona una visión detallada de las diferentes versiones de los datos, permitiendo analizar y recuperar información específica en momentos temporales pasados. Este enfoque resulta valioso para realizar auditorías, investigar cambios no deseados o recuperar datos históricos sin afectar la versión actual de la base de datos. Es esencial comprender y aprovechar estas capacidades de Oracle para gestionar y recuperar datos de manera efectiva.

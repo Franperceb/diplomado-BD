@@ -1,0 +1,190 @@
+
+
+##JORGE FRANCISCO PEREDA CEBALLOS
+##05-04-2024
+##Módulo 08. E-8- estadisticas de columna.
+-------------------------------------------
+#script
+-------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 05/04/2024
+--@Descripción: Ejercicio 08 - MD06E02. Estadisticas de las columnas de una tabla.
+Prompt Conectando como jorge
+conn jorge/jorge
+
+set linesize window
+
+Prompt Creando tabla prueba
+create table prueba(id number);
+
+Prompt Total de registros en tabla creada
+select count(*) from prueba;
+
+declare
+  num pls_integer;
+begin 
+  for i in 1..50000 loop 
+    num := dbms_random.value(1,20);
+    execute immediate 'insert into prueba values (:1)' using num;
+  end loop;
+end;
+/
+
+Prompt Mostrando los registros INSERTADOS 
+ select count(*) from prueba;
+
+Prompt Conectando como sysdba
+connect sys/system1 as sysdba
+
+Prompt Recolectando Estadisticas 
+begin
+  dbms_stats.gather_table_stats (
+      ownname => 'JORGE',
+      tabname => 'PRUEBA',
+      degree  => 2,
+      method_opt => 'for columns id size AUTO'
+  );
+end;
+/
+
+select count(*) 
+from jorge.prueba 
+where id = 15;
+
+
+begin
+  dbms_stats.gather_table_stats (
+      ownname => 'JORGE',
+      tabname => 'PRUEBA',
+      degree  => 2,
+      method_opt => 'for columns id size AUTO'
+  );
+end;
+/
+
+
+Prompt Obteniendo datos de estadistica
+
+col  table_name format a20
+col  column_name format a25
+col  low_value format a20
+col  high_value format a20
+
+select c.table_name,c.column_name,c.histogram
+from dba_tab_statistics t, dba_tab_col_statistics c
+where c.table_name=t.table_name
+and t.owner='JORGE' and c.table_name='PRUEBA'
+and c.column_name in('ID');
+
+
+Prompt Conectando como Jorge 
+conn jorge/jorge
+
+
+Prompt Mostrando datos de estadistica
+col  table_name format a20
+col  column_name format a25
+col  endpoint_actual_value format a25
+
+select table_name,column_name,endpoint_number,endpoint_actual_value
+from user_histograms where table_name='PRUEBA'
+and column_name='ID';
+
+
+
+Prompt Realizando limpieza
+drop table jorge.prueba;
+
+
+
+
+
+###Salida de ejecución
+-----------------------------------------------------
+jorge@jpcdip01> start e-03-estadisticas.sql
+Conectando como jorge
+Connected.
+Creando tabla prueba
+
+Table created.
+
+Total de registros en tabla creada
+
+  COUNT(*)
+----------
+	 0
+
+
+PL/SQL procedure successfully completed.
+
+Mostrando los registros INSERTADOS
+
+  COUNT(*)
+----------
+     50000
+
+Conectando como sysdba
+Connected.
+Recolectando Estadisticas
+
+PL/SQL procedure successfully completed.
+
+
+  COUNT(*)
+----------
+      2590
+
+
+PL/SQL procedure successfully completed.
+
+Obteniendo datos de estadistica
+
+TABLE_NAME	     COLUMN_NAME	       HISTOGRAM
+-------------------- ------------------------- ---------------
+PRUEBA		     ID 		       FREQUENCY
+
+Conectando como Jorge
+Connected.
+Mostrando datos de estadistica
+
+TABLE_NAME	     COLUMN_NAME	       ENDPOINT_NUMBER ENDPOINT_ACTUAL_VALUE
+-------------------- ------------------------- --------------- -------------------------
+PRUEBA		     ID 				  1351 1
+PRUEBA		     ID 				  3950 2
+PRUEBA		     ID 				  6512 3
+PRUEBA		     ID 				  9154 4
+PRUEBA		     ID 				 11831 5
+PRUEBA		     ID 				 14442 6
+PRUEBA		     ID 				 17038 7
+PRUEBA		     ID 				 19700 8
+PRUEBA		     ID 				 22291 9
+PRUEBA		     ID 				 24897 10
+PRUEBA		     ID 				 27597 11
+PRUEBA		     ID 				 30193 12
+PRUEBA		     ID 				 32787 13
+PRUEBA		     ID 				 35459 14
+PRUEBA		     ID 				 38049 15
+PRUEBA		     ID 				 40708 16
+PRUEBA		     ID 				 43271 17
+PRUEBA		     ID 				 45970 18
+PRUEBA		     ID 				 48649 19
+PRUEBA		     ID 				 50000 20
+
+20 rows selected.
+
+Realizando limpieza
+
+Table dropped.
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+Al concluir el ejercicio de generar estadísticas para una tabla diferente del caso de estudio del control médico, 
+se observó una mejora en la comprensión de cómo obtener y analizar estadísticas de columnas en Oracle Database.
+La consulta utilizada para mostrar las estadísticas permitió obtener información valiosa sobre la distribución de datos 
+en las columnas de la tabla prueba. Al interpretar los resultados, se pudo identificar la cardinalidad y la
+ a densidad entre otros parámetros que proporcionan una visión general de las columnas en la tabla.
+Este ejercicio proporcionó una oportunidad para aplicar los conceptos aprendidos en clase en un contexto práctico 
+y diferente al del control médico. 
+La experiencia adquirida al realizar esta actividad contribuyó a mejorar la comprensión de cómo utilizar 
+las estadísticas de columnas para optimizar consultas y mejorar el rendimiento de la base de datos.

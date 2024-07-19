@@ -1,0 +1,344 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 10/02/2024
+##@Descripción: Ejercicio 06
+ - Módulo 06 - Heath Monitor,
+-------------------------------------------
+**Salida de ejecución
+----------------------------------------------------------------------------------
+*******************T1*******************
+
+
+sys@jpcdip02> show parameter diagnostic_dest
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+diagnostic_dest 		     string	 /u01/app/oracle
+sys@jpcdip02> shutdown immediate
+ORA-01109: database not open
+
+
+Database dismounted.
+ORACLE instance shut down.
+sys@jpcdip02> startup
+ORACLE instance started.
+
+Total System Global Area  486536496 bytes
+Fixed Size		    8897840 bytes
+Variable Size		  322961408 bytes
+Database Buffers	   41943040 bytes
+Redo Buffers		    7876608 bytes
+In-Memory Area		  104857600 bytes
+Database mounted.
+ORA-01113: file 1 needs media recovery
+ORA-01110: data file 1: '/u01/app/oracle/oradata/JPCDIP02/system01.dbf'
+
+
+sys@jpcdip02> alter database open; 
+alter database open
+*
+ERROR at line 1:
+ORA-01113: file 2 needs media recovery
+ORA-01110: data file 2: '/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf'
+
+
+Database altered.
+****************T2****************************
+[oracle@pc-jpc JPCDIP02]$ rm -i sysaux01.dbf  
+rm: remove regular file 'sysaux01.dbf'? y
+[oracle@pc-jpc JPCDIP02]$ ls -alh
+total 2.2G
+drwxr-x---. 2 oracle oinstall 4.0K Feb 10 23:10 .
+drwxr-x---. 5 oracle oinstall 4.0K Feb 10 10:23 ..
+-rwxr-x--x. 1 oracle oinstall 761M Feb 10 22:43 system01.dbf
+-rwxr-x--x. 1 oracle oinstall 301M Feb 10 22:43 tbsp_bk
+-rwxr-x--x. 1 oracle oinstall 371M Feb 10 22:43 undotbs01.dbf
+-rwxr-x--x. 1 oracle oinstall 773M Feb 10 22:43 users01.dbf
+[oracle@pc-jpc JPCDIP02]$ cat /u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/hm/reco_2407906248.hm
+   # restore and recover datafile
+   restore ( datafile 2 );
+   recover datafile 2;
+   sql 'alter database datafile 2 online';
+   # recover datafile
+   recover datafile 3, 4, 5;
+   sql 'alter database datafile 3, 4, 5 online';
+[oracle@pc-jpc JPCDIP02]$ ls -alh
+total 2.7G
+drwxr-x---. 2 oracle oinstall 4.0K Feb 10 23:15 .
+drwxr-x---. 5 oracle oinstall 4.0K Feb 10 10:23 ..
+-rw-r-----. 1 oracle oinstall 551M Feb 10 23:15 sysaux01.dbf
+-rwxr-x--x. 1 oracle oinstall 761M Feb 10 23:12 system01.dbf
+-rwxr-x--x. 1 oracle oinstall 301M Feb 10 22:43 tbsp_bk
+-rwxr-x--x. 1 oracle oinstall 371M Feb 10 23:13 undotbs01.dbf
+-rwxr-x--x. 1 oracle oinstall 773M Feb 10 22:43 users01.dbf
+
+
+
+
+ 
+*************T3*************************
+RMAN> backup database tag bk_offline;
+
+Starting backup at 10-FEB-24
+using target database control file instead of recovery catalog
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=498 device type=DISK
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00004 name=/u01/app/oracle/oradata/JPCDIP02/users01.dbf
+input datafile file number=00001 name=/u01/app/oracle/oradata/JPCDIP02/system01.dbf
+input datafile file number=00002 name=/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+input datafile file number=00003 name=/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+input datafile file number=00005 name=/u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+channel ORA_DISK_1: starting piece 1 at 10-FEB-24
+channel ORA_DISK_1: finished piece 1 at 10-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_10/o1_mf_nnndf_BK_OFFLINE_lwjoj8b7_.bkp tag=BK_OFFLINE comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:07
+Finished backup at 10-FEB-24
+
+Starting Control File and SPFILE Autobackup at 10-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_02_10/o1_mf_s_1160601148_lwjojhk2_.bkp comment=NONE
+Finished Control File and SPFILE Autobackup at 10-FEB-24
+
+RMAN> report obsolete 
+2> ;
+
+RMAN retention policy will be applied to the command
+RMAN retention policy is set to redundancy 1
+Report of obsolete backups and copies
+Type                 Key    Completion Time    Filename/Handle
+-------------------- ------ ------------------ --------------------
+Archive Log          7      27-JAN-24          /unam-diplomado-bd/disk-042/archivelogs/jpcdip02/disk_b/arch_jpcdip02_1_130_1153880960.arc
+Archive Log          6      27-JAN-24          /unam-diplomado-bd/disk-041/archivelogs/jpcdip02/disk_a/arch_jpcdip02_1_130_1153880960.arc
+Backup Set           31     10-FEB-24         
+  Backup Piece       31     10-FEB-24          /unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_10/o1_mf_nnndf_FULL_BK_lwjg0847_.bkp
+Backup Set           32     10-FEB-24         
+  Backup Piece       32     10-FEB-24          /unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_02_10/o1_mf_s_1160600374_lwjg0q5g_.bkp
+
+RMAN> list backup summary;
+
+
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time #Pieces #Copies Compressed Tag
+------- -- -- - ----------- --------------- ------- ------- ---------- ---
+31      B  F  A DISK        10-FEB-24       1       1       NO         FULL_BK
+32      B  F  A DISK        10-FEB-24       1       1       NO         TAG20240210T205934
+33      B  F  A DISK        10-FEB-24       1       1       NO         BK_OFFLINE
+34      B  F  A DISK        10-FEB-24       1       1       NO         TAG20240210T230727
+
+RMAN> backup tablespace sysaux  tag bk_sysaux; 
+
+Starting backup at 10-FEB-24
+using channel ORA_DISK_1
+channel ORA_DISK_1: starting full datafile backup set
+channel ORA_DISK_1: specifying datafile(s) in backup set
+input datafile file number=00002 name=/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+channel ORA_DISK_1: starting piece 1 at 10-FEB-24
+channel ORA_DISK_1: finished piece 1 at 10-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_10/o1_mf_nnndf_BK_SYSAUX_lwjon9wv_.bkp tag=BK_SYSAUX comment=NONE
+channel ORA_DISK_1: backup set complete, elapsed time: 00:00:03
+Finished backup at 10-FEB-24
+
+Starting Control File and SPFILE Autobackup at 10-FEB-24
+piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/autobackup/2024_02_10/o1_mf_s_1160601148_lwjonf4c_.bkp comment=NONE
+Finished Control File and SPFILE Autobackup at 10-FEB-24
+
+RMAN> list backup summary
+2> ;
+
+
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time #Pieces #Copies Compressed Tag
+------- -- -- - ----------- --------------- ------- ------- ---------- ---
+31      B  F  A DISK        10-FEB-24       1       1       NO         FULL_BK
+32      B  F  A DISK        10-FEB-24       1       1       NO         TAG20240210T205934
+33      B  F  A DISK        10-FEB-24       1       1       NO         BK_OFFLINE
+34      B  F  A DISK        10-FEB-24       1       1       NO         TAG20240210T230727
+35      B  F  A DISK        10-FEB-24       1       1       NO         BK_SYSAUX
+36      B  F  A DISK        10-FEB-24       1       1       NO         TAG20240210T230932
+
+RMAN> exit
+
+RMAN-06900: warning: unable to generate V$RMAN_STATUS or V$RMAN_OUTPUT row
+RMAN-06901: warning: disabling update of the V$RMAN_STATUS and V$RMAN_OUTPUT rows
+Oracle error from target database: 
+ORA-03135: connection lost contact
+Process ID: 90726
+Session ID: 146 Serial number: 16724
+
+
+Recovery Manager complete.
+[oracle@pc-jpc ~]$ rman target /
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Sat Feb 10 23:11:03 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: JPCDIP02 (DBID=3728965376, not open)
+
+RMAN> list failure;
+
+using target database control file instead of recovery catalog
+Database Role: PRIMARY
+
+List of Database Failures
+=========================
+
+Failure ID Priority Status    Time Detected Summary
+---------- -------- --------- ------------- -------
+2162       CRITICAL OPEN      10-FEB-24     System datafile 1: '/u01/app/oracle/oradata/JPCDIP02/system01.dbf' needs media recovery
+1042       HIGH     OPEN      10-FEB-24     One or more non-system datafiles are missing
+1245       HIGH     OPEN      10-FEB-24     One or more non-system datafiles need media recovery
+
+RMAN> recover database '/u01/app/oracle/oradata/JPCDIP02/system01.dbf';
+
+Starting recover at 10-FEB-24
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=291 device type=DISK
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 02/10/2024 23:11:53
+RMAN-07537: command only allowed in a container database
+
+RMAN> recover datafile '/u01/app/oracle/oradata/JPCDIP02/system01.dbf';
+
+Starting recover at 10-FEB-24
+using channel ORA_DISK_1
+
+starting media recovery
+media recovery complete, elapsed time: 00:00:00
+
+Finished recover at 10-FEB-24
+
+RMAN> list failure;
+
+Database Role: PRIMARY
+
+List of Database Failures
+=========================
+
+Failure ID Priority Status    Time Detected Summary
+---------- -------- --------- ------------- -------
+1042       HIGH     OPEN      10-FEB-24     One or more non-system datafiles are missing
+1245       HIGH     OPEN      10-FEB-24     One or more non-system datafiles need media recovery
+
+RMAN> advise failure;
+
+Database Role: PRIMARY
+
+List of Database Failures
+=========================
+
+Failure ID Priority Status    Time Detected Summary
+---------- -------- --------- ------------- -------
+1042       HIGH     OPEN      10-FEB-24     One or more non-system datafiles are missing
+1245       HIGH     OPEN      10-FEB-24     One or more non-system datafiles need media recovery
+
+analyzing automatic repair options; this may take some time
+using channel ORA_DISK_1
+analyzing automatic repair options complete
+
+Mandatory Manual Actions
+========================
+no manual actions available
+
+Optional Manual Actions
+=======================
+1. If file /u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf was unintentionally renamed or moved, restore it
+2. If you restored the wrong version of data file /u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf, then replace it with the correct one
+3. If you restored the wrong version of data file /u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf, then replace it with the correct one
+4. If you restored the wrong version of data file /u01/app/oracle/oradata/JPCDIP02/users01.dbf, then replace it with the correct one
+5. If you restored the wrong version of data file /u01/app/oracle/oradata/JPCDIP02/tbsp_bk, then replace it with the correct one
+
+Automated Repair Options
+========================
+Option Repair Description
+------ ------------------
+1      Restore and recover datafile 2; Recover datafile 3; Recover datafile 4; ...
+  Strategy: The repair includes complete media recovery with no data loss
+  Repair script: /u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/hm/reco_2407906248.hm
+
+RMAN> recover datafile '/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf';
+
+Starting recover at 10-FEB-24
+using channel ORA_DISK_1
+
+starting media recovery
+media recovery failed
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 02/10/2024 23:13:56
+ORA-00283: recovery session canceled due to errors
+RMAN-11003: failure during parse/execution of SQL statement: alter database recover
+ if needed datafile 3
+ORA-00283: recovery session canceled due to errors
+ORA-00600: internal error code, arguments: [3020], [3], [422], [12583334], [], [], [], [], [], [], [], []
+ORA-10567: Redo is inconsistent with data block (file# 3, block# 422, file offset is 3457024 bytes)
+ORA-10564: tablespace UNDOTBS1
+ORA-01110: data file 3: '/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf'
+ORA-10560: block type 'KTU UNDO BLOCK'
+
+RMAN> repair failure;
+
+Strategy: The repair includes complete media recovery with no data loss
+Repair script: /u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/hm/reco_2407906248.hm
+
+contents of repair script:
+   # restore and recover datafile
+   restore ( datafile 2 );
+   recover datafile 2;
+   sql 'alter database datafile 2 online';
+   # recover datafile
+   recover datafile 3, 4, 5;
+   sql 'alter database datafile 3, 4, 5 online';
+
+Do you really want to execute the above repair (enter YES or NO)? y
+executing repair script
+
+Starting restore at 10-FEB-24
+using channel ORA_DISK_1
+
+channel ORA_DISK_1: starting datafile backup set restore
+channel ORA_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_DISK_1: restoring datafile 00002 to /u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+channel ORA_DISK_1: reading from backup piece /unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_10/o1_mf_nnndf_BK_SYSAUX_lwjon9wv_.bkp
+channel ORA_DISK_1: piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_10/o1_mf_nnndf_BK_SYSAUX_lwjon9wv_.bkp tag=BK_SYSAUX
+channel ORA_DISK_1: restored backup piece 1
+channel ORA_DISK_1: restore complete, elapsed time: 00:00:03
+Finished restore at 10-FEB-24
+
+Starting recover at 10-FEB-24
+using channel ORA_DISK_1
+
+starting media recovery
+media recovery failed
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of repair command at 02/10/2024 23:15:43
+RMAN-03015: error occurred in stored script Repair Script
+ORA-00283: recovery session canceled due to errors
+RMAN-11003: failure during parse/execution of SQL statement: alter database recover
+ if needed datafile 2
+ORA-00283: recovery session canceled due to errors
+ORA-00600: internal error code, arguments: [3020], [2], [5238], [8393846], [], [], [], [], [], [], [], []
+ORA-10567: Redo is inconsistent with data block (file# 2, block# 5238, file offset is 42909696 bytes)
+ORA-10564: tablespace SYSAUX
+ORA-01110: data file 2: '/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf'
+ORA-10561: block type 'TRANSACTION MANAGED DATA BLOCK', data object# 9120
+
+
+
+------------------------------------------------------------------------------------------------
+**CONCLUSIONES
+
+En este ejercicio, se abordó la recuperación de un datafile específico después de simular una falla eliminando 
+el archivo correspondiente del tablespace sysaux. A través del uso de RMAN y la exploración del repositorio ADR,
+se identificaron las fallas y se generaron sugerencias para resolver el problema. A pesar de enfrentar la problemática de
+inconsistencia arrastrando, se logró cumplir el objetivo gracias al contexto proporcionado 
+por el monitor de salud y el asesor de RMAN. Esto resalta la importancia de utilizar herramientas avanzadas de gestión y 
+monitoreo para abordar eficazmente situaciones de recuperación en entornos de bases de datos Oracle.

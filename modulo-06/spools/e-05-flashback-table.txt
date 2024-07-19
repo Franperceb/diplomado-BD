@@ -297,3 +297,11 @@ Version 19.3.0.0.0
 
 -----------------------------------------------------------------------------------------------------------------------------------
 ##Comentarios y conclusiones
+En este ejercicio centrado en Flashback Table, se exploraron las capacidades de Oracle para revertir una tabla a estados anteriores en el tiempo.
+Después de crear la tabla venta y habilitar la funcionalidad de flashback con ENABLE ROW MOVEMENT, se realizaron varias operaciones de inserción, 
+actualización y eliminación. La capacidad de capturar el SCN actual y la marca de tiempo en diferentes puntos del proceso permitió comprender 
+cómo evolucionan los datos en la tabla con el tiempo.
+La función FLASHBACK TABLE se utilizó para restaurar la tabla a un estado anterior, lo que resulta útil en situaciones donde es necesario deshacer
+cambios no deseados o recuperar datos eliminados. Este ejercicio destaca la importancia de planificar y utilizar adecuadamente las características
+de flashback en Oracle para gestionar eficazmente la evolución de los datos en una base de datos. 
+Además, es esencial entender los impactos y las consideraciones al utilizar estas funcionalidades en entornos de producción.

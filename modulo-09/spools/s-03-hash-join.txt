@@ -1,0 +1,122 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-04-2024
+##Módulo 09. E-03- Hash Join.
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/04/2024
+--@Descripción: Ejercicio 03 - Módulo 09. Hash Join.
+
+define syslogon='sys/system1 as sysdba'
+define t_user='control_medico'
+define userlogon='&t_user/&t_user'
+define autotrace_opt='trace only'
+
+
+Prompt conectando como &t_user
+connect &userlogon
+
+set linesize window
+
+Prompt conectando como SYS
+connect &syslogon
+
+Prompt B. Recolectando estadísticas
+begin
+  dbms_stats.gather_schema_stats (
+      ownname => 'CONTROL_MEDICO',      
+      degree  => 2
+  );
+end;
+/
+
+Prompt conectando como &t_user
+connect &userlogon
+
+Prompt Configurando autotrace 'set autotrace '
+set autotrace &autotrace_opt
+
+
+Prompt ====  Consulta 1   Hash Join
+select p.nombre,c.fecha_cita
+from paciente p
+join cita c
+on p.paciente_id = c.paciente_id;
+
+------------------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+control_medico@jpcdip01> start s-03-hash-join.sql
+conectando como control_medico
+Connected.
+conectando como SYS
+Connected.
+B. Recolectando estadísticas
+
+PL/SQL procedure successfully completed.
+
+conectando como control_medico
+Connected.
+Configurando autotrace 'set autotrace '
+SP2-0158: unknown SET option "only"
+====  Consulta 1   Hash Join
+
+20000 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 3842660918
+
+-----------------------------------------------------------------------------------------------
+| Id  | Operation		| Name		      | Rows  | Bytes | Cost (%CPU)| Time     |
+-----------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	|		      | 20000 |   546K|    98	(2)| 00:00:01 |
+|*  1 |  HASH JOIN		|		      | 20000 |   546K|    98	(2)| 00:00:01 |
+|   2 |   VIEW			| index$_join$_001    | 15000 |   175K|    67	(0)| 00:00:01 |
+|*  3 |    HASH JOIN		|		      |       |       | 	   |	      |
+|   4 |     INDEX FAST FULL SCAN| PACIENTE_PK	      | 15000 |   175K|    35	(0)| 00:00:01 |
+|   5 |     INDEX FAST FULL SCAN| PACIENTE_NOMBRE_IDX | 15000 |   175K|    49	(0)| 00:00:01 |
+|   6 |   TABLE ACCESS FULL	| CITA		      | 20000 |   312K|    30	(0)| 00:00:01 |
+-----------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("P"."PACIENTE_ID"="C"."PACIENTE_ID")
+   3 - access(ROWID=ROWID)
+
+
+Statistics
+----------------------------------------------------------
+	 64  recursive calls
+	  0  db block gets
+       1584  consistent gets
+	  3  physical reads
+	  0  redo size
+     574553  bytes sent via SQL*Net to client
+      15114  bytes received via SQL*Net from client
+       1335  SQL*Net roundtrips to/from client
+	  4  sorts (memory)
+	  0  sorts (disk)
+      20000  rows processed
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+
+Al concluir el ejercicio de creación del script s-03-hash-join.sql, 
+pude explorar en profundidad la técnica de Hash Join para ejecutar 
+operaciones de tipo JOIN en Oracle. A través del spool, 
+analicé detalladamente el plan de ejecución generado por la consulta y evalué su eficiencia.
+En el proceso, me enfrenté a algunos problemas relacionados con la recolección de una gran cantidad de registros
+ y la selección adecuada de las cláusulas de unión. Sin embargo, 
+ logré resolver estos problemas ajustando las condiciones de la consulta .
+  En resumen, este ejercicio me proporcionó una valiosa experiencia en la implementación y optimización de consultas 
+  utilizando la técnica de Hash Join en entornos de bases de datos relacionales y saber el proposito del hash join para
+   un gran volumen de registros obtenidos en comparación con los nested loops.

@@ -238,3 +238,14 @@ Version 19.3.0.0.0
 
 -----------------------------------------------------------------------------------------------------------------------------------
 ##Comentarios y conclusiones
+En este ejercicio, se exploraron las capacidades de Oracle Flashback Query para acceder y visualizar datos en momentos específicos del 
+pasado sin afectar el estado actual de la base de datos. Después de crear un usuario, una tabla y realizar manipulaciones de datos, 
+se utilizaron comandos AS OF en consultas SELECT para observar información en diferentes puntos temporales, ya sea mediante SCN o marcas de tiempo. 
+Además, se demostró la capacidad de recuperación de datos eliminados. 
+Es esencial entender las implicaciones de Flashback Query y practicar su uso con precaución, manteniendo registros precisos de SCN y marcas de tiempo 
+para consultas temporales precisas.
+
+
+
+
+

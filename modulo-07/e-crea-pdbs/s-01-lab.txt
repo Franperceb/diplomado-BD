@@ -1,0 +1,215 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 11/02/2024
+##@Descripción: Ejercicio 01 - Módulo 07 -  Lab-01.
+-------------------------------------------
+
+
+Script
+-----------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 23/02/2024
+--@Descripción: Ejercicio 04 - Módulo 07. M07 Lab 01.
+Prompt conectando como sysdba
+conn / as sysdba
+
+Prompt iniciar jpcdip03
+!sh s-030-start-cdb.sh jpcdip03 system3
+
+Prompt conectando jpcdip03
+connect sys/system3@jpcdip03 as sysdba
+
+Prompt Crear un application container jpcdip03_appc1
+
+create pluggable database jpcdip03_appc1 as application container 
+  admin user admin identified by admin
+  file_name_convert=(
+    '/u01/app/oracle/oradata/JPCDIP03/pdbseed',
+    '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_appc1'
+);
+
+prompt abriendo jpcdip03_appc1
+alter pluggable database jpcdip03_appc1 open read write;
+
+prompt conectando a jpcdip03_appc1
+alter session set container=jpcdip03_appc1;
+
+
+Prompt crear PDB jpcdip03_appc1_s1
+
+create pluggable database jpcdip03_appc1_s1
+ admin user admin identified by admin
+ file_name_convert=(
+  '/u01/app/oracle/oradata/JPCDIP03/pdbseed',
+  '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_appc1/jpcdip03_appc1_s1'
+ );
+
+Prompt Abrir  jpcdip03_appc1_s1
+alter pluggable database jpcdip03_appc1_s1 open read write;
+
+Prompt  realizar sync entre pdb y app container
+alter session set container=jpcdip03_appc1_s1;
+alter pluggable database application all sync;
+
+
+alter session set container=jpcdip03_appc1;
+
+Prompt creando un tablespace
+alter system set db_create_file_dest='/u01/app/oracle/oradata' scope=memory;
+create tablespace app1_test01_ts
+datafile size 1m autoextend on next 1m;
+
+Prompt crear un usuario
+create user app1_test_user identified by jorge
+  default tablespace app1_test01_ts
+  quota unlimited on app1_test01_ts
+  container=all;
+
+
+
+
+grant create session, create table, create procedure 
+  to app1_test_user;
+
+
+Prompt crear una tabla
+create table app1_test_user.datos(
+  id number(10,0) constraint carrera_pk primary key,
+  nombre varchar2(40)
+);
+
+create synonym prueba for app1_test_user.datos;
+
+Prompt Insertando datos
+insert into app1_test_user.datos(id,nombre) values (1,'Hola');
+commit;
+
+Prompt sync pdb
+alter session set container=jpcdip03_appc1_s1;
+alter pluggable database application all sync;
+
+
+Prompt conectandome a la pdb
+alter session set container=jpcdip03_appc1_s1;
+
+Prompt Realizando consulta que valida disponibilidad
+select  * from app1_test_user.datos;
+
+
+
+##Salida de ejecución
+----------------------------------------
+sys@jpcdip03> start s-01-lab.sql
+conectando como sysdba
+ERROR:
+ORA-01017: invalid username/password; logon denied
+
+
+Warning: You are no longer connected to ORACLE.
+detener jpcdip04
+sh: s-030-stop-cdb.sh: No such file or directory
+
+iniciar jpcdip03
+Iniciando jpcdip03
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Wed May 1 23:38:39 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip03> ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip03> USER is "SYS"
+sys@jpcdip03> Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+conectando jpcdip03
+Connected.
+Crear un application container jpcdip03_appc1
+
+Pluggable database created.
+
+abriendo jpcdip03_appc1
+
+Pluggable database altered.
+
+conectando a jpcdip03_appc1
+
+Session altered.
+
+crear PDB jpcdip03_appc1_s1
+
+Pluggable database created.
+
+Abrir  jpcdip03_appc1_s1
+
+Pluggable database altered.
+
+realizar sync entre pdb y app container
+
+Session altered.
+
+
+creando un tablespace
+
+System altered.
+
+
+Tablespace created.
+
+crear un usuario
+
+User created.
+
+
+Grant succeeded.
+
+crear una tabla
+
+Table created.
+
+Insertando datos
+
+1 row created.
+
+
+Commit complete.
+
+sync pdb
+
+Session altered.
+
+
+conectandome a la pdb
+
+Session altered.
+
+Realizando consulta que valida disponibilidad
+select	* from app1_test_user.datos
+               *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+--------------------
+##Conclusiones
+
+---------------------------------
+Al concluir el ejercicio, se logró crear un caso de estudio que involucra la creación de un Application Container con una 
+Pluggable Database (PDB) dentro de él. Dentro de esta PDB, se creó una tabla que se espera que esté disponible para su 
+consulta desde otras PDB.
+Durante la implementación del caso de estudio, se identificó una dificultad relacionada con la disponibilidad de la 
+tabla creada en la PDB del Application Container. Aunque se intentó resolver esta cuestión, 
+no se logró completar debido a restricciones de tiempo. Es posible que esta dificultad esté relacionada con 
+los permisos asociados que no se configuraron correctamente para permitir el acceso a la tabla desde otras PDB.
+El código SQL utilizado para la creación del Application Container, la PDB y la tabla se ejecutó sin problemas aparentes. 
+Sin embargo, al intentar realizar una consulta desde otra PDB para verificar la disponibilidad de la tabla, 
+no se obtuvieron los resultados esperados.
+En cuanto a los comentarios y conclusiones, este ejercicio proporcionó una experiencia práctica valiosa para comprender
+ mejor el funcionamiento de los Application Containers y las PDB en Oracle. 
+ La dificultad encontrada resalta la importancia de comprender y configurar correctamente los permisos y
+ la seguridad en entornos de bases de datos Oracle.
+

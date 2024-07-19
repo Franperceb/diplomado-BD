@@ -1,0 +1,334 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-04-2024
+##Módulo 09. E-04- Merge Complex Views.
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/04/2024
+--@Descripción: Ejercicio 04 - Módulo 09. Merge complex views.
+
+
+
+define syslogon='sys/system1 as sysdba'
+define t_user='control_medico'
+define userlogon='&t_user/&t_user'
+define autotrace_opt='trace only'
+
+
+Prompt conectando como &t_user
+connect &userlogon
+
+Prompt Ejemplo Transformación OR
+
+Prompt Generando índices
+
+create index receta_medicamento_id_ix on receta(medicamento_id);
+create index receta_cita_id_ix on receta(cita_id);
+create index medicamento_subclave on medicamento (subclave);
+create index cita_consultorio on cita(consultorio);
+
+Prompt conectando como SYS
+connect &syslogon
+
+Prompt B. Recolectando estadísticas
+begin
+  dbms_stats.gather_schema_stats (
+      ownname => 'CONTROL_MEDICO',      
+      degree  => 2
+  );
+end;
+/
+
+
+Prompt conectando como &t_user
+connect &userlogon
+
+Prompt Configurando autotrace 'set autotrace'
+set autotrace &autotrace_opt
+set linesize window
+
+Prompt ==== Consulta 1
+select m.*, q1.cantidad
+from medicamento m, (
+select medicamento_id, count(*) cantidad
+from receta
+group by medicamento_id
+) q1
+where m.medicamento_id = q1.medicamento_id
+and m.subclave like '040%' and q1.cantidad<50;
+
+Prompt === Consulta 2
+
+select m.*, count(*) cantidad
+from medicamento m, receta r
+where m.subclave like '040%'
+group by m.medicamento_id, num_grupo_terapeutico, grupo_terapeutico, clave_cbcm,
+subclave, nombre_generico, forma_farmaceutica, concentracion, presentacion,
+principal_indicacion, indicacion_secundaria, contraindicaciones, unidades_envase,
+dosis_diaria, nombre_general
+having count (*) <50;
+
+Prompt === Consulta 3
+
+select /*+ no merge (q1) */ m.*, q1.cantidad
+from medicamento m, (
+select medicamento_id, count(*) cantidad
+from receta
+group by medicamento_id
+)q1
+where m.medicamento_id = q1.medicamento_id
+and m.subclave like '040%'
+and q1.cantidad <50;
+
+Prompt === Consulta 4
+select m.*, count(*) cantidad
+from medicamento m, receta r
+where m.subclave like '040%'
+group by m.medicamento_id, num_grupo_terapeutico, grupo_terapeutico, clave_cbcm,
+subclave, nombre_generico, forma_farmaceutica, concentracion, presentacion,
+principal_indicacion, indicacion_secundaria, contraindicaciones, unidades_envase,
+dosis_diaria, nombre_general
+having count(*)<50;
+
+Prompt Eliminando índices
+drop index receta_medicamento_id_ix;
+drop index receta_cita_id_ix;
+drop index medicamento_subclave;
+drop index cita_consultorio;    
+----------------------------------------------------------
+#Salida de ejecución
+-----------------------------------------------------------------------------
+control_medico@jpcdip01> start s-04-merge-complex-views.sql
+conectando como control_medico
+Connected.
+Ejemplo Transformación OR
+Generando índices
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+conectando como SYS
+Connected.
+B. Recolectando estadísticas
+
+PL/SQL procedure successfully completed.
+
+conectando como control_medico
+Connected.
+Configurando autotrace 'set autotrace'
+SP2-0158: unknown SET option "only"
+==== Consulta 1
+
+117 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 876812259
+
+----------------------------------------------------------------------------------------------------
+| Id  | Operation		| Name			   | Rows  | Bytes | Cost (%CPU)| Time	   |
+----------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	|			   |	56 | 30744 |	82   (2)| 00:00:01 |
+|*  1 |  FILTER 		|			   |	   |	   |		|	   |
+|   2 |   HASH GROUP BY 	|			   |	56 | 30744 |	82   (2)| 00:00:01 |
+|*  3 |    HASH JOIN		|			   |  1107 |   593K|	81   (0)| 00:00:01 |
+|*  4 |     TABLE ACCESS FULL	| MEDICAMENTO		   |   111 | 60495 |	68   (0)| 00:00:01 |
+|   5 |     INDEX FAST FULL SCAN| RECETA_MEDICAMENTO_ID_IX | 20000 | 80000 |	13   (0)| 00:00:01 |
+----------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(COUNT(*)<50)
+   3 - access("M"."MEDICAMENTO_ID"="MEDICAMENTO_ID")
+   4 - filter("M"."SUBCLAVE" LIKE '040%')
+
+Note
+-----
+   - this is an adaptive plan
+
+
+Statistics
+----------------------------------------------------------
+	  5  recursive calls
+	  0  db block gets
+	240  consistent gets
+	  0  physical reads
+	  0  redo size
+      66001  bytes sent via SQL*Net to client
+	655  bytes received via SQL*Net from client
+	  9  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	117  rows processed
+
+=== Consulta 2
+
+no rows selected
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 1170401990
+
+------------------------------------------------------------------------------------------------
+| Id  | Operation		 | Name        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	 |	       |   111K|    57M|       | 99412	 (1)| 00:00:04 |
+|*  1 |  FILTER 		 |	       |       |       |       |	    |	       |
+|   2 |   HASH GROUP BY 	 |	       |   111K|    57M|  1238M| 99412	 (1)| 00:00:04 |
+|   3 |    MERGE JOIN CARTESIAN  |	       |  2220K|  1153M|       |  1190	 (1)| 00:00:01 |
+|*  4 |     TABLE ACCESS FULL	 | MEDICAMENTO |   111 | 60495 |       |    68	 (0)| 00:00:01 |
+|   5 |     BUFFER SORT 	 |	       | 20000 |       |       | 99344	 (1)| 00:00:04 |
+|   6 |      INDEX FAST FULL SCAN| RECETA_PK   | 20000 |       |       |    10	 (0)| 00:00:01 |
+------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(COUNT(*)<50)
+   4 - filter("M"."SUBCLAVE" LIKE '040%')
+
+
+Statistics
+----------------------------------------------------------
+	  6  recursive calls
+	  3  db block gets
+	249  consistent gets
+	  0  physical reads
+	576  redo size
+       1630  bytes sent via SQL*Net to client
+	735  bytes received via SQL*Net from client
+	  1  SQL*Net roundtrips to/from client
+	  1  sorts (memory)
+	  0  sorts (disk)
+	  0  rows processed
+
+=== Consulta 3
+
+117 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 876812259
+
+----------------------------------------------------------------------------------------------------
+| Id  | Operation		| Name			   | Rows  | Bytes | Cost (%CPU)| Time	   |
+----------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	|			   |	56 | 30744 |	82   (2)| 00:00:01 |
+|*  1 |  FILTER 		|			   |	   |	   |		|	   |
+|   2 |   HASH GROUP BY 	|			   |	56 | 30744 |	82   (2)| 00:00:01 |
+|*  3 |    HASH JOIN		|			   |  1107 |   593K|	81   (0)| 00:00:01 |
+|*  4 |     TABLE ACCESS FULL	| MEDICAMENTO		   |   111 | 60495 |	68   (0)| 00:00:01 |
+|   5 |     INDEX FAST FULL SCAN| RECETA_MEDICAMENTO_ID_IX | 20000 | 80000 |	13   (0)| 00:00:01 |
+----------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(COUNT(*)<50)
+   3 - access("M"."MEDICAMENTO_ID"="MEDICAMENTO_ID")
+   4 - filter("M"."SUBCLAVE" LIKE '040%')
+
+Note
+-----
+   - this is an adaptive plan
+
+
+Statistics
+----------------------------------------------------------
+	  2  recursive calls
+	  0  db block gets
+	240  consistent gets
+	  0  physical reads
+	  0  redo size
+      66001  bytes sent via SQL*Net to client
+	676  bytes received via SQL*Net from client
+	  9  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	117  rows processed
+
+=== Consulta 4
+
+no rows selected
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 1170401990
+
+------------------------------------------------------------------------------------------------
+| Id  | Operation		 | Name        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	 |	       |   111K|    57M|       | 99412	 (1)| 00:00:04 |
+|*  1 |  FILTER 		 |	       |       |       |       |	    |	       |
+|   2 |   HASH GROUP BY 	 |	       |   111K|    57M|  1238M| 99412	 (1)| 00:00:04 |
+|   3 |    MERGE JOIN CARTESIAN  |	       |  2220K|  1153M|       |  1190	 (1)| 00:00:01 |
+|*  4 |     TABLE ACCESS FULL	 | MEDICAMENTO |   111 | 60495 |       |    68	 (0)| 00:00:01 |
+|   5 |     BUFFER SORT 	 |	       | 20000 |       |       | 99344	 (1)| 00:00:04 |
+|   6 |      INDEX FAST FULL SCAN| RECETA_PK   | 20000 |       |       |    10	 (0)| 00:00:01 |
+------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(COUNT(*)<50)
+   4 - filter("M"."SUBCLAVE" LIKE '040%')
+
+
+Statistics
+----------------------------------------------------------
+	  2  recursive calls
+	  0  db block gets
+	247  consistent gets
+	  0  physical reads
+	  0  redo size
+       1630  bytes sent via SQL*Net to client
+	733  bytes received via SQL*Net from client
+	  1  SQL*Net roundtrips to/from client
+	  1  sorts (memory)
+	  0  sorts (disk)
+	  0  rows processed
+
+Eliminando índices
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+-------------------------------------
+###Comentarios  y conclusiones 
+
+Este ejercicio nos permitió explorar la optimización de consultas mediante la técnica
+de inline views con funciones de agregación en Oracle.
+Al analizar la consulta proporcionada, pudimos identificar una oportunidad para aplicar
+inline views con funciones de agregación, lo que podría mejorar significativamente el rendimiento de la consulta 
+al reducir el número de operaciones y el volumen de datos procesados.
+Al aplicar esta estrategia de optimización, pudimos evaluar el impacto en el rendimiento de la consulta y 
+determinar si la fusión de inline views con funciones de agregación generó mejoras notables en la eficiencia de la consulta.
+En conclusión, este ejercicio nos permitió comprender cómo utilizar la técnica complex inline views para optimizar 
+consultas en Oracle, lo que puede conducir a mejoras significativas en el rendimiento y la eficiencia de las consultas en 
+entornos de bases de datos.
+
+
+

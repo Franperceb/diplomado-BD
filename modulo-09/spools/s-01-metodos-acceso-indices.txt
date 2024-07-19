@@ -1,0 +1,395 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-04-2024
+##Módulo 09. E-01- Métodos de acceso índices.
+-------------------------------------------
+
+###Script
+------------
+@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/04/2024
+--@Descripción: Ejercicio 09 - Módulo 09. Métodos de acceso indices.
+
+define syslogon='sys/system1 as sysdba'
+define t_user='control_medico'
+define userlogon='&t_user/&t_user'
+define autotrace_opt='trace only'
+
+
+Prompt conectando como &t_user
+connect &userlogon
+
+set linesize window
+
+--consulta 2
+create index receta_cita_id_ix on receta(cita_id);
+--consulta 3
+create index medico_nombre_ix on medico(nombre);
+--consulta 4
+create index especialidad_nombre_ix on especialidad(nombre);
+--consulta 5
+create index medicamento_clabe_cbm_indicacion_secundaria_idx on medicamento(clave_cbcm,indicacion_secundaria);
+--consulta 6
+create index receta_id_dias_idx on receta(dias);
+
+create index receta_id_cantidad_idx on receta(cantidad);
+create index medicamento_nombre_generico_idx on medicamento(nombre_generico);
+
+Prompt conectando como SYS
+connect &syslogon
+
+Prompt B. Recolectando estadísticas
+begin
+  dbms_stats.gather_schema_stats (
+      ownname => 'CONTROL_MEDICO',      
+      degree  => 2
+  );
+end;
+/
+
+Prompt conectando como &t_user
+connect &userlogon
+
+Prompt Configurando autotrace 'set autotrace '
+set autotrace &autotrace_opt
+
+
+Prompt ====  Consulta 1  Index Unique Scan
+select clave, nombre 
+from diagnostico 
+where diagnostico_id = 10;
+
+Prompt ====  Consulta 2  Index Range Scan
+select receta_id 
+from receta
+where cita_id in (1,5000);
+
+Prompt ====  Consulta 3  Fast Full Index Scan
+select nombre
+from medico  
+order by nombre;
+
+Prompt ====  Consulta 4   full index Scan
+select nombre
+from especialidad;
+
+Prompt ====  Consulta 5  Skip  index Scan
+select * 
+from medicamento 
+where indicacion_secundaria = '%s';
+
+Prompt ====  Consulta 6  Join  index Scan
+create index paciente_ap_materno_idx on paciente(ap_materno);
+create index paciente_ap_paterno_idx on paciente(ap_paterno);
+
+select ap_materno,ap_paterno from paciente where ap_materno like 'B%';
+
+prompt ELiminando índices
+
+drop index receta_cita_id_ix;
+drop index receta_id_cantidad_idx;
+drop index medico_nombre_ix;
+drop index especialidad_nombre_ix;
+drop index medicamento_clabe_cbm_indicacion_secundaria_idx;
+drop index receta_id_dias_idx;
+drop index medicamento_nombre_generico_idx;
+drop index paciente_ap_paterno_idx;
+drop index paciente_ap_materno_idx;
+
+
+------------------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+ontrol_medico@jpcdip01> start s-01-metodos-acceso-indices.sql
+conectando como control_medico
+Connected.
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+conectando como SYS
+Connected.
+B. Recolectando estadísticas
+
+PL/SQL procedure successfully completed.
+
+conectando como control_medico
+Connected.
+Configurando autotrace 'set autotrace '
+SP2-0158: unknown SET option "only"
+====  Consulta 1  Index Unique Scan
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 4265151822
+
+----------------------------------------------------------------------------------------------
+| Id  | Operation		    | Name	     | Rows  | Bytes | Cost (%CPU)| Time     |
+----------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	    |		     |	   1 |	  52 |	   2   (0)| 00:00:01 |
+|   1 |  TABLE ACCESS BY INDEX ROWID| DIAGNOSTICO    |	   1 |	  52 |	   2   (0)| 00:00:01 |
+|*  2 |   INDEX UNIQUE SCAN	    | DIAGNOSTICO_PK |	   1 |	     |	   1   (0)| 00:00:01 |
+----------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("DIAGNOSTICO_ID"=10)
+
+
+Statistics
+----------------------------------------------------------
+	  0  recursive calls
+	  0  db block gets
+	  3  consistent gets
+	  0  physical reads
+	  0  redo size
+	508  bytes sent via SQL*Net to client
+	414  bytes received via SQL*Net from client
+	  1  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	  1  rows processed
+
+====  Consulta 2  Index Range Scan
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 3302208608
+
+----------------------------------------------------------------------------------------------------------
+| Id  | Operation			     | Name		 | Rows  | Bytes | Cost (%CPU)| Time	 |
+----------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT		     |			 |     3 |    30 |     7   (0)| 00:00:01 |
+|   1 |  INLIST ITERATOR		     |			 |	 |	 |	      | 	 |
+|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED| RECETA		 |     3 |    30 |     7   (0)| 00:00:01 |
+|*  3 |    INDEX RANGE SCAN		     | RECETA_CITA_ID_IX |     3 |	 |     3   (0)| 00:00:01 |
+----------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - access("CITA_ID"=1 OR "CITA_ID"=5000)
+
+
+Statistics
+----------------------------------------------------------
+	  1  recursive calls
+	  0  db block gets
+	  9  consistent gets
+	  0  physical reads
+	  0  redo size
+	626  bytes sent via SQL*Net to client
+	416  bytes received via SQL*Net from client
+	  2  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	  4  rows processed
+
+====  Consulta 3  Fast Full Index Scan
+
+5000 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 3630875500
+
+------------------------------------------------------------------------------------------
+| Id  | Operation	      | Name		 | Rows  | Bytes | Cost (%CPU)| Time	 |
+------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT      | 		 |  5000 | 35000 |     6  (17)| 00:00:01 |
+|   1 |  SORT ORDER BY	      | 		 |  5000 | 35000 |     6  (17)| 00:00:01 |
+|   2 |   INDEX FAST FULL SCAN| MEDICO_NOMBRE_IX |  5000 | 35000 |     5   (0)| 00:00:01 |
+------------------------------------------------------------------------------------------
+
+
+Statistics
+----------------------------------------------------------
+	  1  recursive calls
+	  0  db block gets
+	 19  consistent gets
+	  0  physical reads
+	  0  redo size
+      90548  bytes sent via SQL*Net to client
+       4066  bytes received via SQL*Net from client
+	335  SQL*Net roundtrips to/from client
+	  1  sorts (memory)
+	  0  sorts (disk)
+       5000  rows processed
+
+====  Consulta 4   full index Scan
+
+53 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 2590170592
+
+-------------------------------------------------------------------------------------------
+| Id  | Operation	 | Name 		  | Rows  | Bytes | Cost (%CPU)| Time	  |
+-------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT |			  |    53 |  1113 |	1   (0)| 00:00:01 |
+|   1 |  INDEX FULL SCAN | ESPECIALIDAD_NOMBRE_IX |    53 |  1113 |	1   (0)| 00:00:01 |
+-------------------------------------------------------------------------------------------
+
+
+Statistics
+----------------------------------------------------------
+	  1  recursive calls
+	  0  db block gets
+	  5  consistent gets
+	  0  physical reads
+	  0  redo size
+       2372  bytes sent via SQL*Net to client
+	426  bytes received via SQL*Net from client
+	  5  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	 53  rows processed
+
+====  Consulta 5  Skip	index Scan
+
+no rows selected
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 4015564472
+
+---------------------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation			    | Name					      | Rows  | Bytes | Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT		    |						      |     1 |   545 |    20	(0)| 00:00:01 |
+|   1 |  TABLE ACCESS BY INDEX ROWID BATCHED| MEDICAMENTO				      |     1 |   545 |    20	(0)| 00:00:01 |
+|*  2 |   INDEX SKIP SCAN		    | MEDICAMENTO_CLABE_CBM_INDICACION_SECUNDARIA_IDX |     1 |       |    18	(0)| 00:00:01 |
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access("INDICACION_SECUNDARIA"='%s')
+       filter("INDICACION_SECUNDARIA"='%s')
+
+
+Statistics
+----------------------------------------------------------
+	  1  recursive calls
+	  0  db block gets
+	 18  consistent gets
+	  0  physical reads
+	  0  redo size
+       1552  bytes sent via SQL*Net to client
+	411  bytes received via SQL*Net from client
+	  1  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	  0  rows processed
+
+====  Consulta 6  Join	index Scan
+
+Index created.
+
+
+Index created.
+
+
+1114 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 1181831936
+
+--------------------------------------------------------------------------------------------------
+| Id  | Operation	       | Name			 | Rows  | Bytes | Cost (%CPU)| Time	 |
+--------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT       |			 |  1114 | 17824 |    43   (0)| 00:00:01 |
+|*  1 |  VIEW		       | index$_join$_001	 |  1114 | 17824 |    43   (0)| 00:00:01 |
+|*  2 |   HASH JOIN	       |			 |	 |	 |	      | 	 |
+|*  3 |    INDEX RANGE SCAN    | PACIENTE_AP_MATERNO_IDX |  1114 | 17824 |     4   (0)| 00:00:01 |
+|   4 |    INDEX FAST FULL SCAN| PACIENTE_AP_PATERNO_IDX |  1114 | 17824 |    49   (0)| 00:00:01 |
+--------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter("AP_MATERNO" LIKE 'B%')
+   2 - access(ROWID=ROWID)
+   3 - access("AP_MATERNO" LIKE 'B%')
+
+
+Statistics
+----------------------------------------------------------
+	  1  recursive calls
+	  0  db block gets
+	122  consistent gets
+	 43  physical reads
+	  0  redo size
+      29042  bytes sent via SQL*Net to client
+       1245  bytes received via SQL*Net from client
+	 76  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+       1114  rows processed
+
+ELiminando índices
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+
+Al completar el ejercicio para crear el script s-01-metodos-acceso-indices.sql,
+Adquirí un mejor entendimiento de los métodos de acceso por índice en Oracle 
+y cómo aplicarlos para optimizar consultas. A través del spool, 
+pude visualizar los planes de ejecución y evaluar la eficacia de cada método. 
+Aunque enfrenté algunos problemas menores, como la falta de índices adecuados, 
+pude resolverlos rápidamente. En resumen, este ejercicio fue valioso para mi aprendizaje práctico 
+y me ayudó a comprender mejor cómo mejorar el rendimiento de las consultas en bases de datos Oracle.

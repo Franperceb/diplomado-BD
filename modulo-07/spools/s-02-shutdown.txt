@@ -1,0 +1,165 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 11/02/2024
+##@Descripción: Ejercicio 03 - Módulo 07 - Estados de las PDBS.
+-------------------------------------------
+**SCRIPT 
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 16/02/2024
+--@Descripción: Ejercicio 03 - Módulo 07. Estados de las PDBS.
+
+--   EJERCICIO
+--   Completar el script en las secciones marcadas con TODO
+--
+
+pause Asegurarse que la CDB esté iniciada, asi como oracle_sid= jrcdip03
+pause [enter] para continuar
+
+set linesize window
+Prompt Pregunta 1 --ser cierra solo la cdb no toda la instancia.
+-----------------------------------------------------------
+prompt conectando a jpcdip03_s1
+connect sys/system3@jpcdip03_s1 as sysdba
+pause ¿que sucederá al ejecutar shutdown immediate? [enter]
+shutdown immediate
+
+Prompt pregunta 2 -- debe de cambiarse el estado de la cdb cerrada
+-----------------------------------------------------------
+alter session set container=cdb$root;
+col name format a20
+
+select con_id, name,open_mode from v$pdbs;
+pause Analizar resultados [enter] para continuar
+
+Prompt pregunta 3 detener a la CDB
+-----------------------------------------------------------
+--TODO: Completar -- cierra todas las cdbs por el nivel y la instancia si se detiene
+shutdown immediate
+
+Prompt pregunta 4 , iniciando Nuevamente  
+-------------------------------------------------------------
+-- Analizar la siguiente instrucción ¿Será correta?, ¿ A qué PDB se conectará?
+Pause Asegurar que oracle_sid sea igual a jpcdip03 [Enter] para continuar
+connect sys/system3 as sysdba 
+startup
+
+prompt Ejecutando nuevamente consulta 2
+--alter session set container=cdb$root;
+select con_id, name,open_mode from v$pdbs;
+pause Analizar resultados [enter] para continuar
+
+--TODO: Completar para modificar el valor de open_mode,
+-- hacer el cambio permanente  
+Prompt abriendo todas las Pdbs
+alter pluggable database all open;
+
+Prompt haciendo permanente el cambio 
+alter pluggable database all save state;
+
+Prompt reiniciando CDB
+shutdown immediate
+Prompt iniciando nuevamente
+startup
+
+Prompt mostrando consulta 2 nuevamente
+select con_id, name,open_mode from v$pdbs;
+
+------------------------------------------------------------------
+**SALIDA DE EJECUCIÓN
+
+sys@jpcdip03> start s-02-shutdown.sql
+Asegurarse que la CDB esté iniciada, asi como oracle_sid= jrcdip03
+
+[enter] para continuar
+
+Pregunta 1 --ser cierra solo la cdb no toda la instancia.
+conectando a jpcdip03_s1
+Connected.
+¿que sucederá al ejecutar shutdown immediate? [enter]
+
+Pluggable Database closed.
+pregunta 2 -- debe de cambiarse el estado de la cdb cerrada
+
+Session altered.
+
+
+    CON_ID NAME 		OPEN_MODE
+---------- -------------------- ----------
+	 2 PDB$SEED		READ ONLY
+	 3 JPCDIP03_S1		MOUNTED
+	 4 JPCDIP03_S2		READ WRITE
+
+Analizar resultados [enter] para continuar
+
+pregunta 3 detener a la CDB
+
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+ERROR:
+ORA-12514: TNS:listener does not currently know of service requested in connect descriptor
+
+
+Warning: You are no longer connected to ORACLE.
+pregunta 4 , iniciando Nuevamente
+Asegurar que oracle_sid sea igual a jpcdip03 [Enter] para continuar
+Connected to an idle instance.
+ORACLE instance started.
+
+Total System Global Area  805304728 bytes
+Fixed Size		    9140632 bytes
+Variable Size		  281018368 bytes
+Database Buffers	  507510784 bytes
+Redo Buffers		    7634944 bytes
+Database mounted.
+Database opened.
+Ejecutando nuevamente consulta 2
+
+    CON_ID NAME 		OPEN_MODE
+---------- -------------------- ----------
+	 2 PDB$SEED		READ ONLY
+	 3 JPCDIP03_S1		MOUNTED
+	 4 JPCDIP03_S2		MOUNTED
+
+Analizar resultados [enter] para continuar
+
+abriendo todas las Pdbs
+
+Pluggable database altered.
+
+haciendo permanente el cambio
+
+Pluggable database altered.
+
+reiniciando CDB
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+iniciando nuevamente
+ORACLE instance started.
+
+Total System Global Area  805304728 bytes
+Fixed Size		    9140632 bytes
+Variable Size		  281018368 bytes
+Database Buffers	  507510784 bytes
+Redo Buffers		    7634944 bytes
+Database mounted.
+Database opened.
+mostrando consulta 2 nuevamente
+
+    CON_ID NAME 		OPEN_MODE
+---------- -------------------- ----------
+	 2 PDB$SEED		READ ONLY
+	 3 JPCDIP03_S1		READ WRITE
+	 4 JPCDIP03_S2		READ WRITE
+
+----------------------------------------------------
+##CONCLUSIONES
+
+En el ejercicio se creó un script llamado "s-02-shutdown.sql" que realizó varias actividades relacionadas con detener y reiniciar una base de datos de
+contenedor (CDB) y sus Pluggable Databases (PDBs). Primero, se ejecutó el comando `shutdown immediate` en una PDB para detenerla de inmediato. 
+Luego, se consultó la vista `v$pdbs` desde la instancia raíz (root) para observar información sobre todas las PDBs en la CDB, 
+incluyendo su identificador de contenedor, nombre y modo de apertura (`open_mode`). Posteriormente, se detuvo la CDB por completo y se reinició. 
+Después del reinicio, se observó que el valor del campo `open_mode` en la vista `v$pdbs` no reflejaba correctamente el estado de apertura de las PDBs. 
+Esto requirió ejecutar instrucciones adicionales para corregir el problema y asegurar que el campo `open_mode` mostrara correctamente 
+el estado de apertura actual de las PDBs. En resumen, el ejercicio proporcionó una experiencia práctica sobre cómo gestionar la detención 
+y reinicio de una CDB y sus PDBs, así como sobre cómo verificar y corregir problemas relacionados con el estado de apertura de las PDBs después del reinicio.

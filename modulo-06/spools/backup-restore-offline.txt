@@ -1,0 +1,118 @@
+
+
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 10/02/2024
+##@Descripción: Ejercicio 05 - Módulo 06 - Restore backup offline RMAN,
+-------------------------------------------
+**Salida de ejecución
+----------------------------------------------------------------------------------
+*******************T1*******************
+
+ys@jpcdip02> select name from v$datafile;
+
+NAME
+--------------------------------------------------------------------------------
+/u01/app/oracle/oradata/JPCDIP02/system01.dbf
+/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+/u01/app/oracle/oradata/JPCDIP02/users01.dbf
+/u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+
+sys@jpcdip02> shutdown immediate
+ORA-01116: error in opening database file 2
+ORA-01110: data file 2: '/u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf'
+ORA-27041: unable to open file
+Linux-x86_64 Error: 2: No such file or directory
+Additional information: 3
+sys@jpcdip02> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[jorge@pc-jpc modulo-06]$ sqlplus sys/system2 as sysdba
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sat Feb 10 21:04:52 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+Last Successful login time: Sat Feb 10 2024 21:01:13 -06:00
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip02> startup
+ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip02> 
+sys@jpcdip02> shutdown immediate
+ORA-01116: error in opening database file 1
+ORA-01110: data file 1: '/u01/app/oracle/oradata/JPCDIP02/system01.dbf'
+ORA-27041: unable to open file
+Linux-x86_64 Error: 2: No such file or directory
+Additional information: 3
+sys@jpcdip02> shutdown abort
+ORACLE instance shut down.
+sys@jpcdip02> startup
+ORACLE instance started.
+
+Total System Global Area  486536496 bytes
+Fixed Size		    8897840 bytes
+Variable Size		  310378496 bytes
+Database Buffers	   54525952 bytes
+Redo Buffers		    7876608 bytes
+In-Memory Area		  104857600 bytes
+Database mounted.
+ORA-01157: cannot identify/lock data file 1 - see DBWR trace file
+ORA-01110: data file 1: '/u01/app/oracle/oradata/JPCDIP02/system01.dbf'
+
+
+sys@jpcdip02> alter database open;
+
+Database altered.
+
+
+ 
+*************T2*************************
+Recovery Manager complete.
+[oracle@pc-jpc ~]$ rman target /
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Sat Feb 10 21:38:26 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: JPCDIP02 (DBID=3728965376, not open)
+
+RMAN> restore database;
+
+Starting restore at 10-FEB-24
+using target database control file instead of recovery catalog
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=291 device type=DISK
+
+channel ORA_DISK_1: starting datafile backup set restore
+channel ORA_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_DISK_1: restoring datafile 00001 to /u01/app/oracle/oradata/JPCDIP02/system01.dbf
+channel ORA_DISK_1: restoring datafile 00002 to /u01/app/oracle/oradata/JPCDIP02/sysaux01.dbf
+channel ORA_DISK_1: restoring datafile 00003 to /u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf
+channel ORA_DISK_1: restoring datafile 00004 to /u01/app/oracle/oradata/JPCDIP02/users01.dbf
+channel ORA_DISK_1: restoring datafile 00005 to /u01/app/oracle/oradata/JPCDIP02/tbsp_bk
+channel ORA_DISK_1: reading from backup piece /unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_10/o1_mf_nnndf_FULL_BK_lwjg0847_.bkp
+channel ORA_DISK_1: piece handle=/unam-diplomado-bd/fast-recovery-area/JPCDIP02/backupset/2024_02_10/o1_mf_nnndf_FULL_BK_lwjg0847_.bkp tag=FULL_BK
+channel ORA_DISK_1: restored backup piece 1
+channel ORA_DISK_1: restore complete, elapsed time: 00:00:15
+Finished restore at 10-FEB-24
+
+RMAN> exit
+
+
+------------------------------------------------------------------------------------------------
+**CONCLUSIONES
+
+
+En este ejercicio, se abordó el proceso de backup y restauración offline (noarchivelog) de una base de datos Oracle. 
+Aunque se siguieron los pasos para respaldar y restaurar los datafiles y controlfiles, 
+la restauración no se completó exitosamente debido a un detalle de inconsistencia del SCN en el datafile system01. A
+demás, debido a limitaciones de tiempo, no se logró resolver manualmente este problema. 
+Esto resalta la importancia de contar con procedimientos de respaldo y restauración sólidos, 
+así como la necesidad de realizar pruebas exhaustivas para garantizar la integridad 
+y la efectividad de los procesos de recuperación en situaciones reales.

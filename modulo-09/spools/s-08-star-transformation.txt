@@ -1,0 +1,204 @@
+
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-04-2024
+##Módulo 09. E-08- Star transformation.
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/04/2024
+--@Descripción: Ejercicio 08 - Módulo 09. Star Transformation.
+
+
+define syslogon='sys/system1 as sysdba'
+define t_user='control_medico'
+define userlogon='&t_user/&t_user'
+define autotrace_opt='trace only'
+
+
+Prompt conectando como &t_user
+connect &userlogon
+
+create bitmap index cita_paciente_id_bix on cita(paciente_id);
+create bitmap index cita_diagnostico_id_bix on cita(diagnostico_id);
+create bitmap index cita_medico_id_bix on cita(medico_id);
+create index diagnostico_clave_ix on diagnostico(clave);
+create index medico_cedula_ix on medico(cedula);
+create index paciente_curp_ix on paciente(curp);
+
+
+Prompt Configurando autotrace 'set autotrace '
+set autotrace &autotrace_opt
+
+set linesize window
+
+select /*+ STAR_TRANSFORMATION */d.clave,m.cedula
+from diagnostico d, paciente p, medico m, cita c
+where c.diagnostico_id = d.diagnostico_id
+and  c.paciente_id = p.paciente_id
+and c.medico_id = m.medico_id
+and d.clave like 'Z%'
+and m.cedula like '9%'
+and p.curp like 'Z%';
+
+--- EL uso de star transformation también se controla con el parámetro
+--  parametro star_transformation_enabled
+
+Prompt haciendo limpieza
+
+drop index cita_paciente_id_bix;
+drop index cita_diagnostico_id_bix;
+drop index cita_medico_id_bix;
+drop index diagnostico_clave_ix;
+drop index medico_cedula_ix;
+drop index paciente_curp_ix;
+
+------------------------------------------------------
+###Salida de ejecución
+------------------------------------------------------
+control_medico@jpcdip01> start s-08-star-transformation.sql
+conectando como control_medico
+Connected.
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+Configurando autotrace 'set autotrace '
+SP2-0158: unknown SET option "only"
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 3146282438
+
+--------------------------------------------------------------------------------------------------------------------------
+| Id  | Operation				     | Name			 | Rows  | Bytes | Cost (%CPU)| Time	 |
+--------------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT			     |				 |     1 |    51 |   105   (0)| 00:00:01 |
+|   1 |  TEMP TABLE TRANSFORMATION		     |				 |	 |	 |	      | 	 |
+|   2 |   LOAD AS SELECT (CURSOR DURATION MEMORY)    | SYS_TEMP_0FD9D6618_3459DF |	 |	 |	      | 	 |
+|*  3 |    VIEW 				     | index$_join$_094 	 |   438 |  6570 |    13   (0)| 00:00:01 |
+|*  4 |     HASH JOIN				     |				 |	 |	 |	      | 	 |
+|*  5 |      INDEX RANGE SCAN			     | MEDICO_CEDULA_IX 	 |   438 |  6570 |     3   (0)| 00:00:01 |
+|   6 |      INDEX FAST FULL SCAN		     | MEDICO_PK		 |   438 |  6570 |    13   (0)| 00:00:01 |
+|*  7 |   HASH JOIN				     |				 |     1 |    51 |    92   (0)| 00:00:01 |
+|*  8 |    HASH JOIN				     |				 |     1 |    36 |    90   (0)| 00:00:01 |
+|   9 |     VIEW				     | VW_ST_83EEE05A		 |     1 |    26 |    86   (0)| 00:00:01 |
+|  10 |      NESTED LOOPS			     |				 |     1 |    47 |    50   (0)| 00:00:01 |
+|  11 |       BITMAP CONVERSION TO ROWIDS	     |				 |	 |    10 |    50   (0)| 00:00:01 |
+|  12 |        BITMAP AND			     |				 |	 |	 |	      | 	 |
+|  13 | 	BITMAP MERGE			     |				 |	 |	 |	      | 	 |
+|  14 | 	 BITMAP KEY ITERATION		     |				 |	 |	 |	      | 	 |
+|  15 | 	  TABLE ACCESS BY INDEX ROWID BATCHED| DIAGNOSTICO		 |   129 |  1290 |     4   (0)| 00:00:01 |
+|* 16 | 	   INDEX RANGE SCAN		     | DIAGNOSTICO_CLAVE_IX	 |   129 |	 |     2   (0)| 00:00:01 |
+|* 17 | 	  BITMAP INDEX RANGE SCAN	     | CITA_DIAGNOSTICO_ID_BIX	 |	 |	 |	      | 	 |
+|  18 | 	BITMAP MERGE			     |				 |	 |	 |	      | 	 |
+|  19 | 	 BITMAP KEY ITERATION		     |				 |	 |	 |	      | 	 |
+|  20 | 	  TABLE ACCESS FULL		     | SYS_TEMP_0FD9D6618_3459DF |   438 |  1752 |     2   (0)| 00:00:01 |
+|* 21 | 	  BITMAP INDEX RANGE SCAN	     | CITA_MEDICO_ID_BIX	 |	 |	 |	      | 	 |
+|  22 | 	BITMAP MERGE			     |				 |	 |	 |	      | 	 |
+|  23 | 	 BITMAP KEY ITERATION		     |				 |	 |	 |	      | 	 |
+|* 24 | 	  VIEW				     | index$_join$_089 	 |   209 |  5016 |    30   (0)| 00:00:01 |
+|* 25 | 	   HASH JOIN			     |				 |	 |	 |	      | 	 |
+|* 26 | 	    INDEX RANGE SCAN		     | PACIENTE_CURP_IX 	 |   209 |  5016 |     2   (0)| 00:00:01 |
+|  27 | 	    INDEX FAST FULL SCAN	     | PACIENTE_PK		 |   209 |  5016 |    35   (0)| 00:00:01 |
+|* 28 | 	  BITMAP INDEX RANGE SCAN	     | CITA_PACIENTE_ID_BIX	 |	 |	 |	      | 	 |
+|  29 |       TABLE ACCESS BY USER ROWID	     | CITA			 |     1 |    21 |    36   (0)| 00:00:01 |
+|  30 |     TABLE ACCESS BY INDEX ROWID BATCHED      | DIAGNOSTICO		 |   129 |  1290 |     4   (0)| 00:00:01 |
+|* 31 |      INDEX RANGE SCAN			     | DIAGNOSTICO_CLAVE_IX	 |   129 |	 |     2   (0)| 00:00:01 |
+|  32 |    TABLE ACCESS FULL			     | SYS_TEMP_0FD9D6618_3459DF |   438 |  6570 |     2   (0)| 00:00:01 |
+--------------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   3 - filter("M"."CEDULA" LIKE '9%')
+   4 - access(ROWID=ROWID)
+   5 - access("M"."CEDULA" LIKE '9%')
+   7 - access("ITEM_1"="C0")
+   8 - access("ITEM_2"="D"."DIAGNOSTICO_ID")
+  16 - access("D"."CLAVE" LIKE 'Z%')
+       filter("D"."CLAVE" LIKE 'Z%')
+  17 - access("C"."DIAGNOSTICO_ID"="D"."DIAGNOSTICO_ID")
+  21 - access("C"."MEDICO_ID"="C0")
+  24 - filter("P"."CURP" LIKE 'Z%')
+  25 - access(ROWID=ROWID)
+  26 - access("P"."CURP" LIKE 'Z%')
+  28 - access("C"."PACIENTE_ID"="P"."PACIENTE_ID")
+  31 - access("D"."CLAVE" LIKE 'Z%')
+       filter("D"."CLAVE" LIKE 'Z%')
+
+Note
+-----
+   - star transformation used for this statement
+   - this is an adaptive plan
+
+
+Statistics
+----------------------------------------------------------
+	 58  recursive calls
+	  2  db block gets
+       2030  consistent gets
+	 98  physical reads
+	376  redo size
+	745  bytes sent via SQL*Net to client
+	641  bytes received via SQL*Net from client
+	  2  SQL*Net roundtrips to/from client
+	 16  sorts (memory)
+	  0  sorts (disk)
+	  4  rows processed
+
+haciendo limpieza
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+
+Este ejercicio nos permitió explorar el concepto de star transformation en Oracle
+y su aplicación práctica en la optimización de consultas en un entorno de modelo de datos de tipo estrella.
+Al crear el script s-08-star-transformation.sql, generamos una consulta que involucra tablas dimensionales 
+y una tabla de hechos, similar a la estructura típica de un esquema de modelo de datos en estrella. 
+La consulta se centró en obtener la clave del diagnóstico y el número de cédula de los médicos que han diagnosticado 
+enfermedades específicas con ciertas características. Se aplicaron filtros para considerar solo a los médicos y 
+pacientes que cumplen ciertos criterios, como médicos con ciertas cédulas y pacientes con ciertas curps.
+Para provocar un star transformation, se realizaron configuraciones específicas que permiten a Oracle reconocer
+ el esquema de estrella y optimizar la consulta mediante la ejecución de operaciones de join en paralelo.
+Además, se exploró el uso de una tabla temporal para comparar el rendimiento de la consulta con y sin esta técnica. 
+La tabla temporal actúa como una versión materializada de los datos de entrada, lo que puede mejorar el rendimiento al evitar 
+la necesidad de realizar operaciones de join complejas en tiempo de consulta.
+En conclusión, este ejercicio nos proporcionó una comprensión más profunda del star transformation 
+y su aplicación en entornos de modelo de datos de tipo estrella, así como la importancia de considerar técnicas 
+como el uso de tablas temporales para mejorar el rendimiento de las consultas en Oracle.

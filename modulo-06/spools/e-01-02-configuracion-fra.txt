@@ -168,3 +168,16 @@ undo_retention			     integer	 1800
 
 -----------------------------------------------------------------------------------------------------------------------------------
 ##Comentarios y conclusiones
+
+En este ejercicio, se abordaron aspectos críticos de la configuración de la Fast Recovery Area (FRA) 
+en Oracle mediante la creación de scripts y consultas SQL específicas. El primer script, e-01-directorio-fra.sh, 
+se centró en la creación de la carpeta destinada a la FRA, destacando la importancia de la automatización para tareas rutinarias.
+El script SQL e-02-configuracion-fra.sql llevó a cabo una serie de acciones clave, desde verificar la existencia y ubicación de la FRA 
+hasta asegurarse de que la base de datos esté en modo archivelog. Además, se especificó el tamaño y la ubicación de la FRA,
+seguido por la activación del modo flashback y la configuración del periodo de retención de datos. La necesidad de detener e iniciar la instancia en modo mount
+para ciertos cambios subrayó la importancia de comprender los estados de la instancia.
+La sugerencia resultante de este ejercicio apunta a documentar y automatizar estas configuraciones para mejorar la eficiencia operativa.
+Los aprendizajes clave incluyen la comprensión de los modos de la instancia, la gestión proactiva de la retención y el flashback, 
+y la importancia crítica de una configuración adecuada de la FRA para garantizar la integridad y la capacidad de recuperación de la base de datos Oracle.
+En resumen, este ejercicio subraya la necesidad de prácticas de administración efectivas, automatización y comprensión profunda 
+de los conceptos relacionados con la FRA en entornos de base de datos Oracle.

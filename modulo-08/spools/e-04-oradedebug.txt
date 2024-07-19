@@ -1,0 +1,55 @@
+
+##JORGE FRANCISCO PEREDA CEBALLOS
+##05-04-2024
+##Módulo 08. E-7- Oradebug.
+-------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+t-1
+select p.PID,p.SPID,s.SID 
+from v$process p,v$session s 
+where s.paddr = p.addr 
+and s.sid = 123;
+
+"PID"	"SPID"	"SID"
+50	"675443"	123
+
+select * from v$session
+where username='CONTROL_MEDICO';
+
+"SADDR"	"SID"	"SERIAL#"	"AUDSID"	"PADDR"	"USER#"	"USERNAME"	"COMMAND"	"OWNERID"	"TADDR"	"LOCKWAIT"	"STATUS"	"SERVER"	"SCHEMA#"	"SCHEMANAME"	"OSUSER"	"PROCESS"	"MACHINE"	"PORT"	"TERMINAL"	"PROGRAM"	"TYPE"	"SQL_ADDRESS"	"SQL_HASH_VALUE"	"SQL_ID"	"SQL_CHILD_NUMBER"	"SQL_EXEC_START"	"SQL_EXEC_ID"	"PREV_SQL_ADDR"	"PREV_HASH_VALUE"	"PREV_SQL_ID"	"PREV_CHILD_NUMBER"	"PREV_EXEC_START"	"PREV_EXEC_ID"	"PLSQL_ENTRY_OBJECT_ID"	"PLSQL_ENTRY_SUBPROGRAM_ID"	"PLSQL_OBJECT_ID"	"PLSQL_SUBPROGRAM_ID"	"MODULE"	"MODULE_HASH"	"ACTION"	"ACTION_HASH"	"CLIENT_INFO"	"FIXED_TABLE_SEQUENCE"	"ROW_WAIT_OBJ#"	"ROW_WAIT_FILE#"	"ROW_WAIT_BLOCK#"	"ROW_WAIT_ROW#"	"TOP_LEVEL_CALL#"	"LOGON_TIME"	"LAST_CALL_ET"	"PDML_ENABLED"	"FAILOVER_TYPE"	"FAILOVER_METHOD"	"FAILED_OVER"	"RESOURCE_CONSUMER_GROUP"	"PDML_STATUS"	"PDDL_STATUS"	"PQ_STATUS"	"CURRENT_QUEUE_DURATION"	"CLIENT_IDENTIFIER"	"BLOCKING_SESSION_STATUS"	"BLOCKING_INSTANCE"	"BLOCKING_SESSION"	"FINAL_BLOCKING_SESSION_STATUS"	"FINAL_BLOCKING_INSTANCE"	"FINAL_BLOCKING_SESSION"	"SEQ#"	"EVENT#"	"EVENT"	"P1TEXT"	"P1"	"P1RAW"	"P2TEXT"	"P2"	"P2RAW"	"P3TEXT"	"P3"	"P3RAW"	"WAIT_CLASS_ID"	"WAIT_CLASS#"	"WAIT_CLASS"	"WAIT_TIME"	"SECONDS_IN_WAIT"	"STATE"	"WAIT_TIME_MICRO"	"TIME_REMAINING_MICRO"	"TIME_SINCE_LAST_WAIT_MICRO"	"SERVICE_NAME"	"SQL_TRACE"	"SQL_TRACE_WAITS"	"SQL_TRACE_BINDS"	"SQL_TRACE_PLAN_STATS"	"SESSION_EDITION_ID"	"CREATOR_ADDR"	"CREATOR_SERIAL#"	"ECID"	"SQL_TRANSLATION_PROFILE_ID"	"PGA_TUNABLE_MEM"	"SHARD_DDL_STATUS"	"CON_ID"	"EXTERNAL_NAME"	"PLSQL_DEBUGGER_CONNECTED"
+0000000070AE9D58	123	64730	1900012	0000000070F45DF8	203	"CONTROL_MEDICO"	0	2147483644	""	""	"INACTIVE"	"DEDICATED"	203	"CONTROL_MEDICO"	"jorge"	"122831"	"pc-jpc.fi.unam"	0	"pts/0"	"sqlplus@pc-jpc.fi.unam (TNS V1-V3)"	"USER"	00	0	""				0000000060E30640	3177412285	"gbg0wsuyq6xpx"	0	25-04-2024 00:51:06	16777608					"sqlplus@pc-jpc.fi.unam (TNS V1-V3)"	2360772617	""	0	""	84675	-1	0	0	0	5	25-04-2024 00:51:06	316420	"NO"	"NONE"	"NONE"	"NO"	"OTHER_GROUPS"	"DISABLED"	"ENABLED"	"ENABLED"	0	""	"NO HOLDER"			"UNKNOWN"			47	445	"SQL*Net message from client"	"driver id"	1650815232	0000000062657100	"#bytes"	1	0000000000000001	""	0	00	2723168908	6	"Idle"	0	73438	"WAITING"	73438265852	-1	0	"SYS$USERS"	"DISABLED"	"FALSE"	"FALSE"	"FIRST EXEC"	134	0000000070F45DF8	97	""	0	0	"DISABLED"	0	"jorge"	"FALSE"
+000000007069FC00	242	50599	1900011	0000000070F488B8	203	"CONTROL_MEDICO"	0	2147483644	"000000006BAF4E70"	""	"INACTIVE"	"DEDICATED"	203	"CONTROL_MEDICO"	"jorge"	"122831"	"pc-jpc.fi.unam"	0	"pts/0"	"sqlplus@pc-jpc.fi.unam (TNS V1-V3)"	"USER"	00	0	""				0000000064330360	349105966	"g72kdvcacxvtf"	0	25-04-2024 00:51:06	16777389					"SQL*Plus"	3669949024	""	0	""	84681	-1	0	0	0	94	25-04-2024 00:51:06	316420	"NO"	"NONE"	"NONE"	"NO"	"OTHER_GROUPS"	"DISABLED"	"ENABLED"	"ENABLED"	0	""	"NO HOLDER"			"UNKNOWN"			2156	445	"SQL*Net message from client"	"driver id"	1650815232	0000000062657100	"#bytes"	1	0000000000000001	""	0	00	2723168908	6	"Idle"	0	73438	"WAITING"	73438252856	-1	0	"SYS$USERS"	"DISABLED"	"FALSE"	"FALSE"	"FIRST EXEC"	134	0000000070F488B8	70	""	0	0	"DISABLED"	0	"jorge"	"FALSE"
+
+
+select * from medicamento;
+
+t-2
+sys@jpcdip01> oradebug setospid 675443
+Oracle pid: 50, Unix process pid: 675443, image: oracle@pc-jpc.fi.unam (TNS V1-V3)
+sys@jpcdip01> oradebug unlimit
+Statement processed.
+sys@jpcdip01> oradebug event 10046 trace name context forever,level 12;
+Statement processed.
+
+t-3
+
+[oracle@pc-jpc trace]$ ls -ltr | grep 675443
+-rw-r-----. 1 oracle oinstall 116057 Apr 28 17:23 jpcdip01_ora_675443.trm
+-rw-r-----. 1 oracle oinstall 656150 Apr 28 17:23 jpcdip01_ora_675443.trc
+[oracle@pc-jpc trace]$ tail 
+Display all 421 possibilities? (y or n)
+[oracle@pc-jpc trace]$ tail -1  jpcdip01_ora_675443.trc 
+STAT #139763750293168 id=1 cnt=2005 pid=0 pos=1 obj=73733 op='TABLE ACCESS FULL MEDICAMENTO (cr=310 pr=0 pw=0 str=1 time=7244 us cost=68 size=1092725 card=2005)'
+[oracle@pc-jpc trace]$ 
+
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+Durante la ejecución del ejercicio, no se detectaron problemas significativos. La creación del spool y la verificación del archivo trace se llevaron a cabo sin contratiempos.
+Este ejercicio contribuyó a mejorar mi comprensión sobre el uso de oradebug para consultar logs en Oracle y cómo pueden ser útiles para registrar y analizar la ejecución de scripts. 
+La inclusión de una verificación del archivo trace proporciona una capa adicional de control y verificación del proceso. En general, el ejercicio fue útil para fortalecer
+ mis habilidades en el manejo de scripts en Oracle.

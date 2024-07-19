@@ -333,35 +333,33 @@ Session altered.
 drop table fb_drop1
            *
 ERROR at line 1:
-ORA-00604: error occurred at recursive SQL level 1
-ORA-04031: unable to allocate 4008 bytes of shared memory ("shared
-pool","delete lob$ where obj#=:1","sga heap(1,0)","kglsim heap")
+ORA-00942: table or view does not exist
+
 
 
 Mostrando contenido de la papelera de reciclaje
-from recyclebin
-     *
-ERROR at line 2:
-ORA-00604: error occurred at recursive SQL level 1
-ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","select
-val","KGLH0^500deaca","kglHeapInitialize:temp")
+
 
 
 drop table fb_drop2
            *
 ERROR at line 1:
-ORA-00604: error occurred at recursive SQL level 1
-ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","unknown object","KGLH0^5e6d8df5","kglHeapInitialize:temp")
-
+ORA-00942: table or view does not exist	
 
 Mostrando contenido de la papelera de reciclaje
-from recyclebin
-     *
-ERROR at line 2:
-ORA-04031: unable to allocate 40 bytes of shared memory ("shared pool","unknown object","KGLH0^adfbba17","kglHeapInitialize:temp")
 
 
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
 ##Comentarios y conclusiones
+
+En este ejercicio, se exploraron las capacidades de "Flashback Drop" en Oracle, una funcionalidad diseñada para recuperar objetos eliminados de la base de datos. 
+Se inició activando la papelera de reciclaje a nivel del usuario sys, permitiendo así el rastreo de objetos eliminados.
+Se procedió a crear la tabla fb_drop con datos de ejemplo y se observó cómo la eliminación de la tabla dejó rastros en la papelera de reciclaje. 
+Utilizando consultas en las vistas RECYCLEBIN y USER_RECYCLEBIN, se verificó el contenido de la papelera y se recuperó la tabla eliminada, 
+demostrando la utilidad de "Flashback Drop".
+El ejercicio también abordó situaciones en las que se eliminó la tabla nuevamente, se verificó la papelera de reciclaje
+y se recuperaron las tablas eliminadas, resaltando la flexibilidad de esta funcionalidad para gestionar objetos eliminados en diferentes momentos.
+Finalmente, se desactivó la papelera de reciclaje y se confirmó que las tablas eliminadas ya no estaban presentes, mostrando cómo esta característica puede ser controlada y administrada según las necesidades específicas del entorno de la base de datos. 
+Este ejercicio subraya la importancia de comprender y utilizar de manera efectiva las herramientas de recuperación y gestión de objetos en Oracle Database.

@@ -1,0 +1,544 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 23/02/2024
+##@Descripción:Ejercicio 05 - Módulo 07. E05 Unpluging y Plugging de PDBs
+-------------------------------------------
+**SCRIPT
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 23/02/2024
+--@Descripción: Ejercicio 05 - Módulo 07. E05 Unpluging y Plugging de PDBs
+
+--   EJERCICIO
+--   Completar el script en las secciones marcadas con TODO
+--
+Prompt hacer unplug en jpcdip03_s3  -> plug en jpcdip04_s3
+
+--directorios donde están los datafiles
+define unplug_jpcdip03_s3='/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3'
+define plug_jpcdip04_s3='/u01/app/oracle/oradata/JPCDIP04/jpcdip04_s3'
+
+prompt Iniciar jpcdip03
+!sh s-030-start-cdb.sh jpcdip03 system3
+
+Prompt Connectar a jpcdip03 a cdb$root
+connect sys/system3@jpcdip03 as sysdba
+
+Prompt Crear PDB  jpcdip03_s3  a partir de Seed
+--TODO: crear PDB 
+create pluggable database jpcdip03_s3
+  admin user admin_s3 identified by admin_s3
+  file_name_convert=(
+    '/u01/app/oracle/oradata/JPCDIP03/pdbseed',
+    '&unplug_jpcdip03_s3'
+  );
+
+
+Prompt hacer unplug de  jpcdip03_s3, no se requiere cerrarla ya que no ha sido abierta
+--TODO: realizar unplug
+alter pluggable database jpcdip03_s3 unplug
+  into '&unplug_jpcdip03_s3/jpcdip03_s3.xml';
+
+
+Prompt Mostrando datos de las PDBs
+show pdbs
+
+Prompt  Mostrando datos de las PDBs  (dba_pdbs)
+col pdb_name format a30
+select pdb_id,pdb_name,status from dba_pdbs;
+pause Analizar [enter] para continuar
+
+Prompt mostrando metadatos
+!chmod 777 &unplug_jpcdip03_s3/jpcdip_s3.xml
+!cat &unplug_jpcdip03_s3/jpcdip03_s3.xml
+
+pause Revisar XML, revisar rutas [enter] para continuar
+
+
+prompt El siguiente paso es hacer plug en jpcdip04
+
+prompt Iniciar jpcdip04
+!sh s-030-start-cdb.sh jpcdip04 system4
+
+prompt  Validar compatibilidad, conectando a jpcdip04
+connect sys/system4@jpcdip04 as sysdba 
+
+show con_id
+show con_name 
+-- TODO: Agregar programa PL/SQL --validar compatibilidad de versiones config
+set serveroutput on
+
+declare 
+  v_compatible boolean;
+begin
+  v_compatible := dbms_pdb.check_plug_compatibility(
+    pdb_descr_file => '&unplug_jpcdip03_s3/jpcdip03_s3.xml',
+    pdb_name => 'jpcdip03_s3'
+  );
+
+  if v_compatible then
+    dbms_output.put_line('PDB jpcdip03_s3 no es compatible con jpcdip04');
+  else
+    raise_application_error(-20001,'PDB jpcdip03_s3 NO es compatible con jpcdip04');
+  end if;
+end;
+/
+
+pause Validar resultados [enter] para continuar
+
+prompt agregar la nueva PDB
+--TODO: Agregar a la nueva PDB
+create pluggable database jpcdip04_s3
+  using '&unplug_jpcdip03_s3/jpcdip03_s3.xml'
+  file_name_convert=(
+    '&unplug_jpcdip03_s3',
+    '&plug_jpcdip04_s3'
+  );
+
+prompt Revisando datafiles en ubicacion origen
+!ls -l &unplug_jpcdip03_s3/
+
+pause Analizar resultados [Enter] para continuar 
+
+prompt mostrando datos de las PDBS
+
+show pdbs
+
+select pdb_id,pdb_name,status from dba_pdbs;
+pause Analizar [enter] para continuar
+
+prompt Abriendo jpcdip04_s3
+alter pluggable database jpcdip04_s3 open read write;
+
+prompt conectar a jpcdip04_s3
+alter session set container=jpcdip04_s3;
+
+prompt mostrando datos de la nueva PDB
+show con_id
+show con_name
+
+pause Analizar resultado [Enter] para comenzar con Limpieza
+-----------------------------------------------------------
+
+Prompt eliminar jpcdip03_s3
+connect sys/system3@jpcdip03 as sysdba 
+--alter pluggable database jpcdip03_s3 close;
+drop pluggable database jpcdip03_s3 including datafiles;
+
+
+
+Prompt eliminar jpcdip04_s3
+connect sys/system4@jpcdip04 as sysdba 
+alter pluggable database jpcdip04_s3 close;
+drop pluggable database jpcdip04_s3 including datafiles;
+Prompt eliminando archivo XML
+!rm &unplug_jpcdip03_s3/jpcdip03_s3.xml
+
+------------------------------------------------------------
+**SALIDA DE EJECUCIÓN
+sys@jpcdip01> start s-035-crea-pdb.sql
+hacer unplug en jpcdip03_s3  -> plug en jpcdip04_s3
+Iniciar jpcdip03
+Iniciando jpcdip03
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Wed Mar 6 22:04:44 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip03> ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip03> USER is "SYS"
+sys@jpcdip03> Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+Connectar a jpcdip03 a cdb$root
+Connected.
+Crear PDB  jpcdip03_s3	a partir de Seed
+old   5:     '&unplug_jpcdip03_s3'
+new   5:     '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3'
+
+Pluggable database created.
+
+hacer unplug de  jpcdip03_s3, no se requiere cerrarla ya que no ha sido abierta
+old   2:   into '&unplug_jpcdip03_s3/jpcdip03_s3.xml'
+new   2:   into '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/jpcdip03_s3.xml'
+
+Pluggable database altered.
+
+Mostrando datos de las PDBs
+
+    CON_ID CON_NAME			  OPEN MODE  RESTRICTED
+---------- ------------------------------ ---------- ----------
+	 2 PDB$SEED			  READ ONLY  NO
+	 3 JPCDIP03_S1			  READ WRITE NO
+	 4 JPCDIP03_S2			  READ WRITE NO
+	 5 JPCDIP03_S3			  MOUNTED
+Mostrando datos de las PDBs  (dba_pdbs)
+
+    PDB_ID PDB_NAME			  STATUS
+---------- ------------------------------ ----------
+	 3 JPCDIP03_S1			  NORMAL
+	 2 PDB$SEED			  NORMAL
+	 4 JPCDIP03_S2			  NORMAL
+	 5 JPCDIP03_S3			  UNPLUGGED
+
+Analizar [enter] para continuar
+
+mostrando metadatos
+chmod: cannot access '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/jpcdip_s3.xml': No such file or directory
+
+<?xml version="1.0" encoding="UTF-8"?>
+<PDB>
+  <xmlversion>1</xmlversion>
+  <pdbname>JPCDIP03_S3</pdbname>
+  <cid>5</cid>
+  <byteorder>1</byteorder>
+  <vsn>318767104</vsn>
+  <vsns>
+    <vsnnum>19.0.0.0.0</vsnnum>
+    <cdbcompt>19.0.0.0.0</cdbcompt>
+    <pdbcompt>19.0.0.0.0</pdbcompt>
+    <vsnlibnum>0.0.0.0.24</vsnlibnum>
+    <vsnsql>24</vsnsql>
+    <vsnbsv>8.0.0.0.0</vsnbsv>
+  </vsns>
+  <dbid>2566397244</dbid>
+  <ncdb2pdb>0</ncdb2pdb>
+  <cdbid>3785456339</cdbid>
+  <guid>130B2CF445727327E0630100007F3FC3</guid>
+  <uscnbas>2538995</uscnbas>
+  <uscnwrp>0</uscnwrp>
+  <undoscn>280</undoscn>
+  <rdba>4194824</rdba>
+  <tablespace>
+    <name>SYSTEM</name>
+    <type>0</type>
+    <tsn>0</tsn>
+    <status>1</status>
+    <issft>0</issft>
+    <isnft>0</isnft>
+    <encts>0</encts>
+    <flags>0</flags>
+    <bmunitsize>8</bmunitsize>
+    <file>
+      <path>/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/system01.dbf</path>
+      <afn>39</afn>
+      <rfn>1</rfn>
+      <createscnbas>2538662</createscnbas>
+      <createscnwrp>0</createscnwrp>
+      <status>1</status>
+      <fileblocks>34560</fileblocks>
+      <blocksize>8192</blocksize>
+      <vsn>318767104</vsn>
+      <fdbid>2566397244</fdbid>
+      <fcpsb>2538986</fcpsb>
+      <fcpsw>0</fcpsw>
+      <frlsb>1920977</frlsb>
+      <frlsw>0</frlsw>
+      <frlt>1160562326</frlt>
+      <autoext>0</autoext>
+      <maxsize>0</maxsize>
+      <incsize>0</incsize>
+      <plugscn>0</plugscn>
+      <plugafn>0</plugafn>
+      <plugdbid>0</plugdbid>
+    </file>
+  </tablespace>
+  <tablespace>
+    <name>SYSAUX</name>
+    <type>0</type>
+    <tsn>1</tsn>
+    <status>1</status>
+    <issft>0</issft>
+    <isnft>0</isnft>
+    <encts>0</encts>
+    <flags>0</flags>
+    <bmunitsize>8</bmunitsize>
+    <file>
+      <path>/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/sysaux01.dbf</path>
+      <afn>40</afn>
+      <rfn>4</rfn>
+      <createscnbas>2538666</createscnbas>
+      <createscnwrp>0</createscnwrp>
+      <status>1</status>
+      <fileblocks>42240</fileblocks>
+      <blocksize>8192</blocksize>
+      <vsn>318767104</vsn>
+      <fdbid>2566397244</fdbid>
+      <fcpsb>2538986</fcpsb>
+      <fcpsw>0</fcpsw>
+      <frlsb>1920977</frlsb>
+      <frlsw>0</frlsw>
+      <frlt>1160562326</frlt>
+      <autoext>0</autoext>
+      <maxsize>0</maxsize>
+      <incsize>0</incsize>
+      <plugscn>0</plugscn>
+      <plugafn>0</plugafn>
+      <plugdbid>0</plugdbid>
+    </file>
+  </tablespace>
+  <tablespace>
+    <name>UNDOTBS1</name>
+    <type>2</type>
+    <tsn>2</tsn>
+    <status>1</status>
+    <issft>0</issft>
+    <isnft>0</isnft>
+    <encts>0</encts>
+    <flags>0</flags>
+    <bmunitsize>8</bmunitsize>
+    <file>
+      <path>/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/undotbs01.dbf</path>
+      <afn>41</afn>
+      <rfn>9</rfn>
+      <createscnbas>2538669</createscnbas>
+      <createscnwrp>0</createscnwrp>
+      <status>1</status>
+      <fileblocks>12800</fileblocks>
+      <blocksize>8192</blocksize>
+      <vsn>318767104</vsn>
+      <fdbid>2566397244</fdbid>
+      <fcpsb>2538986</fcpsb>
+      <fcpsw>0</fcpsw>
+      <frlsb>1920977</frlsb>
+      <frlsw>0</frlsw>
+      <frlt>1160562326</frlt>
+      <autoext>0</autoext>
+      <maxsize>0</maxsize>
+      <incsize>0</incsize>
+      <plugscn>0</plugscn>
+      <plugafn>0</plugafn>
+      <plugdbid>0</plugdbid>
+    </file>
+  </tablespace>
+  <tablespace>
+    <name>TEMP</name>
+    <type>1</type>
+    <tsn>3</tsn>
+    <status>1</status>
+    <issft>0</issft>
+    <isnft>0</isnft>
+    <encts>0</encts>
+    <flags>0</flags>
+    <bmunitsize>128</bmunitsize>
+    <file>
+      <path>/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/temp012024-02-10_10-33-09-464-AM.dbf</path>
+      <afn>5</afn>
+      <rfn>1</rfn>
+      <createscnbas>2538663</createscnbas>
+      <createscnwrp>0</createscnwrp>
+      <status>1</status>
+      <fileblocks>4608</fileblocks>
+      <blocksize>8192</blocksize>
+      <vsn>318767104</vsn>
+      <autoext>1</autoext>
+      <maxsize>4194302</maxsize>
+      <incsize>80</incsize>
+      <plugscn>0</plugscn>
+      <plugafn>0</plugafn>
+      <plugdbid>0</plugdbid>
+    </file>
+  </tablespace>
+  <recover>0</recover>
+  <optional>
+    <ncdb2pdb>0</ncdb2pdb>
+    <csid>873</csid>
+    <ncsid>2000</ncsid>
+    <options>
+      <option>APS=19.0.0.0.0</option>
+      <option>CATALOG=19.0.0.0.0</option>
+      <option>CATJAVA=19.0.0.0.0</option>
+      <option>CATPROC=19.0.0.0.0</option>
+      <option>CONTEXT=19.0.0.0.0</option>
+      <option>DV=19.0.0.0.0</option>
+      <option>JAVAVM=19.0.0.0.0</option>
+      <option>OLS=19.0.0.0.0</option>
+      <option>ORDIM=19.0.0.0.0</option>
+      <option>OWM=19.0.0.0.0</option>
+      <option>SDO=19.0.0.0.0</option>
+      <option>XDB=19.0.0.0.0</option>
+      <option>XML=19.0.0.0.0</option>
+      <option>XOQ=19.0.0.0.0</option>
+    </options>
+    <olsoid>0</olsoid>
+    <dv>0</dv>
+    <APEX>NULL</APEX>
+    <parameters>
+      <parameter>processes=640</parameter>
+      <parameter>nls_language='AMERICAN'</parameter>
+      <parameter>nls_territory='AMERICA'</parameter>
+      <parameter>db_block_size=8192</parameter>
+      <parameter>compatible='19.0.0'</parameter>
+      <parameter>open_cursors=300</parameter>
+      <parameter>pga_aggregate_target=268435456</parameter>
+      <parameter>enable_pluggable_database=TRUE</parameter>
+    </parameters>
+    <sqlpatches>
+      <sqlpatch>19.3.0.0.0 Release_Update 1904101227 (RU): APPLY SUCCESS</sqlpatch>
+    </sqlpatches>
+    <tzvers>
+      <tzver>primary version:32</tzver>
+      <tzver>secondary version:0</tzver>
+    </tzvers>
+    <walletkey>0</walletkey>
+    <services/>
+    <opatches>
+      <opatch>29517242</opatch>
+    </opatches>
+    <hasclob>1</hasclob>
+    <awr>
+      <loadprofile>CPU used by this session=49.062992</loadprofile>
+      <loadprofile>DB time=72.204724</loadprofile>
+      <loadprofile>db block changes=1064.304495</loadprofile>
+      <loadprofile>execute count=2479.451772</loadprofile>
+      <loadprofile>logons cumulative=1.629921</loadprofile>
+      <loadprofile>parse count (hard)=268.342520</loadprofile>
+      <loadprofile>parse count (total)=563.703740</loadprofile>
+      <loadprofile>physical reads=130.860174</loadprofile>
+      <loadprofile>physical writes=8.395374</loadprofile>
+      <loadprofile>redo size=199548.208612</loadprofile>
+      <loadprofile>session logical reads=12535.893701</loadprofile>
+      <loadprofile>user calls=26.268701</loadprofile>
+      <loadprofile>user commits=3.219762</loadprofile>
+      <loadprofile>user rollbacks=0.025877</loadprofile>
+    </awr>
+    <hardvsnchk>0</hardvsnchk>
+    <localundo>1</localundo>
+    <apps/>
+    <dbedition>8</dbedition>
+    <dvopsctl>2</dvopsctl>
+    <clnupsrcpal>1</clnupsrcpal>
+  </optional>
+</PDB>
+
+Revisar XML, revisar rutas [enter] para continuar
+
+El siguiente paso es hacer plug en jpcdip04
+Iniciar jpcdip04
+Iniciando jpcdip04
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Wed Mar 6 22:04:55 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip04> ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip04> USER is "SYS"
+sys@jpcdip04> Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+Validar compatibilidad, conectando a jpcdip04
+Connected.
+
+CON_ID
+------------------------------
+1
+
+CON_NAME
+------------------------------
+CDB$ROOT
+old   5:     pdb_descr_file => '&unplug_jpcdip03_s3/jpcdip03_s3.xml',
+new   5:     pdb_descr_file => '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/jpcdip03_s3.xml',
+PDB jpcdip03_s3 no es compatible con jpcdip04
+
+PL/SQL procedure successfully completed.
+
+Validar resultados [enter] para continuar
+
+agregar la nueva PDB
+old   2:   using '&unplug_jpcdip03_s3/jpcdip03_s3.xml'
+new   2:   using '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3/jpcdip03_s3.xml'
+old   4:     '&unplug_jpcdip03_s3',
+new   4:     '/u01/app/oracle/oradata/JPCDIP03/jpcdip03_s3',
+old   5:     '&plug_jpcdip04_s3'
+new   5:     '/u01/app/oracle/oradata/JPCDIP04/jpcdip04_s3'
+
+Pluggable database created.
+
+Revisando datafiles en ubicacion origen
+total 716900
+-rw-r--r--. 1 oracle oinstall      6679 Mar  6 22:04 jpcdip03_s3.xml
+-rw-r-----. 1 oracle oinstall 346038272 Mar  6 22:04 sysaux01.dbf
+-rw-r-----. 1 oracle oinstall 283123712 Mar  6 22:04 system01.dbf
+-rw-r-----. 1 oracle oinstall  37756928 Mar  6 22:04 temp012024-02-10_10-33-09-464-AM.dbf
+-rw-r-----. 1 oracle oinstall 104865792 Mar  6 22:04 undotbs01.dbf
+
+Analizar resultados [Enter] para continuar
+
+mostrando datos de las PDBS
+
+    CON_ID CON_NAME			  OPEN MODE  RESTRICTED
+---------- ------------------------------ ---------- ----------
+	 2 PDB$SEED			  READ ONLY  NO
+	 3 JPCDIP04_S			  READ WRITE NO
+	 4 JPCDIP04_S3			  MOUNTED
+
+    PDB_ID PDB_NAME			  STATUS
+---------- ------------------------------ ----------
+	 3 JPCDIP04_S			  NORMAL
+	 2 PDB$SEED			  NORMAL
+	 4 JPCDIP04_S3			  NEW
+
+Analizar [enter] para continuar
+
+Abriendo jpcdip04_s3
+
+Pluggable database altered.
+
+conectar a jpcdip04_s3
+
+Session altered.
+
+mostrando datos de la nueva PDB
+
+CON_ID
+------------------------------
+4
+
+CON_NAME
+------------------------------
+JPCDIP04_S3
+Analizar resultado [Enter] para comenzar con Limpieza
+
+eliminar jpcdip03_s3
+Connected.
+
+Pluggable database dropped.
+
+eliminar jpcdip04_s3
+Connected.
+
+Pluggable database altered.
+
+
+Pluggable database dropped.
+
+eliminando archivo XML
+
+
+-----------------------------------------------------------------------------------
+**CONCLUSIONES
+Este ejercicio demuestra el proceso de desenchufar (unplug) 
+una Pluggable Database (PDB) de una Container Database (CDB) 
+y luego volver a enchufarla (plug) en otra CDB. Primero, se crea una nueva PDB en la CDB origen, 
+se realiza el unplug de esta PDB y se genera un archivo XML que contiene los metadatos necesarios para el plug en la CDB destino.
+Después, se valida la compatibilidad entre las versiones de las CDBs origen y destino. 
+Si son compatibles, se realiza el plug de la PDB en la CDB destino utilizando el archivo XML generado anteriormente. 
+Finalmente, se abre la nueva PDB en la CDB destino y se realizan las verificaciones necesarias.
+Este ejercicio destaca la versatilidad del proceso de unplug y plug de PDBs, 
+permitiendo la migración de bases de datos entre diferentes CDBs de manera eficiente y segura.
+Además, resalta la importancia de verificar la compatibilidad entre las versiones de las CDBs involucradas para garantizar
+el éxito de la operación.
+
+
+
+

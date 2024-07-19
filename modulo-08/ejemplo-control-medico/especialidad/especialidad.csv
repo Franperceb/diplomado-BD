@@ -1,0 +1,54 @@
+ESPECIALIDAD,Duracion,Requisitos
+Anatomia Patologica,4 ,Medicina General
+Anestesiologia y Recuperacion,3 ,Medicina General
+Anestesiologia Pediatrica,1 ,Especialista en Anestesiologia
+Cardiologia,4 ,Medicina General
+Cardiologia Pediatrica,2 ,Especialista en Pediatria
+Cirugia General,4 ,Medicina General
+Cirugia Pediatrica,5 ,Medicina General
+Cirugia Plastica y Reconstructiva,2 ,tercer  de Cirugia General
+Cirugia Toracica General,5 ,Medicina General
+Cirugia Cardiovascular Toracica,5 ,Medicina General
+Dermatologia,4 ,Medicina General
+Endocrinologia,4 ,Medicina General
+Gastroenterologia,4 ,Medicina General
+Geriatria y Gerontologia,5 ,Medicina General
+Ginecologia y Obstetricia,3 ,Medicina General
+Ginecologia Oncologica,2 ,Ginecologia y Obstetricia
+Hematologia,4 ,Medicina General
+Hematologia Pediatrica,2 ,Pediatria
+Infectologia,4 ,Medicina General
+Infectologia Pediatrica,2 ,Pediatria
+Inmunologia Clinica Medica,2 ,Medicina Interna o Pediatria
+Medicina Critica Pediatrica,2 ,Pediatria
+Medicina Critica y Terapia Intensiva,4 ,Medicina General
+Medicina de Emergencias,3 ,Medicina General
+Medicina Interna,4 ,Medicina General
+Medicina Familiar y Comunitaria,4 ,Medicina General
+Medicina Fisica y Rehabilitacion,3 ,Medicina General
+Medicina Materno Fetal,3 ,Ginecologia y Obstetricia
+Medicina Paliativa,4 ,Medicina General
+Nefrologia,2 ,Medicina Interna
+Nefrologia Pediatrica,2 ,Pediatria
+Neonatologia,2 ,Pediatria
+Neumologia,4 ,Medicina General
+Neumologia Pediatrica,2 ,Pediatria
+Neurocirugia,6 ,Medicina General
+Neurologia,4 ,Medicina General
+Oftalmologia,3 ,Medicina General
+Oftalmologia Pediatrica,1.5 ,Oftalmologia
+Oncologia Medica,4 ,Medicina General
+Oncologia Quirurgica,2 ,Cirugia General
+Ortopedia y Traumatologia,5 ,Medicina General
+Ortopedia y Traumatologia,2 ,Ortopedia y Traumatologia
+Otorrinolaringologia,4 ,Medicina General
+Patologia Pediatrica,2 ,Anatomia Patologica
+Pediatria,3 ,Medicina General
+Psicologia Clinica,2 ,Licenciatura en Psicologia
+Psiquiatria,3 ,Medicina General
+Radiologia e Imagenes Medicas,4 ,Medicina General
+Radioterapia,4 ,Medicina General
+Reumatologia,4 ,Medicina General
+Urologia,4 ,Medicina General
+Urologia Pediatrica,2 ,Urologia
+Vascular Periferico,4 ,Medicina General

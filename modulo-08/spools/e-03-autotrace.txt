@@ -1,0 +1,75 @@
+
+##JORGE FRANCISCO PEREDA CEBALLOS
+##05-04-2024
+##Módulo 08. E-6- Uso de autotrace en sentencia SQL.
+-------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+
+sys@jpcdip01> grant plustrace to control_medico;
+
+Grant succeeded.
+
+sys@jpcdip01> conn control_medico/control_medico 
+Connected.
+control_medico@jpcdip01> set autotrace on
+control_medico@jpcdip01> set autotrace on explain
+control_medico@jpcdip01> set autotrace on statistics
+control_medico@jpcdip01> set autotrace on
+control_medico@jpcdip01> set autotrace traceonly 
+control_medico@jpcdip01> select count(*) from medicamento;
+DIAGNOSTICO
+ESPECIALIDAD
+MEDICO
+PACIENTE
+CITA
+MEDICAMENTO
+RECETA
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 2644595223
+
+--------------------------------------------------------------------------------
+| Id  | Operation	      | Name	       | Rows  | Cost (%CPU)| Time     |
+--------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT      | 	       |     1 |     5	 (0)| 00:00:01 |
+|   1 |  SORT AGGREGATE       | 	       |     1 |	    |	       |
+|   2 |   INDEX FAST FULL SCAN| MEDICAMENTO_PK |  1828 |     5	 (0)| 00:00:01 |
+--------------------------------------------------------------------------------
+
+Note
+-----
+   - dynamic statistics used: dynamic sampling (level=2)
+
+
+Statistics
+----------------------------------------------------------
+	113  recursive calls
+	  0  db block gets
+	186  consistent gets
+	  0  physical reads
+	140  redo size
+	551  bytes sent via SQL*Net to client
+	394  bytes received via SQL*Net from client
+	  2  SQL*Net roundtrips to/from client
+	  6  sorts (memory)
+	  0  sorts (disk)
+	  1  rows processed
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+
+Este ejercicio proporcionó una experiencia práctica en la generación de consultas que provocan un index fast full scan 
+en Oracle utilizando el esquema de control médico. Se detectó la necesidad de comprender cómo estructurar 
+consultas para optimizar el rendimiento y utilizar índices de manera eficiente. 
+Al utilizar el comando autotrace, se pudo examinar el plan de ejecución y comprender mejor cómo se accede a los 
+datos en la base de datos. Esta práctica mejoró la comprensión del rendimiento de las consultas 
+y cómo mejorarlas para obtener resultados más eficientes. Uno de los detalles que se presentaron fue la generación del rol 
+para realizar el autotrace, sin embargo, al investigar la manera de realizarlo y otorgarlo a través de sys al usuario control_medico
+se pudo continuar y concluir exitosamente el ejercicio.
+
+
+

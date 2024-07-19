@@ -1,0 +1,89 @@
+##Instalar las siguiente dependencias
+
+sudo dnf -y install wget oracleasm
+
+## Crear los siguientes grupos, emplear root
+groupadd -g 54327 asmdba
+groupadd -g 54328 asmoper
+groupadd -g 54329 asmadmin
+
+
+###crear al usuario grid
+useradd -u 54322 -g oinstall -G dba,asmdba,asmoper,asmadmin grid
+
+###Asignar password al usuario grid  (asignar el valor grid)
+passwd grid 
+
+
+####Asignar grupos adicionales al usuario oracle
+usermod  -g oinstall -G dba,oper,asmdba,asmoper,asmadmin oracle
+
+####Creación de directorios para instalar grid
+mkdir -p /u01/app/grid/19c/grid_home
+
+#Cambiando permisos
+chown -R grid:oinstall /u01/app/grid
+
+
+##Configuracion de discos
+
+##Crear servicio
+
+###configuración de un servicio empleado systemctl
+/etc/systemd/system/
+- crear el script raw-devices.service
+/A-UYdXu2apW.C5[Unit]
+Description=Utility script used to initialize raw devices for Oracle ASM
+
+[Service]
+User=root
+WorkingDirectory=/u01/app/grid
+ExecStart=/u01/app/grid/raw-devices-setup.sh
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
+#########################4
+#!/bin/bash
+echo "Inicializando raw devices para Oracle ASM"
+
+
+losetup /dev/loop11 /unam-diplomado/asm_disks/disk1.img
+losetup /dev/loop12 /unam-diplomado/asm_disks/disk2.img
+losetup /dev/loop13 /unam-diplomado/asm_disks/disk3.img
+losetup /dev/loop14 /unam-diplomado/asm_disks/disk4.img
+losetup /dev/loop15 /unam-diplomado/asm_disks/disk5.img
+losetup /dev/loop16 /unam-diplomado/asm_disks/disk6.img
+
+#verificar
+losetup -a
+
+#asociar a dispositivo raw
+raw /dev/raw/raw01 /dev/loop11
+raw /dev/raw/raw02 /dev/loop12
+raw /dev/raw/raw03 /dev/loop13
+raw /dev/raw/raw04 /dev/loop14
+raw /dev/raw/raw05 /dev/loop15
+raw /dev/raw/raw06 /dev/loop16
+
+chown grid:asmdba /dev/raw/raw*
+chmod 660 /dev/raw/raw*
+ls -l /dev/raw/*
+
+## El siguiente paso es activar el servicio  y despues iniciarlo
+#Activar
+sudo systemctl enable raw-devices.service
+
+#Ver status
+systemctl status raw-devices.service
+
+#Iniciar servicio
+systemctl start raw-devices.service
+
+#detener servicio
+systemctl stop raw-devices.service
+
+

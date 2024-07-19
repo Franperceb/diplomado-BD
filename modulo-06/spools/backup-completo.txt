@@ -1,3 +1,9 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 26/01/2024
+##@Descripción: Ejercicio 01 - Módulo 06 - Backup Completo RMAN,
+-------------------------------------------
+**Salida de ejecución
+----------------------------------------------------------------------------------
 
 [oracle@pc-jpc dbhome_1]$ tree /unam-diplomado-bd/fast-recovery-area/
 /unam-diplomado-bd/fast-recovery-area/
@@ -13,6 +19,9 @@
         └── o1_mf_lvbk5j4t_.flb
 
 5 directories, 5 files
+
+## Para usar RMAN es necesario implementar el listener
+
 [oracle@pc-jpc dbhome_1]$ lsnrctl start
 
 LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 27-JAN-2024 13:04:20
@@ -322,3 +331,18 @@ Modification Time BS Key  S #Pieces #Copies Compressed Tag
 27-JAN-24         3       A 1       1       NO         TAG20240127T130425
 
 RMAN> 
+
+------------------------------------------------------------------------------------------------
+**CONCLUSIONES
+
+
+En este ejercicio, se realizó un backup completo de la base de datos utilizando RMAN, un proceso fundamental para garantizar la seguridad y disponibilidad
+de los datos. Durante la ejecución del ejercicio, se verificó que la base de datos estuviera en modo archive log, 
+se conectó a la instancia a través del usuario oracle y se llevó a cabo el primer backup, incluyendo los archive redo log.
+Posteriormente, se analizaron los resultados del backup, examinando los tipos de backup sets generados, la cantidad de backup sets de cada tipo, 
+la ubicación de los backups, el número de piezas generadas y el tamaño del backup generado. Se procedió a mostrar los archivos generados en la FRA y 
+a listar los backups realizados, tanto en general como por tipo de archivo.
+Además, se obtuvo un resumen del backup y se revisaron los archivos que podían ser eliminados, eliminándolos si era necesario para optimizar 
+el almacenamiento y mantener la integridad del backup.
+En resumen, este ejercicio proporcionó una experiencia práctica y completa en la realización de backups con RMAN,
+resaltando la importancia de mantener un procedimiento regular y bien planificado para la protección de los datos de la base de datos.

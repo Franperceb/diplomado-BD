@@ -1,0 +1,561 @@
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Ejercicio 04 Módulo 06. Instance recovery.
+
+
+**Script
+------------------------------------------
+***** recovery-instancia.sql***************************
+
+
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 26/01/2024
+--@Descripción: Ejercicio 01 - Módulo 06. Fallo backup instancia.
+
+CONNECT user06bk/user06bk 
+
+Prompt Creando secuencia para tabla
+create sequence  prueba_id_seq
+    start with 0
+    increment by 1 
+    minvalue 0;
+
+Prompt Creando tabla pruebabk
+CREATE TABLE pruebabk (
+    id  NUMBER(9,0),
+    datos VARCHAR2(40)
+);
+
+Prompt creando procedimiento para insertar registros
+CREATE OR REPLACE PROCEDURE insertar_registros (
+    cantidad_registros IN NUMBER
+) AS
+BEGIN
+    FOR i IN 1..cantidad_registros LOOP
+        INSERT INTO pruebabk VALUES (prueba_id_seq.nextval, 'Registro ' || i);
+    END LOOP;
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Se insertaron ' || cantidad_registros || ' registros en la tabla pruebabk.');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Error: ' || SQLERRM);
+END;
+/
+
+Prompt Insertando 10 registros
+exec insertar_registros(10);
+
+pause Checar altert log [Enter] para continuar 
+
+Prompt simulando caida de instancia
+Prompt conectando como sysdba
+conn sys/system2 as sysdba
+shutdown abort 
+startup
+
+Prompt conectando como usuario user06bk
+CONNECT user06bk/user06bk 
+
+
+Prompt verificar información recuperada [Enter] para continuar...
+
+
+--------------------------------------------
+**Salida de ejecución
+************************Terminal-1*****************************************
+
+
+user06bk@jpcdip02> start recovery-instancia.sql
+Connected.
+Creando secuencia para tabla
+
+Sequence created.
+
+Creando tabla pruebabk
+
+Table created.
+
+creando procedimiento para insertar registros
+
+Procedure created.
+
+Insertando 10 registros
+
+PL/SQL procedure successfully completed.
+
+Checar altert log [Enter] para continuar
+
+simulando caida de instancia
+conectando como sysdba
+Connected.
+ORACLE instance shut down.
+ORACLE instance started.
+
+Total System Global Area  486536496 bytes
+Fixed Size		    8897840 bytes
+Variable Size		  318767104 bytes
+Database Buffers	   46137344 bytes
+Redo Buffers		    7876608 bytes
+In-Memory Area		  104857600 bytes
+Database mounted.
+Database opened.
+conectando como usuario user06bk
+Connected.
+verificar información recuperada [Enter] para continuar...
+
+
+*************Terminal-2. Alert.log**********************************
+
+2024-02-07T20:35:03.578865-06:00
+Shutting down ORACLE instance (abort) (OS id: 10280)
+License high water mark = 8
+2024-02-07T20:35:03.579405-06:00
+USER (ospid: 10280): terminating the instance
+2024-02-07T20:35:04.583353-06:00
+Instance terminated by USER, pid = 10280
+2024-02-07T20:35:04.620764-06:00
+Instance shutdown complete (OS id: 10280)
+2024-02-07T20:35:07.837744-06:00
+Starting ORACLE instance (normal) (OS id: 10281)
+2024-02-07T20:35:07.842713-06:00
+Specified value of sga_max_size is too small, bumping to 486539264
+2024-02-07T20:35:07.842821-06:00
+****************************************************
+ /dev/shm will be used for creating SGA 
+Large pages will not be used. Only standard 4K pages will be used 
+****************************************************
+2024-02-07T20:35:07.844586-06:00
+**********************************************************************
+2024-02-07T20:35:07.844648-06:00
+Dump of system resources acquired for SHARED GLOBAL AREA (SGA) 
+
+2024-02-07T20:35:07.844778-06:00
+ Domain name: user.slice/user-1000.slice/user@1000.service
+2024-02-07T20:35:07.844868-06:00
+ Per process system memlock (soft) limit = 64K
+2024-02-07T20:35:07.844996-06:00
+ Expected per process system memlock (soft) limit to lock
+ instance MAX SHARED GLOBAL AREA (SGA) into memory: 464M
+2024-02-07T20:35:07.845179-06:00
+ Available system pagesizes:
+  4K, 2048K 
+2024-02-07T20:35:07.845365-06:00
+ Supported system pagesize(s):
+2024-02-07T20:35:07.845455-06:00
+  PAGESIZE  AVAILABLE_PAGES  EXPECTED_PAGES  ALLOCATED_PAGES  ERROR(s)
+2024-02-07T20:35:07.845572-06:00
+        4K       Configured          118788          118788        NONE
+2024-02-07T20:35:07.845671-06:00
+ Reason for not supporting certain system pagesizes: 
+2024-02-07T20:35:07.845759-06:00
+  2048K - Dynamic allocate and free memory regions
+2024-02-07T20:35:07.845826-06:00
+RECOMMENDATION:
+2024-02-07T20:35:07.845887-06:00
+ 1. Increase per process memlock (soft) limit to at least 464MB
+ to lock 100% of SHARED GLOBAL AREA (SGA) pages into physical memory
+2024-02-07T20:35:07.846000-06:00
+**********************************************************************
+2024-02-07T20:35:10.963659-06:00
+LICENSE_MAX_SESSION = 0
+LICENSE_SESSIONS_WARNING = 0
+2024-02-07T20:35:10.998997-06:00
+Initial number of CPU is 8
+Number of processor cores in the system is 4
+Number of processor sockets in the system is 1
+Capability Type : Network 
+capabilities requested : 7 detected : 0 Simulated : 0
+Capability Type : Runtime Environment 
+capabilities requested : 400000FF detected : 40000000 Simulated : 0
+Capability Type : Engineered Systems 
+capabilities requested : 7 detected : 0 Simulated : 0
+Capability Type : Database Test 
+capabilities requested : 3 detected : 0 Simulated : 0
+Autotune of undo retention is turned on. 
+IMODE=BR
+ILAT =62
+LICENSE_MAX_USERS = 0
+SYS auditing is enabled
+NOTE: remote asm mode is local (mode 0x1; from cluster type)
+NOTE: Using default ASM root directory ASM
+NOTE: remote asm mode is local (mode 0x1; from cluster type)
+NOTE: Cluster configuration type = NONE [2]
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0.
+ORACLE_HOME:    /u01/app/oracle/product/19.3.0/dbhome_1
+System name:	Linux
+Node name:	pc-jpc.fi.unam
+Release:	5.4.17-2136.324.5.3.el8uek.x86_64
+Version:	#2 SMP Tue Oct 10 12:43:39 PDT 2023
+Machine:	x86_64
+Using parameter settings in server-side spfile /u01/app/oracle/product/19.3.0/dbhome_1/dbs/spfilejpcdip02.ora
+System parameters with non-default values:
+  sga_max_size             = 464M
+  memory_target            = 768M
+  memory_max_target        = 1G
+  control_files            = "/unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/control01.ctl"
+  control_files            = "/unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/control02.ctl"
+  control_files            = "/unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/control03.ctl"
+  log_archive_dest_1       = "LOCATION=/unam-diplomado-bd/disk-041/archivelogs/jpcdip02/disk_a MANDATORY"
+  log_archive_dest_2       = "LOCATION=/unam-diplomado-bd/disk-042/archivelogs/jpcdip02/disk_b"
+  log_archive_min_succeed_dest= 1
+  log_archive_format       = "arch_jpcdip02_%t_%s_%r.arc"
+  log_archive_max_processes= 5
+  db_recovery_file_dest    = "/unam-diplomado-bd/fast-recovery-area"
+  db_recovery_file_dest_size= 20G
+  db_flashback_retention_target= 1440
+  undo_retention           = 1800
+  inmemory_size            = 100M
+  db_securefile            = "PREFERRED"
+  db_domain                = "fi.unam"
+  dispatchers              = "(dispatchers=2)(protocol=tcp)"
+  shared_servers           = 4
+  max_shared_servers       = 4
+  max_dispatchers          = 2
+  db_name                  = "jpcdip02"
+2024-02-07T20:35:11.111408-06:00
+============================================================
+NOTE: PatchLevel of this instance 0
+============================================================
+Starting background process PMON
+2024-02-07T20:35:11.128409-06:00
+PMON started with pid=2, OS id=10285 
+Starting background process CLMN
+2024-02-07T20:35:11.136434-06:00
+CLMN started with pid=3, OS id=10287 
+Starting background process PSP0
+2024-02-07T20:35:11.145027-06:00
+PSP0 started with pid=4, OS id=10289 
+Starting background process VKTM
+2024-02-07T20:35:12.156131-06:00
+VKTM started with pid=5, OS id=10291 at elevated (RT) priority
+2024-02-07T20:35:12.156156-06:00
+Starting background process GEN0
+2024-02-07T20:35:12.157697-06:00
+VKTM running at (1)millisec precision with DBRM quantum (100)ms
+2024-02-07T20:35:12.163636-06:00
+GEN0 started with pid=6, OS id=10295 
+Starting background process MMAN
+2024-02-07T20:35:12.171428-06:00
+MMAN started with pid=7, OS id=10297 
+Starting background process GEN1
+2024-02-07T20:35:12.190799-06:00
+GEN1 started with pid=9, OS id=10301_10302 
+Starting background process DIAG
+2024-02-07T20:35:12.198220-06:00
+DIAG started with pid=11, OS id=10304 
+Starting background process OFSD
+2024-02-07T20:35:12.211901-06:00
+OFSD started with pid=8, OS id=10306_10307 
+Starting background process DBRM
+2024-02-07T20:35:12.212814-06:00
+Oracle running with ofslib:'Oracle File Server Library' version=2
+2024-02-07T20:35:12.219635-06:00
+DBRM started with pid=13, OS id=10309 
+Starting background process VKRM
+2024-02-07T20:35:12.226829-06:00
+VKRM started with pid=14, OS id=10311 
+Starting background process SVCB
+2024-02-07T20:35:12.234470-06:00
+SVCB started with pid=15, OS id=10313 
+Starting background process PMAN
+2024-02-07T20:35:12.241899-06:00
+PMAN started with pid=16, OS id=10315 
+Starting background process DIA0
+2024-02-07T20:35:12.249900-06:00
+DIA0 started with pid=17, OS id=10317 
+Starting background process DBW0
+2024-02-07T20:35:12.258565-06:00
+DBW0 started with pid=18, OS id=10319 
+Starting background process LGWR
+2024-02-07T20:35:12.266371-06:00
+LGWR started with pid=19, OS id=10321 
+Starting background process CKPT
+2024-02-07T20:35:12.273724-06:00
+CKPT started with pid=20, OS id=10323 
+Starting background process SMON
+2024-02-07T20:35:12.281973-06:00
+LGWR slave LG00 created with pid=21, OS pid=10325
+2024-02-07T20:35:12.289375-06:00
+SMON started with pid=22, OS id=10327 
+LGWR slave LG01 created with pid=23, OS pid=10329
+Starting background process SMCO
+2024-02-07T20:35:12.304808-06:00
+SMCO started with pid=24, OS id=10331 
+Starting background process RECO
+2024-02-07T20:35:12.312509-06:00
+RECO started with pid=25, OS id=10333 
+Starting background process LREG
+2024-02-07T20:35:12.327918-06:00
+LREG started with pid=27, OS id=10337 
+Starting background process PXMN
+2024-02-07T20:35:12.343775-06:00
+PXMN started with pid=29, OS id=10341 
+Starting background process FENC
+2024-02-07T20:35:12.351660-06:00
+FENC started with pid=30, OS id=10343 
+Starting background process MMON
+2024-02-07T20:35:12.359427-06:00
+MMON started with pid=31, OS id=10345 
+Starting background process MMNL
+2024-02-07T20:35:12.367196-06:00
+MMNL started with pid=32, OS id=10347 
+2024-02-07T20:35:12.367266-06:00
+starting up 2 dispatcher(s) for network address '(ADDRESS=(PARTIAL=YES)(PROTOCOL=tcp))'...
+starting up 4 shared server(s) ...
+Starting background process TMON
+2024-02-07T20:35:12.418731-06:00
+TMON started with pid=38, OS id=10361 
+Setting CPU count to 8
+ORACLE_BASE from environment = /u01/app/oracle
+2024-02-07T20:35:12.470402-06:00
+ALTER DATABASE   MOUNT
+2024-02-07T20:35:15.234751-06:00
+Using default pga_aggregate_limit of 2048 MB
+2024-02-07T20:35:16.523619-06:00
+.... (PID:10362): Redo network throttle feature is disabled at mount time
+2024-02-07T20:35:16.589303-06:00
+Successful mount of redo thread 1, with mount id 3735440768
+2024-02-07T20:35:16.589786-06:00
+Allocating 3981120 bytes in shared pool for flashback generation buffer.
+Allocated 3981120 bytes in shared pool for flashback generation buffer
+Starting background process RVWR
+2024-02-07T20:35:16.598524-06:00
+RVWR started with pid=42, OS id=10379 
+2024-02-07T20:35:16.661544-06:00
+Database mounted in Exclusive Mode
+Lost write protection disabled
+.... (PID:10362): Using STANDBY_ARCHIVE_DEST parameter default value as /unam-diplomado-bd/disk-041/archivelogs/jpcdip02/disk_a [krsd.c:18141]
+Completed: ALTER DATABASE   MOUNT
+2024-02-07T20:35:16.733103-06:00
+ALTER DATABASE OPEN
+2024-02-07T20:35:16.735366-06:00
+Ping without log force is disabled:
+  instance mounted in exclusive mode.
+2024-02-07T20:35:16.793166-06:00
+Beginning crash recovery of 1 threads
+ parallel recovery started with 7 processes
+ Thread 1: Recovery starting at checkpoint rba (logseq 5 block 12558), scn 0
+2024-02-07T20:35:16.849001-06:00
+Started redo scan
+2024-02-07T20:35:16.901678-06:00
+Completed redo scan
+ read 92 KB redo, 90 data blocks need recovery
+2024-02-07T20:35:16.902907-06:00
+Started redo application at
+ Thread 1: logseq 5, block 12558, offset 0
+2024-02-07T20:35:16.903361-06:00
+Recovery of Online Redo Log: Thread 1 Group 5 Seq 5 Reading mem 0
+  Mem# 0: /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo05a_60.log
+  Mem# 1: /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo05b_60.log
+  Mem# 2: /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo05c_60.log
+2024-02-07T20:35:16.903942-06:00
+Completed redo application of 0.06MB
+2024-02-07T20:35:16.960107-06:00
+Completed crash recovery at
+ Thread 1: RBA 5.12742.16, nab 12742, scn 0x00000000002fc1fd
+ 90 data blocks read, 90 data blocks written, 92 redo k-bytes read
+Endian type of dictionary set to little
+2024-02-07T20:35:17.076985-06:00
+LGWR (PID:10321): STARTING ARCH PROCESSES
+Starting background process ARC0
+2024-02-07T20:35:17.085585-06:00
+TT00 (PID:10396): Gap Manager starting
+2024-02-07T20:35:17.093362-06:00
+ARC0 started with pid=51, OS id=10398 
+2024-02-07T20:35:17.103639-06:00
+LGWR (PID:10321): ARC0: Archival started
+LGWR (PID:10321): STARTING ARCH PROCESSES COMPLETE
+2024-02-07T20:35:17.103895-06:00
+ARC0 (PID:10398): Becoming a 'no FAL' ARCH
+ARC0 (PID:10398): Becoming the 'no SRL' ARCH
+2024-02-07T20:35:17.179544-06:00
+Thread 1 advanced to log sequence 6 (thread open)
+Redo log for group 6, sequence 6 is not located on DAX storage
+Thread 1 opened at log sequence 6
+  Current log# 6 seq# 6 mem# 0: /unam-diplomado-bd/disk-01/app/oracle/oradata/JPCDIP02/redo06a_60.log
+  Current log# 6 seq# 6 mem# 1: /unam-diplomado-bd/disk-02/app/oracle/oradata/JPCDIP02/redo06b_60.log
+  Current log# 6 seq# 6 mem# 2: /unam-diplomado-bd/disk-03/app/oracle/oradata/JPCDIP02/redo06c_60.log
+Successful open of redo thread 1
+2024-02-07T20:35:17.221976-06:00
+MTTR advisory is disabled because FAST_START_MTTR_TARGET is not set
+stopping change tracking
+Undo initialization recovery: err:0 start: 4274293 end: 4274302 diff: 9 ms (0.0 seconds)
+[10380] Successfully onlined Undo Tablespace 2.
+Undo initialization online undo segments: err:0 start: 4274302 end: 4274314 diff: 12 ms (0.0 seconds)
+Undo initialization finished serial:0 start:4274293 end:4274318 diff:25 ms (0.0 seconds)
+Verifying minimum file header compatibility for tablespace encryption..
+Verifying file header compatibility for tablespace encryption completed for pdb 0
+2024-02-07T20:35:17.336304-06:00
+ARC0 (PID:10398): Archived Log entry 18 added for T-1.S-5 ID 0xde976f96 LAD:1
+2024-02-07T20:35:17.336372-06:00
+ARC0 (PID:10398): Archived Log entry 19 added for T-1.S-5 ID 0xde976f96 LAD:2
+2024-02-07T20:35:17.358346-06:00
+Database Characterset is AL32UTF8
+Auto-enabling DEFAULT_PLAN resource plan for InMemory
+Opening with Resource Manager plan: DEFAULT_PLAN 
+Starting background process IMCO
+2024-02-07T20:35:17.474766-06:00
+IMCO started with pid=53, OS id=10402 
+joxcsys_required_dirobj_exists: directory object exists with required path /u01/app/oracle/product/19.3.0/dbhome_1/javavm/admin/, pid 10380 cid 0
+replication_dependency_tracking turned off (no async multimaster replication found)
+Starting background process AQPC
+2024-02-07T20:35:17.635175-06:00
+AQPC started with pid=54, OS id=10404 
+2024-02-07T20:35:17.742594-06:00
+Starting background process CJQ0
+2024-02-07T20:35:17.750819-06:00
+CJQ0 started with pid=55, OS id=10406 
+Completed: ALTER DATABASE OPEN
+2024-02-07T20:35:18.102144-06:00
+TMON (PID:10361): STARTING ARCH PROCESSES
+Starting background process ARC1
+2024-02-07T20:35:18.110020-06:00
+ARC1 started with pid=43, OS id=10441 
+Starting background process ARC2
+2024-02-07T20:35:18.118260-06:00
+ARC2 started with pid=72, OS id=10443 
+Starting background process ARC3
+2024-02-07T20:35:18.125849-06:00
+ARC3 started with pid=73, OS id=10445 
+Starting background process ARC4
+2024-02-07T20:35:18.133412-06:00
+ARC4 started with pid=74, OS id=10447 
+TMON (PID:10361): ARC1: Archival started
+TMON (PID:10361): ARC2: Archival started
+TMON (PID:10361): ARC3: Archival started
+TMON (PID:10361): ARC4: Archival started
+TMON (PID:10361): STARTING ARCH PROCESSES COMPLETE
+2024-02-07T20:35:18.742999-06:00
+QPI: opatch file present, opatch
+QPI: qopiprep.bat file present
+2024-02-07T20:35:20.267712-06:00
+===========================================================
+Dumping current patch information
+===========================================================
+Patch Id: 29517242
+Patch Description: Database Release Update : 19.3.0.0.190416 (29517242)
+Patch Apply Time: 2019-04-18T02:21:17-05:00
+Bugs Fixed: 14735102,19697993,20313356,21965541,25806201,25883179,25986062,
+26476244,26611353,26872233,27369515,27423500,27666312,27710072,27846298,
+27957203,28064977,28072567,28129791,28181021,28210681,28279456,28313275,
+28350595,28371123,28379065,28431445,28463226,28489419,28502773,28513333,
+28534475,28561704,28569897,28572533,28572544,28587723,28593682,28594086,
+28597221,28601957,28605066,28606598,28625862,28627033,28636532,28643718,
+28644549,28645570,28646200,28646939,28649388,28655209,28663782,28673945,
+28692275,28694872,28696373,28705231,28710385,28710734,28714461,28718469,
+28730079,28740708,28760206,28772390,28774416,28777214,28789531,28791852,
+28795551,28802734,28804517,28810381,28811560,28815123,28815355,28819640,
+28824482,28833912,28835937,28862532,28863432,28873575,28876253,28876639,
+28884931,28888327,28892794,28897512,28899663,28901126,28905457,28907196,
+28912691,28915561,28917080,28918429,28919145,28922227,28922532,28922608,
+28925634,28925880,28933158,28936114,28937717,28938698,28940179,28940281,
+28941901,28942455,28945421,28945994,28951533,28952168,28954762,28955606,
+28957292,28957723,28962775,28965231,28966444,28974083,28977322,28983095,
+28983486,28986326,28986481,28988482,28989306,28993295,28994307,28996376,
+29000000,29001888,29002927,29003738,29006318,29006621,29007321,29007775,
+29008035,29011936,29013475,29014076,29015118,29017265,29018655,29019121,
+29021063,29021352,29024552,29026582,29026606,29027456,29027694,29027940,
+29031575,29031600,29032234,29032457,29032607,29033052,29033145,29033200,
+29033280,29034587,29037290,29038528,29039089,29039510,29043554,29043651,
+29043725,29044763,29044954,29047850,29048289,29048498,29048605,29050560,
+29050765,29051702,29052726,29053783,29056024,29056270,29056560,29059011,
+29061959,29062692,29062848,29062860,29062868,29110526,29110783,29110790,
+29110797,29110802,29110805,29111598,29113282,29113305,29117526,29117642,
+29119077,29120223,29122224,29122254,29123297,29123432,29123482,29124368,
+29125380,29126345,29127957,29128935,29129450,29129497,29129712,29130219,
+29131539,29132938,29134447,29136111,29138641,29141316,29141341,29141685,
+29142667,29144995,29145214,29145730,29149829,29150338,29151520,29152357,
+29155099,29157389,29158680,29158899,29159909,29159936,29160174,29162095,
+29163415,29163437,29163524,29163567,29167111,29167342,29167374,29167940,
+29168219,29168433,29169073,29169215,29171942,29172618,29172826,29173140,
+29173373,29173817,29174004,29176318,29177466,29177543,29177886,29178385,
+29180313,29180455,29180559,29180893,29181153,29181231,29181620,29181743,
+29181923,29182019,29183912,29184297,29184666,29185193,29186456,29189302,
+29189307,29189889,29190235,29190474,29190740,29191541,29192419,29192468,
+29192685,29193207,29194205,29194367,29194493,29194827,29195279,29195337,
+29195758,29196725,29199635,29199733,29200316,29200700,29201494,29201539,
+29202104,29202850,29203122,29203166,29203425,29203443,29203604,29205281,
+29205323,29205419,29205463,29205767,29205918,29206109,29206605,29207073,
+29208260,29208732,29211457,29211724,29212012,29212433,29212611,29213351,
+29213775,29213850,29213879,29214561,29214960,29216746,29216984,29217294,
+29217472,29217828,29217848,29218570,29219205,29219273,29220079,29221248,
+29221891,29222031,29222784,29223833,29223859,29223967,29224065,29224605,
+29225076,29227602,29228869,29229164,29229754,29229844,29229955,29230252,
+29230565,29231133,29232117,29232154,29234123,29237538,29240307,29241345,
+29242017,29242884,29243958,29245137,29245160,29246163,29247415,29247712,
+29247906,29248552,29248835,29248858,29249991,29250059,29251259,29253184,
+29253871,29254031,29254930,29255178,29255273,29255431,29255435,29256426,
+29259119,29259320,29261906,29262512,29262887,29265448,29266248,29266899,
+29267292,29268412,29269171,29270585,29273539,29273735,29273847,29274428,
+29274564,29274627,29275461,29278218,29279658,29279751,29279854,29282898,
+29285503,29285788,29285956,29286037,29287130,29287705,29292837,29293072,
+29297863,29297915,29298220,29299049,29299082,29299844,29301566,29302963,
+29303918,29304781,29311588,29312310,29312734,29312753,29313347,29313417,
+29313525,29314539,29318410,29319441,29321489,29323946,29324568,29325087,
+29325105,29325257,29325993,29327044,29329087,29331209,29331380,29331493,
+29332771,29333500,29337310,29338315,29338453,29338780,29338913,29339155,
+29341209,29343086,29346943,29347620,29348176,29350052,29351386,29351716,
+29351749,29352867,29353271,29355654,29356547,29356752,29358828,29360672,
+29361801,29363151,29364171,29364177,29367019,29367561,29368253,29373418,
+29373588,29374179,29377986,29378029,29379978,29382784,29385652,29386502,
+29386635,29386660,29387274,29388094,29388524,29388830,29389889,29390435,
+29394140,29394749,29397954,29398863,29399100,29399121,29405012,29405651,
+29412066,29412269,29417884,29423826,29429264,29429566,29431485,29435652,
+29438736,29439522,29450421,29451386,29452576,29452953,29457807,29460252,
+29462957,29486181,29507616,29515240,29521748,29530812,29531654,29557336,
+29558975,29601461
+
+Patch Id: 29585399
+Patch Description: OCW RELEASE UPDATE 19.3.0.0.0 (29585399)
+Patch Apply Time: 2019-04-18T02:21:33-05:00
+Bugs Fixed: 3,27222128,27572040,27604329,27760043,27877830,28302580,28470673,
+28621543,28642469,28699321,28710663,28755846,28772816,28785321,28800508,
+28808652,28815557,28847541,28847572,28870496,28871040,28874416,28877252,
+28881191,28881848,28888083,28911140,28925250,28925460,28935956,28940472,
+28942694,28951332,28963036,28968779,28980448,28995287,29003207,29003617,
+29016294,29018680,29024876,29026154,29027933,29047127,29052850,29058476,
+29111631,29112455,29117337,29123444,29125708,29125786,29129476,29131772,
+29132456,29139727,29146157,29147849,29149170,29152603,29152752,29154631,
+29154636,29154829,29159216,29159661,29160462,29161923,29169540,29169739,
+29170717,29173618,29181568,29182920,29183298,29186091,29191827,29201143,
+29201695,29209545,29210577,29210610,29210624,29210683,29213641,29219627,
+29224294,29225861,29229839,29235934,29242906,29243749,29244495,29244766,
+29244968,29248723,29249583,29251564,29255616,29260224,29261695,29271019,
+29273360,29282090,29282666,29285453,29285621,29290235,29292232,29293806,
+29294753,29299830,29307090,29307109,29311336,29329675,29330791,29339299,
+29357821,29360467,29360775,29367971,29368725,29379299,29379381,29380527,
+29381000,29382296,29391301,29393649,29402110,29411931,29413360,29457319,
+29465047
+===========================================================
+2024-02-07T20:35:20.759460-06:00
+db_recovery_file_dest_size of 20480 MB is 8.80% used. This is a
+user-specified limit on the amount of space that will be used by this
+database for recovery-related files, and does not reflect the amount of
+space available in the underlying filesystem or ASM diskgroup.
+2024-02-07T21:20:19.619854-06:00
+Errors in file /u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/trace/jpcdip02_m004_11011.trc  (incident=173706):
+ORA-04031: unable to allocate 84112 bytes of shared memory ("shared pool","DBMS_BACKUP_RESTORE","PLMCD^a5f238a0","BAMIMA: Bam Buffer")
+Incident details in: /u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/incident/incdir_173706/jpcdip02_m004_11011_i173706.trc
+Use ADRCI or Support Workbench to package the incident.
+See Note 411.1 at My Oracle Support for error and packaging details.
+2024-02-07T21:20:19.723814-06:00
+ORA-04031 heap dump being written to trace file /u01/app/oracle/diag/rdbms/jpcdip02/jpcdip02/incident/incdir_173706/jpcdip02_m004_11011_i173706.trc
+2024-02-07T21:20:20.625254-06:00
+*****************************************************************
+An internal routine has requested a dump of selected redo.
+This usually happens following a specific internal error, when
+analysis of the redo logs will help Oracle Support with the
+diagnosis.
+It is recommended that you retain all the redo logs generated (by
+all the instances) during the past 12 hours, in case additional
+redo dumps are required to help with the diagnosis.
+*****************************************************************
+
+----------------------------------------------------------------------------------------
+**CONCLUSIONES
+En este ejercicio se exploraron diferentes tipos de fallos que pueden afectar una base de datos y 
+se demostró la importancia de la recuperación automática de la instancia para mitigar los impactos. 
+Se simuló la caída de la instancia y se verificó la recuperación automática mediante la observación de los registros de alerta. 
+Esto destacó la capacidad del sistema para restaurar el servicio de manera eficiente después de un fallo, asegurando la continuidad del servicio 
+sin pérdida de datos significativa. No se tuvo problemas al generarlo pues la maestra y las instrucciones son muy claras. 

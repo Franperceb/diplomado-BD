@@ -179,3 +179,19 @@ Restore point dropped.
 
 -----------------------------------------------------------------------------------------------------------------------------------
 ##Comentarios y conclusiones
+
+En el desarrollo de este ejercicio focalizado en la función de "Flashback Database" en Oracle, se exploraron los pasos necesarios 
+para regresar la base de datos a un punto específico en el tiempo. Primero, se verificó el número SCN actual de la base de datos,
+ se creó un punto de restauración y se confirmó su existencia mediante la consulta de la vista v$restore_point.
+ Luego, se simuló actividad en la base de datos con el usuario user06, creando una tabla y agregando datos. 
+ Al detener e iniciar la instancia en modo mount como usuario sys, se ejecutó el proceso de flashback para regresar la base de datos
+al punto de restauración previamente creado. La apertura de la base de datos en modo open y la verificación del retorno al punto marcado 
+demostraron la eficacia del flashback en revertir la base de datos.
+Finalmente, se eliminó el punto de restauración para mantener un manejo limpio y eficiente de los recursos de la base de datos.
+Este ejercicio resaltó la potencia de la funcionalidad "Flashback Database" para gestionar y corregir cambios no deseados en la base de datos, 
+proporcionando un nivel adicional de control y recuperación.
+
+
+
+
+

@@ -1,0 +1,342 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-04-2024
+##Módulo 09. E-07- Ejemplo Vistas Materializadas.
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/04/2024
+--@Descripción: Ejercicio 07 - Módulo 09. Ejemplo de vista materializada.
+
+define syslogon='sys/system1 as sysdba'
+define t_user='control_medico'
+define userlogon='&t_user/&t_user'
+define autotrace_opt='trace only'
+
+Prompt conectando como SYS
+connect &syslogon
+grant create materialized view to &t_user;
+
+Prompt conectando como &t_user
+connect &userlogon
+
+
+create index cita_paciente_id on cita(paciente_id);
+create index cita_diagnostico_id on cita(diagnostico_id);
+create index cita_medico_id on cita(medico_id);
+create index receta_cita_id on receta(cita_id);
+create index receta_medicamento_id on receta(medicamento_id);
+create unique index paciente_curp on paciente(curp);
+create index cita_fecha_cita_fx_1 on cita(to_number(to_char(fecha_cita,'yyyy')));
+
+Prompt conectando como SYS
+connect &syslogon
+
+Prompt B. Recolectando estadísticas
+begin
+  dbms_stats.gather_schema_stats (
+      ownname => 'CONTROL_MEDICO',      
+      degree  => 2
+  );
+end;
+/
+
+Prompt conectando como &t_user
+connect &userlogon
+
+Prompt Configurando autotrace 'set autotrace '
+set autotrace &autotrace_opt
+
+set linesize window
+
+Prompt creando consulta
+
+select p.curp,c.fecha_cita,d.clave,m.cedula,me.nombre_generico,
+  q1.num_citas, q2.num_medicamentos
+from paciente p, cita c, diagnostico d, medico m , receta r,
+  medicamento me,  (
+    select paciente_id, count(*) num_citas
+    from cita c
+    group by paciente_id
+    having count(*) <= 3
+  ) q1,
+  (
+    select r.cita_id,count(*) num_medicamentos
+    from receta r
+    group by cita_id 
+    having count(*) <= 2
+  ) q2
+where p.paciente_id = c.paciente_id
+and c.diagnostico_id = d.diagnostico_id
+and c.medico_id = m.medico_id
+and c.cita_id = r.cita_id
+and r.medicamento_id = me.medicamento_id
+and q1.paciente_id = p.paciente_id
+and q2.cita_id = c.cita_id
+and (p.curp like 'C%')
+and to_number(to_char(c.fecha_cita,'yyyy'))  between 2005 and 2015;
+
+
+Prompt creando vista materializada
+
+create materialized view mv_reporte_citas enable query rewrite as
+  select p.curp,c.fecha_cita,d.clave,m.cedula,me.nombre_generico,
+    q1.num_citas, q2.num_medicamentos
+  from paciente p, cita c, diagnostico d, medico m , receta r,
+    medicamento me,  (
+      select paciente_id, count(*) num_citas
+      from cita c
+      group by paciente_id
+      having count(*) <= 3
+    ) q1,
+    (
+      select r.cita_id,count(*) num_medicamentos
+      from receta r
+      group by cita_id 
+      having count(*) <= 2
+    ) q2
+  where p.paciente_id = c.paciente_id
+  and c.diagnostico_id = d.diagnostico_id
+  and c.medico_id = m.medico_id
+  and c.cita_id = r.cita_id
+  and r.medicamento_id = me.medicamento_id
+  and q1.paciente_id = p.paciente_id
+  and q2.cita_id = c.cita_id
+  and (p.curp like 'C%')
+  and to_number(to_char(c.fecha_cita,'yyyy'))  between 2005 and 2015;
+
+
+prompt Ejecutando nuevamente la consulta con vista materializada
+
+select p.curp,c.fecha_cita,d.clave,m.cedula,me.nombre_generico,
+  q1.num_citas, q2.num_medicamentos
+from paciente p, cita c, diagnostico d, medico m , receta r,
+  medicamento me,  (
+    select paciente_id, count(*) num_citas
+    from cita c
+    group by paciente_id
+    having count(*) <= 3
+  ) q1,
+  (
+    select r.cita_id,count(*) num_medicamentos
+    from receta r
+    group by cita_id 
+    having count(*) <= 2
+  ) q2
+where p.paciente_id = c.paciente_id
+and c.diagnostico_id = d.diagnostico_id
+and c.medico_id = m.medico_id
+and c.cita_id = r.cita_id
+and r.medicamento_id = me.medicamento_id
+and q1.paciente_id = p.paciente_id
+and q2.cita_id = c.cita_id
+and (p.curp like 'C%')
+and to_number(to_char(c.fecha_cita,'yyyy'))  between 2005 and 2015;
+
+prompt ELiminando índices
+
+drop index cita_paciente_id;
+drop index cita_diagnostico_id;
+drop index cita_medico_id;
+drop index receta_cita_id;
+drop index receta_medicamento_id;
+drop index paciente_curp;
+drop index cita_fecha_cita_fx_1;
+-----------------------------------------------------------
+##Salida de ejecución
+-----------------------------------------------------------------------------
+
+control_medico@jpcdip01> start s-07-ejemplo-vm.sql
+conectando como SYS
+Connected.
+old   1: grant create materialized view to &t_user
+new   1: grant create materialized view to control_medico
+
+Grant succeeded.
+
+conectando como control_medico
+Connected.
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+conectando como SYS
+Connected.
+B. Recolectando estadísticas
+
+PL/SQL procedure successfully completed.
+
+conectando como control_medico
+Connected.
+Configurando autotrace 'set autotrace '
+SP2-0158: unknown SET option "only"
+creando consulta
+
+73 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 2782989119
+
+----------------------------------------------------------------------------------------------------
+| Id  | Operation			| Name		   | Rows  | Bytes | Cost (%CPU)| Time	   |
+----------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT		|		   |   194 | 33950 |   340   (2)| 00:00:01 |
+|*  1 |  HASH JOIN			|		   |   194 | 33950 |   340   (2)| 00:00:01 |
+|*  2 |   HASH JOIN			|		   |   194 | 27936 |   272   (2)| 00:00:01 |
+|*  3 |    HASH JOIN			|		   |   123 | 16605 |   250   (2)| 00:00:01 |
+|   4 |     NESTED LOOPS		|		   |   123 | 15375 |   216   (2)| 00:00:01 |
+|   5 |      NESTED LOOPS		|		   |   123 | 15375 |   216   (2)| 00:00:01 |
+|*  6 |       HASH JOIN 		|		   |   123 | 13530 |	93   (5)| 00:00:01 |
+|   7 |        JOIN FILTER CREATE	| :BF0000	   |   133 | 11172 |	78   (3)| 00:00:01 |
+|*  8 | 	HASH JOIN		|		   |   133 | 11172 |	78   (3)| 00:00:01 |
+|*  9 | 	 VIEW			| index$_join$_001 |   599 | 14376 |	32   (0)| 00:00:01 |
+|* 10 | 	  HASH JOIN		|		   |	   |	   |		|	   |
+|* 11 | 	   INDEX RANGE SCAN	| PACIENTE_CURP    |   599 | 14376 |	 4   (0)| 00:00:01 |
+|  12 | 	   INDEX FAST FULL SCAN | PACIENTE_PK	   |   599 | 14376 |	35   (0)| 00:00:01 |
+|* 13 | 	 HASH JOIN		|		   |   633 | 37980 |	46   (5)| 00:00:01 |
+|  14 | 	  VIEW			|		   |   633 | 16458 |	15   (7)| 00:00:01 |
+|* 15 | 	   HASH GROUP BY	|		   |   633 |  3165 |	15   (7)| 00:00:01 |
+|  16 | 	    INDEX FAST FULL SCAN| RECETA_CITA_ID   | 20000 |	97K|	14   (0)| 00:00:01 |
+|* 17 | 	  TABLE ACCESS FULL	| CITA		   |  3032 |   100K|	31   (4)| 00:00:01 |
+|  18 |        VIEW			|		   |   553 | 14378 |	14   (8)| 00:00:01 |
+|* 19 | 	HASH GROUP BY		|		   |   553 |  2765 |	14   (8)| 00:00:01 |
+|  20 | 	 JOIN FILTER USE	| :BF0000	   | 20000 |	97K|	13   (0)| 00:00:01 |
+|  21 | 	  INDEX FAST FULL SCAN	| CITA_PACIENTE_ID | 20000 |	97K|	13   (0)| 00:00:01 |
+|* 22 |       INDEX UNIQUE SCAN 	| MEDICO_PK	   |	 1 |	   |	 0   (0)| 00:00:01 |
+|  23 |      TABLE ACCESS BY INDEX ROWID| MEDICO	   |	 1 |	15 |	 1   (0)| 00:00:01 |
+|  24 |     TABLE ACCESS FULL		| DIAGNOSTICO	   | 14423 |   140K|	34   (0)| 00:00:01 |
+|  25 |    TABLE ACCESS FULL		| RECETA	   | 20000 |   175K|	22   (0)| 00:00:01 |
+|  26 |   TABLE ACCESS FULL		| MEDICAMENTO	   |  2005 | 62155 |	68   (0)| 00:00:01 |
+----------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("R"."MEDICAMENTO_ID"="ME"."MEDICAMENTO_ID")
+   2 - access("C"."CITA_ID"="R"."CITA_ID")
+   3 - access("C"."DIAGNOSTICO_ID"="D"."DIAGNOSTICO_ID")
+   6 - access("Q1"."PACIENTE_ID"="P"."PACIENTE_ID")
+   8 - access("P"."PACIENTE_ID"="C"."PACIENTE_ID")
+   9 - filter("P"."CURP" LIKE 'C%')
+  10 - access(ROWID=ROWID)
+  11 - access("P"."CURP" LIKE 'C%')
+  13 - access("Q2"."CITA_ID"="C"."CITA_ID")
+  15 - filter(COUNT(*)<=2)
+  17 - filter(TO_NUMBER(TO_CHAR(INTERNAL_FUNCTION("FECHA_CITA"),'yyyy'))>=2005 AND
+	      TO_NUMBER(TO_CHAR(INTERNAL_FUNCTION("FECHA_CITA"),'yyyy'))<=2015)
+  19 - filter(COUNT(*)<=3)
+  22 - access("C"."MEDICO_ID"="M"."MEDICO_ID")
+
+Note
+-----
+   - this is an adaptive plan
+
+
+Statistics
+----------------------------------------------------------
+	 45  recursive calls
+	  7  db block gets
+	782  consistent gets
+	  3  physical reads
+       1056  redo size
+       7379  bytes sent via SQL*Net to client
+       1159  bytes received via SQL*Net from client
+	  6  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	 73  rows processed
+
+creando vista materializada
+
+Materialized view created.
+
+Ejecutando nuevamente la consulta con vista materializada
+
+73 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 1508465341
+
+-------------------------------------------------------------------------------------------------
+| Id  | Operation		     | Name		| Rows	| Bytes | Cost (%CPU)| Time	|
+-------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	     |			|    73 |  5694 |     3   (0)| 00:00:01 |
+|   1 |  MAT_VIEW REWRITE ACCESS FULL| MV_REPORTE_CITAS |    73 |  5694 |     3   (0)| 00:00:01 |
+-------------------------------------------------------------------------------------------------
+
+
+Statistics
+----------------------------------------------------------
+	 32  recursive calls
+	 36  db block gets
+	 23  consistent gets
+	  5  physical reads
+       7016  redo size
+       7649  bytes sent via SQL*Net to client
+       1159  bytes received via SQL*Net from client
+	  6  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+	 73  rows processed
+
+ELiminando índices
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+----------------------------------------------------------------------
+###Comentarios  y conclusiones 
+Este ejercicio nos permitió explorar el uso de vistas materializadas en Oracle para generar un reporte complejo 
+con filtros específicos.
+Al generar el script s-07-ejemplo-vm.sql, otorgamos el privilegio create materialized view al usuario control_medico 
+y creamos una vista materializada según el enunciado proporcionado. Además, se crearon los índices necesarios 
+para garantizar planes de ejecución eficientes.
+El enunciado requería un reporte que incluyera varias columnas relacionadas con pacientes, citas médicas, 
+diagnósticos, médicos y medicamentos recetados. Además, se especificaron filtros para limitar los datos incluidos en el reporte,
+como el rango de años de las citas, la curp del paciente, el número de citas y la cantidad de medicamentos recetados.
+Después de crear la vista materializada, se comprobó el uso de query rewrite al ejecutar la consulta que alimenta a 
+la vista materializada. Esto permite que Oracle utilice la vista materializada en lugar de ejecutar la consulta original,
+lo que puede mejorar significativamente el rendimiento de la consulta.
+En resumen, este ejercicio nos brindó la oportunidad de aplicar el concepto de vistas materializadas
+en un contexto práctico, demostrando su utilidad para generar informes complejos con filtros específicos 
+y mejorar el rendimiento de consultas complejas en Oracle.

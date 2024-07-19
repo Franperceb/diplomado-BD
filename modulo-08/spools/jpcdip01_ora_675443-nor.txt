@@ -1,0 +1,131 @@
+
+##JORGE FRANCISCO PEREDA CEBALLOS
+##05-04-2024
+##Módulo 08. E-8- TKPROF.
+-------------------------------------------
+
+
+TKPROF: Release 19.0.0.0.0 - Development on Sun Apr 28 18:16:45 2024
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Trace file: jpcdip01_ora_675443.trc
+Sort options: default
+
+********************************************************************************
+count    = number of times OCI procedure was executed
+cpu      = cpu time in seconds executing 
+elapsed  = elapsed time in seconds executing
+disk     = number of physical reads of buffers from disk
+query    = number of buffers gotten for consistent read
+current  = number of buffers gotten in current mode (usually for update)
+rows     = number of rows processed by the fetch or execute call
+********************************************************************************
+
+SQL ID: apxpv93ch42ra Plan Hash: 2091070402
+
+select * 
+from
+ medicamento
+
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        1      0.01       0.01          0          0          0           0
+Execute      1      0.00       0.00          0          0          0           0
+Fetch      135      0.00       0.00          0        310          0        2005
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total      137      0.02       0.02          0        310          0        2005
+
+Misses in library cache during parse: 1
+Optimizer mode: ALL_ROWS
+Parsing user id: 203  
+Number of plan statistics captured: 1
+
+Rows (1st) Rows (avg) Rows (max)  Row Source Operation
+---------- ---------- ----------  ---------------------------------------------------
+      2005       2005       2005  TABLE ACCESS FULL MEDICAMENTO (cr=310 pr=0 pw=0 time=7244 us starts=1 cost=68 size=1092725 card=2005)
+
+
+Elapsed times include waiting on following events:
+  Event waited on                             Times   Max. Wait  Total Waited
+  ----------------------------------------   Waited  ----------  ------------
+  SQL*Net message to client                     135        0.00          0.00
+  SQL*Net message from client                   134        0.08          8.74
+  SQL*Net more data to client                    47        0.00          0.00
+
+
+
+********************************************************************************
+
+OVERALL TOTALS FOR ALL NON-RECURSIVE STATEMENTS
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        1      0.01       0.01          0          0          0           0
+Execute      1      0.00       0.00          0          0          0           0
+Fetch      135      0.00       0.00          0        310          0        2005
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total      137      0.02       0.02          0        310          0        2005
+
+Misses in library cache during parse: 1
+
+Elapsed times include waiting on following events:
+  Event waited on                             Times   Max. Wait  Total Waited
+  ----------------------------------------   Waited  ----------  ------------
+  SQL*Net message from client                   135      183.53        192.27
+  SQL*Net message to client                     135        0.00          0.00
+  SQL*Net more data to client                    47        0.00          0.00
+
+
+OVERALL TOTALS FOR ALL RECURSIVE STATEMENTS
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse       42      0.01       0.01          0          0          0           0
+Execute    822      0.08       0.09          0          0          0           0
+Fetch     1392      0.01       0.01          0       3054          0        3191
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total     2256      0.11       0.12          0       3054          0        3191
+
+Misses in library cache during parse: 37
+Misses in library cache during execute: 37
+
+Elapsed times include waiting on following events:
+  Event waited on                             Times   Max. Wait  Total Waited
+  ----------------------------------------   Waited  ----------  ------------
+  PGA memory operation                            5        0.00          0.00
+
+    1  user  SQL statements in session.
+   55  internal SQL statements in session.
+   56  SQL statements in session.
+********************************************************************************
+Trace file: jpcdip01_ora_675443.trc
+Trace file compatibility: 12.2.0.0
+Sort options: default
+
+       1  session in tracefile.
+       1  user  SQL statements in trace file.
+      55  internal SQL statements in trace file.
+      56  SQL statements in trace file.
+      51  unique SQL statements in trace file.
+   13416  lines in trace file.
+       8  elapsed seconds in trace file.
+-------------------------------------------
+
+
+#Conclusiones
+------------------
+
+Al concluir el ejercicio 8, se pudo apreciar la utilidad de utilizar la herramienta tkprof para analizar los archivos trace 
+generados en Oracle. La generación del reporte con tkprof permitió obtener una visión más estructurada y 
+detallada del rendimiento de las consultas ejecutadas.
+Durante la revisión del reporte generado por tkprof, se identificaron algunas diferencias con respecto al archivo trace original. 
+Principalmente, el reporte proporcionó información más organizada y legible sobre el tiempo de ejecución, las operaciones realizadas 
+y los recursos utilizados por cada consulta.
+No se detectaron problemas significativos durante la ejecución del ejercicio. La generación del reporte con tkprof se llevó 
+a cabo sin contratiempos y proporcionó una comprensión más clara del rendimiento de las consultas.
+Este ejercicio contribuyó a mejorar mi comprensión sobre cómo utilizar la herramienta tkprof para analizar y optimizar consultas en Oracle. 
+Proporcionó una experiencia práctica valiosa que ayudó a fortalecer mis habilidades en el diagnóstico 
+y mejora del rendimiento de las consultas SQL. 
+En general, el ejercicio fue beneficioso para mi aprendizaje y desarrollo en el campo de administración de bases de datos.

@@ -1,0 +1,121 @@
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-04-2024
+##Módulo 09. E-04- Sort merge Join.
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/04/2024
+--@Descripción: Ejercicio 04 - Módulo 09. Sort Merge Join.
+
+define syslogon='sys/system1 as sysdba'
+define t_user='control_medico'
+define userlogon='&t_user/&t_user'
+define autotrace_opt='trace only'
+
+
+Prompt conectando como &t_user
+connect &userlogon
+
+set linesize window
+Prompt Ejemplo Hash Join
+
+
+Prompt conectando como SYS
+connect &syslogon
+
+Prompt B. Recolectando estadísticas
+begin
+  dbms_stats.gather_schema_stats (
+      ownname => 'CONTROL_MEDICO',      
+      degree  => 2
+  );
+end;
+/
+
+Prompt conectando como &t_user
+connect &userlogon
+
+Prompt Configurando autotrace 'set autotrace '
+set autotrace &autotrace_opt
+
+
+Prompt ====  Consulta 1   Sorts merge join
+select m.nombre,m.cedula,e.nombre,e.requisito
+from especialidad e, medico m
+where e.especialidad_id = m.especialidad_id
+and m.nombre like 'A%' ;
+
+------------------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+control_medico@jpcdip01> start s-04-sort-merge-join.sql
+conectando como control_medico
+Connected.
+Ejemplo Hash Join
+conectando como SYS
+Connected.
+B. Recolectando estadísticas
+
+PL/SQL procedure successfully completed.
+
+conectando como control_medico
+Connected.
+Configurando autotrace 'set autotrace '
+SP2-0158: unknown SET option "only"
+====  Consulta 1   Sorts merge join
+
+483 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 3154104233
+
+------------------------------------------------------------------------------------------------
+| Id  | Operation		     | Name	       | Rows  | Bytes | Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT	     |		       |   484 | 30492 |   241	 (1)| 00:00:01 |
+|   1 |  MERGE JOIN		     |		       |   484 | 30492 |   241	 (1)| 00:00:01 |
+|   2 |   TABLE ACCESS BY INDEX ROWID| ESPECIALIDAD    |    53 |  2226 |     2	 (0)| 00:00:01 |
+|   3 |    INDEX FULL SCAN	     | ESPECIALIDAD_PK |    53 |       |     1	 (0)| 00:00:01 |
+|*  4 |   SORT JOIN		     |		       |   484 | 10164 |   239	 (1)| 00:00:01 |
+|*  5 |    TABLE ACCESS FULL	     | MEDICO	       |   484 | 10164 |   238	 (0)| 00:00:01 |
+------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   4 - access("E"."ESPECIALIDAD_ID"="M"."ESPECIALIDAD_ID")
+       filter("E"."ESPECIALIDAD_ID"="M"."ESPECIALIDAD_ID")
+   5 - filter("M"."NOMBRE" LIKE 'A%')
+
+
+Statistics
+----------------------------------------------------------
+	  5  recursive calls
+	  0  db block gets
+	889  consistent gets
+	  0  physical reads
+	  0  redo size
+      19223  bytes sent via SQL*Net to client
+	857  bytes received via SQL*Net from client
+	 34  SQL*Net roundtrips to/from client
+	  1  sorts (memory)
+	  0  sorts (disk)
+	483  rows processed
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+Al finalizar el ejercicio de creación del script s-04-sort-merge-join.sql, 
+quedó claro para mí el funcionamiento y la importancia de la técnica de SORT MERGE JOIN en operaciones de tipo JOIN en Oracle. 
+A través del análisis del plan de ejecución generado en el spool, pude apreciar cómo esta técnica se emplea cuando los conjuntos
+ de datos están ordenados y cómo se resuelven los problemas cuando no lo están. Encontré que la principal problemática radica 
+ en la necesidad de ordenar los conjuntos de datos antes de realizar el join para que se ejecute eficientemente el SORT MERGE JOIN.
+ En caso de que los conjuntos no estén ordenados, Oracle optará por otras técnicas como el Hash Join o Nested Loop.
+  En resumen, este ejercicio proporcionó una valiosa comprensión sobre el funcionamiento 
+y la aplicación práctica del SORT MERGE JOIN, así como las consideraciones necesarias para su correcta implementación.

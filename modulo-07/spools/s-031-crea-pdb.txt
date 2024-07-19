@@ -1,0 +1,409 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 11/02/2024
+##@Descripción: Ejercicio 04 - Módulo 07 - Creación PDB desde cero.
+-------------------------------------------
+
+***SCRIPT
+
+
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 23/02/2024
+--@Descripción: Ejercicio 04 - Módulo 07. Creación de una PDB
+
+
+------------------------------------------------------------
+**SALIDA DE EJECUCIÓN
+
+sys@jpcdip03> start s-031-crea-pdb.sql
+
+SP2-0606: Cannot create SPOOL file "/unam-diplomado-bd/modulos/modulo-07/spools/s-031-shutdown-jpc-spool.txt"
+Creando  CDB a a partir de SEED  (from scratch)
+1. Iniciando CDB jpcdip03
+Iniciando jpcdip03
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Fri Feb 16 18:37:02 2024
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+sys@jpcdip03> ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip03> USER is "SYS"
+sys@jpcdip03> Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+2. Conectando como SYS en jpcdip03
+Connected.
+3. Configurando OMF
+
+System altered.
+
+4. Crear una PDB from scratch (desde cero) empleando OMF
+
+Pluggable database created.
+
+Mostrando los datos de las PDBs con SQL*Plus
+
+    CON_ID CON_NAME			  OPEN MODE  RESTRICTED
+---------- ------------------------------ ---------- ----------
+	 2 PDB$SEED			  READ ONLY  NO
+	 3 JPCDIP03_S1			  READ WRITE NO
+	 4 JPCDIP03_S2			  READ WRITE NO
+	 5 JPCDIP03_S3			  MOUNTED
+[Enter] para continuar
+
+5. Mostrando los datafiles a partir de bda_data_files
+
+   FILE_ID FILE_NAME
+---------- ------------------------------------------------------------
+	 1 /u01/app/oracle/oradata/JPCDIP03/system01.dbf
+	 3 /u01/app/oracle/oradata/JPCDIP03/sysaux01.dbf
+	 4 /u01/app/oracle/oradata/JPCDIP03/undotbs01.dbf
+	 7 /u01/app/oracle/oradata/JPCDIP03/users01.dbf
+
+Mostrando los datafiles a partir  de cdb_data_files
+
+   FILE_ID FILE_NAME
+---------- ------------------------------------------------------------
+	 1 /u01/app/oracle/oradata/JPCDIP03/system01.dbf
+	 3 /u01/app/oracle/oradata/JPCDIP03/sysaux01.dbf
+	 4 /u01/app/oracle/oradata/JPCDIP03/undotbs01.dbf
+	 7 /u01/app/oracle/oradata/JPCDIP03/users01.dbf
+	13 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/system01.dbf
+	14 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/sysaux01.dbf
+	15 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/undotbs01.dbf
+	16 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/users01.dbf
+	 9 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/system01.dbf
+	10 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/sysaux01.dbf
+	11 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/undotbs01.dbf
+	12 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/users01.dbf
+
+12 rows selected.
+
+Analizar resutados. ¿Qué sucede con los datafiles de la nueva pdb?
+[Enter] para continuar
+
+6. accediendo a la PDB
+
+Pluggable database altered.
+
+7. Mostrando datafiles de la CDB desde cdb_data_files
+
+   FILE_ID FILE_NAME
+---------- --------------------------------------------------------------------------------------------------------------
+	 1 /u01/app/oracle/oradata/JPCDIP03/system01.dbf
+	 3 /u01/app/oracle/oradata/JPCDIP03/sysaux01.dbf
+	 4 /u01/app/oracle/oradata/JPCDIP03/undotbs01.dbf
+	 7 /u01/app/oracle/oradata/JPCDIP03/users01.dbf
+	20 /u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_system_lwzzxhs9_.dbf
+	21 /u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_sysaux_lwzzxhsg_.dbf
+	22 /u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_undotbs1_lwzzxhsg_.dbf
+	13 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/system01.dbf
+	14 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/sysaux01.dbf
+	15 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/undotbs01.dbf
+	16 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s2/users01.dbf
+	 9 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/system01.dbf
+	10 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/sysaux01.dbf
+	11 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/undotbs01.dbf
+	12 /u01/app/oracle/oradata/JPCDIP03/jpcdip03_s1/users01.dbf
+
+15 rows selected.
+
+8. Mostrando datos de las PDBs con comando de SQL*Plus
+
+    CON_ID CON_NAME			  OPEN MODE  RESTRICTED
+---------- ------------------------------ ---------- ----------
+	 2 PDB$SEED			  READ ONLY  NO
+	 3 JPCDIP03_S1			  READ WRITE NO
+	 4 JPCDIP03_S2			  READ WRITE NO
+	 5 JPCDIP03_S3			  READ WRITE NO
+Analizar [enter] para continuar
+
+
+CON_ID
+------------------------------
+1
+
+CON_NAME
+------------------------------
+CDB$ROOT
+9. Mostrando datafiles desde la nueva PDB empleando cdb_data_files
+
+Session altered.
+
+
+   FILE_ID FILE_NAME
+---------- --------------------------------------------------------------------------------------------------------------
+	20 /u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_system_lwzzxhs9_.dbf
+	21 /u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_sysaux_lwzzxhsg_.dbf
+	22 /u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_undotbs1_lwzzxhsg_.dbf
+
+10. [Enter] para comenzar con la limpieza ...
+
+Cambiando a cdb$root
+
+Session altered.
+
+
+Pluggable database altered.
+
+
+
+Pluggable database altered.
+
+Mostrando contenido de los metadatos [enter] para ejecutar..
+
+<?xml version="1.0" encoding="UTF-8"?>
+<PDB>
+  <xmlversion>1</xmlversion>
+  <pdbname>JPCDIP03_S3</pdbname>
+  <cid>5</cid>
+  <byteorder>1</byteorder>
+  <vsn>318767104</vsn>
+  <vsns>
+    <vsnnum>19.0.0.0.0</vsnnum>
+    <cdbcompt>19.0.0.0.0</cdbcompt>
+    <pdbcompt>19.0.0.0.0</pdbcompt>
+    <vsnlibnum>0.0.0.0.24</vsnlibnum>
+    <vsnsql>24</vsnsql>
+    <vsnbsv>8.0.0.0.0</vsnbsv>
+  </vsns>
+  <dbid>2163680180</dbid>
+  <ncdb2pdb>0</ncdb2pdb>
+  <cdbid>3785456339</cdbid>
+  <guid>118A0F361ED16383E0630100007FED3C</guid>
+  <uscnbas>2359149</uscnbas>
+  <uscnwrp>0</uscnwrp>
+  <undoscn>280</undoscn>
+  <rdba>4194824</rdba>
+  <tablespace>
+    <name>SYSTEM</name>
+    <type>0</type>
+    <tsn>0</tsn>
+    <status>1</status>
+    <issft>0</issft>
+    <isnft>0</isnft>
+    <encts>0</encts>
+    <flags>0</flags>
+    <bmunitsize>8</bmunitsize>
+    <file>
+      <path>/u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_system_lwzzxhs9_.dbf</path>
+      <afn>20</afn>
+      <rfn>1</rfn>
+      <createscnbas>2357601</createscnbas>
+      <createscnwrp>0</createscnwrp>
+      <status>1</status>
+      <fileblocks>34560</fileblocks>
+      <blocksize>8192</blocksize>
+      <vsn>318767104</vsn>
+      <fdbid>2163680180</fdbid>
+      <fcpsb>2359140</fcpsb>
+      <fcpsw>0</fcpsw>
+      <frlsb>1920977</frlsb>
+      <frlsw>0</frlsw>
+      <frlt>1160562326</frlt>
+      <autoext>1</autoext>
+      <maxsize>4194302</maxsize>
+      <incsize>1280</incsize>
+      <plugscn>0</plugscn>
+      <plugafn>0</plugafn>
+      <plugdbid>0</plugdbid>
+    </file>
+  </tablespace>
+  <tablespace>
+    <name>SYSAUX</name>
+    <type>0</type>
+    <tsn>1</tsn>
+    <status>1</status>
+    <issft>0</issft>
+    <isnft>0</isnft>
+    <encts>0</encts>
+    <flags>0</flags>
+    <bmunitsize>8</bmunitsize>
+    <file>
+      <path>/u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_sysaux_lwzzxhsg_.dbf</path>
+      <afn>21</afn>
+      <rfn>4</rfn>
+      <createscnbas>2357605</createscnbas>
+      <createscnwrp>0</createscnwrp>
+      <status>1</status>
+      <fileblocks>42240</fileblocks>
+      <blocksize>8192</blocksize>
+      <vsn>318767104</vsn>
+      <fdbid>2163680180</fdbid>
+      <fcpsb>2359140</fcpsb>
+      <fcpsw>0</fcpsw>
+      <frlsb>1920977</frlsb>
+      <frlsw>0</frlsw>
+      <frlt>1160562326</frlt>
+      <autoext>1</autoext>
+      <maxsize>4194302</maxsize>
+      <incsize>1280</incsize>
+      <plugscn>0</plugscn>
+      <plugafn>0</plugafn>
+      <plugdbid>0</plugdbid>
+    </file>
+  </tablespace>
+  <tablespace>
+    <name>UNDOTBS1</name>
+    <type>2</type>
+    <tsn>2</tsn>
+    <status>1</status>
+    <issft>0</issft>
+    <isnft>0</isnft>
+    <encts>0</encts>
+    <flags>0</flags>
+    <bmunitsize>8</bmunitsize>
+    <file>
+      <path>/u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_undotbs1_lwzzxhsg_.dbf</path>
+      <afn>22</afn>
+      <rfn>9</rfn>
+      <createscnbas>2357608</createscnbas>
+      <createscnwrp>0</createscnwrp>
+      <status>1</status>
+      <fileblocks>12800</fileblocks>
+      <blocksize>8192</blocksize>
+      <vsn>318767104</vsn>
+      <fdbid>2163680180</fdbid>
+      <fcpsb>2359140</fcpsb>
+      <fcpsw>0</fcpsw>
+      <frlsb>1920977</frlsb>
+      <frlsw>0</frlsw>
+      <frlt>1160562326</frlt>
+      <autoext>1</autoext>
+      <maxsize>4194302</maxsize>
+      <incsize>640</incsize>
+      <plugscn>0</plugscn>
+      <plugafn>0</plugafn>
+      <plugdbid>0</plugdbid>
+    </file>
+  </tablespace>
+  <tablespace>
+    <name>TEMP</name>
+    <type>1</type>
+    <tsn>3</tsn>
+    <status>1</status>
+    <issft>0</issft>
+    <isnft>0</isnft>
+    <encts>0</encts>
+    <flags>0</flags>
+    <bmunitsize>128</bmunitsize>
+    <file>
+      <path>/u01/app/oracle/oradata/JPCDIP03/118A0F361ED16383E0630100007FED3C/datafile/o1_mf_temp_lwzzxhsg_.dbf</path>
+      <afn>5</afn>
+      <rfn>1</rfn>
+      <createscnbas>2357602</createscnbas>
+      <createscnwrp>0</createscnwrp>
+      <status>1</status>
+      <fileblocks>4608</fileblocks>
+      <blocksize>8192</blocksize>
+      <vsn>318767104</vsn>
+      <autoext>1</autoext>
+      <maxsize>4194302</maxsize>
+      <incsize>80</incsize>
+      <plugscn>0</plugscn>
+      <plugafn>0</plugafn>
+      <plugdbid>0</plugdbid>
+    </file>
+  </tablespace>
+  <recover>0</recover>
+  <optional>
+    <ncdb2pdb>0</ncdb2pdb>
+    <csid>873</csid>
+    <ncsid>2000</ncsid>
+    <options>
+      <option>APS=19.0.0.0.0</option>
+      <option>CATALOG=19.0.0.0.0</option>
+      <option>CATJAVA=19.0.0.0.0</option>
+      <option>CATPROC=19.0.0.0.0</option>
+      <option>CONTEXT=19.0.0.0.0</option>
+      <option>DV=19.0.0.0.0</option>
+      <option>JAVAVM=19.0.0.0.0</option>
+      <option>OLS=19.0.0.0.0</option>
+      <option>ORDIM=19.0.0.0.0</option>
+      <option>OWM=19.0.0.0.0</option>
+      <option>SDO=19.0.0.0.0</option>
+      <option>XDB=19.0.0.0.0</option>
+      <option>XML=19.0.0.0.0</option>
+      <option>XOQ=19.0.0.0.0</option>
+    </options>
+    <olsoid>0</olsoid>
+    <dv>0</dv>
+    <APEX>NULL</APEX>
+    <parameters>
+      <parameter>processes=640</parameter>
+      <parameter>nls_language='AMERICAN'</parameter>
+      <parameter>nls_territory='AMERICA'</parameter>
+      <parameter>db_block_size=8192</parameter>
+      <parameter>compatible='19.0.0'</parameter>
+      <parameter>open_cursors=300</parameter>
+      <parameter>pga_aggregate_target=268435456</parameter>
+      <parameter>enable_pluggable_database=TRUE</parameter>
+    </parameters>
+    <sqlpatches>
+      <sqlpatch>19.3.0.0.0 Release_Update 1904101227 (RU): APPLY SUCCESS</sqlpatch>
+    </sqlpatches>
+    <tzvers>
+      <tzver>primary version:32</tzver>
+      <tzver>secondary version:0</tzver>
+    </tzvers>
+    <walletkey>0</walletkey>
+    <services/>
+    <opatches>
+      <opatch>29517242</opatch>
+    </opatches>
+    <hasclob>1</hasclob>
+    <awr>
+      <loadprofile>CPU used by this session=25.114829</loadprofile>
+      <loadprofile>DB time=36.769029</loadprofile>
+      <loadprofile>db block changes=1064.304495</loadprofile>
+      <loadprofile>execute count=1683.301181</loadprofile>
+      <loadprofile>logons cumulative=1.629921</loadprofile>
+      <loadprofile>parse count (hard)=183.395013</loadprofile>
+      <loadprofile>parse count (total)=378.913605</loadprofile>
+      <loadprofile>physical reads=88.184560</loadprofile>
+      <loadprofile>physical writes=8.395374</loadprofile>
+      <loadprofile>redo size=199548.208612</loadprofile>
+      <loadprofile>session logical reads=8479.429134</loadprofile>
+      <loadprofile>user calls=17.845801</loadprofile>
+      <loadprofile>user commits=3.219762</loadprofile>
+      <loadprofile>user rollbacks=0.025877</loadprofile>
+    </awr>
+    <hardvsnchk>0</hardvsnchk>
+    <localundo>1</localundo>
+    <apps/>
+    <dbedition>8</dbedition>
+    <dvopsctl>2</dvopsctl>
+    <clnupsrcpal>1</clnupsrcpal>
+  </optional>
+</PDB>
+
+Analizar XML, [enter] para continuar (se eliminarán los archivos)
+
+
+Pluggable database dropped.
+
+rm: remove write-protected regular file '/unam-diplomado-bd/modulos/modulo-07/e-crea-pdbs/metadata-jpcdip03_s3.xml'? y
+
+
+System altered.
+
+apagando spool
+
+##CONCLUSIONES
+
+En este ejercicio, se completó y probó un script llamado "temp-s-031-crea-pdb.sql" para realizar varias acciones en una Container Database (CDB). 
+Primero, se aseguró de que la CDB estuviera iniciada y se conectó a la instancia raíz (CDB Root). 
+Luego, se realizó la configuración necesaria para habilitar Oracle Managed Files (OMF) en una ubicación específica del sistema de archivos. 
+Esta configuración permite que Oracle gestione automáticamente la creación y administración de archivos de datos y de registro, simplificando así
+ la administración del almacenamiento de la base de datos.
+A continuación, se creó una nueva Pluggable Database (PDB) utilizando OMF. Después de la creación, se mostraron los datos de todas las PDBs existentes 
+en la CDB utilizando comandos de SQL*Plus. Se ejecutaron comandos SQL para mostrar los datafiles generados para la nueva PDB, tanto desde la perspectiva d
+e una PDB individual como desde la instancia raíz de la CDB. Se observó que los datafiles de la nueva PDB se registraron correctamente en la vista `cdb_data_files`.
+Se realizó una limpieza para eliminar los cambios realizados durante el ejercicio. En resumen, este ejercicio proporcionó una experiencia práctica sobre cómo crear 
+y configurar una nueva PDB utilizando OMF, así como sobre cómo verificar y administrar los datafiles asociados a esta PDB tanto desde la perspectiva de la 
+PDB individual como desde la instancia raíz de la CDB.

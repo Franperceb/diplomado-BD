@@ -1,0 +1,302 @@
+
+##JORGE FRANCISCO PEREDA CEBALLOS
+##12-04-2024
+##Módulo 09. E-03- Merge Views.
+-------------------------------------------
+
+###Script
+------------------------------------------------------
+--@Autor: Jorge Francisco Pereda Ceballos
+--@Fecha creación: 12/04/2024
+--@Descripción: Ejercicio 03 - Módulo 09. Merge views.
+
+define syslogon='sys/system1 as sysdba'
+define t_user='control_medico'
+define userlogon='&t_user/&t_user'
+define autotrace_opt='trace only'
+
+
+Prompt conectando como &t_user
+connect &userlogon
+
+Prompt Ejemplo Transformación OR
+
+Prompt Generando índices
+
+create index receta_medicamento_id_ix on receta(medicamento_id);
+create index receta_cita_id_ix on receta(cita_id);
+create index medicamento_subclave on medicamento(subclave);
+create index cita_consultorio on cita(consultorio);
+
+
+Prompt conectando como SYS
+connect &syslogon
+
+Prompt B. Recolectando estadísticas
+begin
+  dbms_stats.gather_schema_stats (
+      ownname => 'CONTROL_MEDICO',      
+      degree  => 2
+  );
+end;
+/
+
+Prompt conectando como &t_user
+connect &userlogon
+
+Prompt Configurando autotrace 'set autotrace '
+set autotrace &autotrace_opt
+set linesize window
+
+Prompt ====  Consulta 1 Sin subconsulta
+
+select m.nombre_generico,r.receta_id,r.cantidad,c.fecha_cita
+from medicamento m
+join receta r
+  on m.medicamento_id = r.medicamento_id
+join  cita c
+  on  r.cita_id = c.cita_id
+and m.subclave like '010%' 
+and  c.consultorio like 'C-6%';
+
+Prompt  Consulta 2 con subconsulta y con hint no_merge
+
+select /*+ no_merge(q1) */ q1.nombre_generico,q1.receta_id,q1.cantidad,c.fecha_cita
+from cita c
+join (
+  select m.nombre_generico, r.medicamento_id, r.receta_id,r.cantidad,r.cita_id
+  from receta r
+  join medicamento m
+    on m.medicamento_id = r.medicamento_id
+  where  m.subclave like '01%' 
+) q1 
+on c.cita_id = q1.cita_id
+where c.consultorio like 'C-6%'; 
+
+
+
+Prompt  Consulta 3 con subconsulta y sin hint no_merge
+
+select  m.nombre_generico,q1.receta_id,q1.cantidad,q1.fecha_cita
+from medicamento m
+join (
+  select r.medicamento_id, r.receta_id,r.cantidad,c.fecha_cita
+  from receta r
+  join cita c
+    on r.cita_id = c.cita_id
+  where  c.consultorio like 'C-6%'
+) q1 
+on q1.medicamento_id = m.medicamento_id
+where m.subclave like '01%'; 
+
+
+
+Prompt Eliminando índices
+drop index receta_medicamento_id_ix;
+drop index receta_cita_id_ix;
+drop index medicamento_subclave;
+drop index cita_consultorio;
+------------------------------------------------------
+
+
+###Salida de ejecución
+-----------------------------------------------------
+control_medico@jpcdip01> start s-03-merge-views.sql
+conectando como control_medico
+Connected.
+Ejemplo Transformación OR
+Generando índices
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+
+Index created.
+
+conectando como SYS
+Connected.
+B. Recolectando estadísticas
+
+PL/SQL procedure successfully completed.
+
+conectando como control_medico
+Connected.
+Configurando autotrace 'set autotrace '
+SP2-0158: unknown SET option "only"
+====  Consulta 1 Sin subconsulta
+
+1779 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 4188504906
+
+-------------------------------------------------------------------------------------------------------------------
+| Id  | Operation			       | Name			  | Rows  | Bytes | Cost (%CPU)| Time	  |
+-------------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT		       |			  |	2 |   176 |    24   (0)| 00:00:01 |
+|   1 |  NESTED LOOPS			       |			  |	2 |   176 |    24   (0)| 00:00:01 |
+|   2 |   NESTED LOOPS			       |			  |    10 |   176 |    24   (0)| 00:00:01 |
+|   3 |    NESTED LOOPS 		       |			  |    10 |   660 |    14   (0)| 00:00:01 |
+|   4 |     TABLE ACCESS BY INDEX ROWID BATCHED| MEDICAMENTO		  |	1 |    48 |	3   (0)| 00:00:01 |
+|*  5 |      INDEX RANGE SCAN		       | MEDICAMENTO_SUBCLAVE	  |	1 |	  |	2   (0)| 00:00:01 |
+|   6 |     TABLE ACCESS BY INDEX ROWID BATCHED| RECETA 		  |    10 |   180 |    11   (0)| 00:00:01 |
+|*  7 |      INDEX RANGE SCAN		       | RECETA_MEDICAMENTO_ID_IX |    10 |	  |	1   (0)| 00:00:01 |
+|*  8 |    INDEX UNIQUE SCAN		       | CITA_PK		  |	1 |	  |	0   (0)| 00:00:01 |
+|*  9 |   TABLE ACCESS BY INDEX ROWID	       | CITA			  |	1 |    22 |	1   (0)| 00:00:01 |
+-------------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   5 - access("M"."SUBCLAVE" LIKE '010%')
+       filter("M"."SUBCLAVE" LIKE '010%')
+   7 - access("M"."MEDICAMENTO_ID"="R"."MEDICAMENTO_ID")
+   8 - access("R"."CITA_ID"="C"."CITA_ID")
+   9 - filter("C"."CONSULTORIO" LIKE 'C-6%')
+
+Note
+-----
+   - this is an adaptive plan
+
+
+Statistics
+----------------------------------------------------------
+	 15  recursive calls
+	 22  db block gets
+      37033  consistent gets
+	  0  physical reads
+       4100  redo size
+      99865  bytes sent via SQL*Net to client
+       1893  bytes received via SQL*Net from client
+	120  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+       1779  rows processed
+
+Consulta 2 con subconsulta y con hint no_merge
+
+1779 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 3044099183
+
+------------------------------------------------------------------------------------
+| Id  | Operation	     | Name	   | Rows  | Bytes | Cost (%CPU)| Time	   |
+------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT     |		   |  2234 |   682K|   120   (0)| 00:00:01 |
+|*  1 |  HASH JOIN	     |		   |  2234 |   682K|   120   (0)| 00:00:01 |
+|*  2 |   TABLE ACCESS FULL  | CITA	   |  2234 | 49148 |	30   (0)| 00:00:01 |
+|   3 |   VIEW		     |		   |  2319 |   659K|	90   (0)| 00:00:01 |
+|*  4 |    HASH JOIN	     |		   |  2319 |   149K|	90   (0)| 00:00:01 |
+|*  5 |     TABLE ACCESS FULL| MEDICAMENTO |   233 | 11184 |	68   (0)| 00:00:01 |
+|   6 |     TABLE ACCESS FULL| RECETA	   | 20000 |   351K|	22   (0)| 00:00:01 |
+------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("C"."CITA_ID"="Q1"."CITA_ID")
+   2 - filter("C"."CONSULTORIO" LIKE 'C-6%')
+   4 - access("M"."MEDICAMENTO_ID"="R"."MEDICAMENTO_ID")
+   5 - filter("M"."SUBCLAVE" LIKE '01%')
+
+Note
+-----
+   - this is an adaptive plan
+
+
+Statistics
+----------------------------------------------------------
+	  1  recursive calls
+	  0  db block gets
+	490  consistent gets
+	  0  physical reads
+	  0  redo size
+      99865  bytes sent via SQL*Net to client
+       2023  bytes received via SQL*Net from client
+	120  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+       1779  rows processed
+
+Consulta 3 con subconsulta y sin hint no_merge
+
+1779 rows selected.
+
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 1428189122
+
+-----------------------------------------------------------------------------------
+| Id  | Operation	    | Name	  | Rows  | Bytes | Cost (%CPU)| Time	  |
+-----------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT    |		  |   410 | 36080 |   120   (0)| 00:00:01 |
+|*  1 |  HASH JOIN	    |		  |   410 | 36080 |   120   (0)| 00:00:01 |
+|*  2 |   TABLE ACCESS FULL | CITA	  |  2234 | 49148 |    30   (0)| 00:00:01 |
+|*  3 |   HASH JOIN	    |		  |  2319 |   149K|    90   (0)| 00:00:01 |
+|*  4 |    TABLE ACCESS FULL| MEDICAMENTO |   233 | 11184 |    68   (0)| 00:00:01 |
+|   5 |    TABLE ACCESS FULL| RECETA	  | 20000 |   351K|    22   (0)| 00:00:01 |
+-----------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - access("R"."CITA_ID"="C"."CITA_ID")
+   2 - filter("C"."CONSULTORIO" LIKE 'C-6%')
+   3 - access("R"."MEDICAMENTO_ID"="M"."MEDICAMENTO_ID")
+   4 - filter("M"."SUBCLAVE" LIKE '01%')
+
+Note
+-----
+   - this is an adaptive plan
+
+
+Statistics
+----------------------------------------------------------
+	  5  recursive calls
+	  0  db block gets
+	493  consistent gets
+	  0  physical reads
+	  0  redo size
+      99865  bytes sent via SQL*Net to client
+       1988  bytes received via SQL*Net from client
+	120  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+       1779  rows processed
+
+Eliminando índices
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+
+Index dropped.
+
+-----------------------------------------------------------------------------
+
+###Comentarios  y conclusiones 
+Este ejercicio proporcionó una oportunidad para explorar la optimización de consultas mediante la operación de 
+de inline views en Oracle.
+Al analizar las consultas proporcionadas, pudimos identificar oportunidades potenciales para aplicar la operación de inline views,
+ lo que podría mejorar el rendimiento de las consultas al reducir el número de operaciones y el volumen de datos procesados.
+Al aplicar esta estrategia de optimización, pudimos evaluar el impacto en el rendimiento de las consultas y determinar 
+si la operación  de inline views generó mejoras significativas en la eficiencia de las consultas.
+En conclusión, este ejercicio nos permitió comprender mejor cómo utilizar la operación de inline views para optimizar
+ consultas en Oracle, lo que puede conducir a mejoras en el rendimiento y la eficiencia de las consultas en entornos 
+ de bases de datos.

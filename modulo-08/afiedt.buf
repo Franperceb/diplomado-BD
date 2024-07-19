@@ -1,0 +1,10 @@
+SELECT 
+    s.SNAPSHOT_NAME,          -- Nombre del snapshot
+    s.OWNER,                -- Propietario del snapshot
+    s.TABLE_NAME,           -- Nombre de la tabla base del snapshot
+    s.CREATION_TIME        -- Hora de creación del snapshot
+FROM 
+    DBA_SNAPSHOTS s
+JOIN 
+    DBA_TABLES t ON s.TABLE_NAME = t.TABLE_NAME AND s.OWNER = t.OWNER
+/

@@ -1,0 +1,86 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 10/02/2024
+##@Descripción: Ejercicio 01 - Módulo 06 - Restore Completo RMAN,
+-------------------------------------------
+**Salida de ejecución
+----------------------------------------------------------------------------------
+*******************T1*******************
+sys@jpcdip02> archive log list;
+Database log mode	       Archive Mode
+Automatic archival	       Enabled
+Archive destination	       /unam-diplomado-bd/disk-042/archivelogs/jpcdip02/disk_b
+Oldest online log sequence     6
+Next log sequence to archive   8
+Current log sequence	       8
+sys@jpcdip02> select sequence#, first_change#, to_char(first_time.'HH24:mi:ss dd-mm-yyyy') from v$log;
+select sequence#, first_change#, to_char(first_time.'HH24:mi:ss dd-mm-yyyy') from v$log
+                                                    *
+ERROR at line 1:
+ORA-01747: invalid user.table.column, table.column, or column specification
+
+
+sys@jpcdip02> edit
+Wrote file afiedt.buf
+
+  1* select sequence#, first_change#, to_char(first_time,'HH24:mi:ss dd-mm-yyyy') from v$log
+sys@jpcdip02> run     
+  1* select sequence#, first_change#, to_char(first_time,'HH24:mi:ss dd-mm-yyyy') from v$log
+
+ SEQUENCE# FIRST_CHANGE# TO_CHAR(FIRST_TIME,
+---------- ------------- -------------------
+	 7	 3437859 22:20:28 07-02-2024
+	 6	 3229855 20:35:17 07-02-2024
+	 8	 3545095 21:10:33 10-02-2024
+
+sys@jpcdip02> select count(*) from prueba;
+select count(*) from prueba
+                     *
+ERROR at line 1:
+ORA-01219: database or pluggable database not open: queries allowed on fixed tables or views only
+
+
+sys@jpcdip02> alter system switch logfile;
+alter system switch logfile
+*
+ERROR at line 1:
+ORA-01109: database not open
+
+
+sys@jpcdip02> alter database open;
+alter database open
+*
+ERROR at line 1:
+ORA-01113: file 1 needs media recovery
+ORA-01110: data file 1: '/u01/app/oracle/oradata/JPCDIP02/system01.dbf'
+
+*************************************T2 ************************************
+
+RMAN> 	recover database;
+
+Starting recover at 10-FEB-24
+using channel ORA_DISK_1
+
+starting media recovery
+media recovery failed
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 02/10/2024 22:43:34
+ORA-00283: recovery session canceled due to errors
+RMAN-11003: failure during parse/execution of SQL statement: alter database recover
+ if needed start
+ORA-00283: recovery session canceled due to errors
+ORA-00600: internal error code, arguments: [3020], [3], [422], [12583334], [], [], [], [], [], [], [], []
+ORA-10567: Redo is inconsistent with data block (file# 3, block# 422, file offset is 3457024 bytes)
+ORA-10564: tablespace UNDOTBS1
+ORA-01110: data file 3: '/u01/app/oracle/oradata/JPCDIP02/undotbs01.dbf'
+ORA-10560: block type 'KTU UNDO BLOCK'
+
+------------------------------------------------------------------------------------------------
+**CONCLUSIONES
+
+En este ejercicio, se exploró el proceso completo de respaldo y restauración de una base de datos utilizando RMAN.
+Se simularon diferentes escenarios, desde la realización del respaldo hasta la recuperación de la base de datos después de la pérdida de los datafiles.
+Se puso énfasis en la importancia de tener un plan de respaldo sólido y en seguir procedimientos adecuados para garantizar la integridad y
+la disponibilidad de los datos. Este ejercicio resalta la capacidad de RMAN para realizar copias de seguridad completas y para restaurar 
+la base de datos a un estado consistente en caso de pérdida de datos.

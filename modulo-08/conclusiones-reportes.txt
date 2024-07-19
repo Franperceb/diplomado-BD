@@ -1,0 +1,14 @@
+Para este ejercicio utilice de la herramienta ubicada en $ORACLE_HOME/rdbms/admin
+- awrrpt.sql para generar el 194 y 195. 196 y 197 1 y 2 , 3y 4)
+- Para la comparación de los dos reportes : awrddrpt.sql 
+
+------------
+##Conclusiones
+---------------
+
+El análisis comparativo de reportes AWR, generados bajo diferentes cargas de trabajo, 
+facilita la detección de cuellos de botella en el rendimiento de la base de datos. 
+Observando las variaciones en el uso de recursos, tiempos de respuesta y eventos de mayor impacto,
+ se pueden identificar las causas de posibles problemas y determinar las acciones correctivas, como optimización 
+ de consultas o ajuste de configuración. Este ejercicio resulta fundamental para desarrollar habilidades de análisis y
+ mejorar el rendimiento de las bases de datos Oracle.

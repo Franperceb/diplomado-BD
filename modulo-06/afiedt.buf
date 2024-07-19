@@ -1,2 +1,2 @@
-insert into user06bk.tablebk values('dato3')
+select sequence#, first_change#, to_char(first_time,'HH24:mi:ss dd-mm-yyyy') from v$log
 /

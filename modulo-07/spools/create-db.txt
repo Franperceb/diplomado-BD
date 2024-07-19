@@ -1,0 +1,64 @@
+##@Autor: Jorge Francisco Pereda Ceballos
+##@Fecha creación: 11/02/2024
+##@Descripción: Ejercicio 01 - Módulo 07 - Creación BDD.
+-------------------------------------------
+
+
+
+------------------------------------------------------------
+**SALIDA DE EJECUCIÓN
+
+
+sys@jpcdip03> startup 
+ORA-01081: cannot start already-running ORACLE - shut it down first
+sys@jpcdip03> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[oracle@pc-jpc ~]$ lsnrctl status
+
+LSNRCTL for Linux: Version 19.0.0.0.0 - Production on 10-FEB-2024 11:23:32
+
+Copyright (c) 1991, 2019, Oracle.  All rights reserved.
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521)))
+STATUS of the LISTENER
+------------------------
+Alias                     LISTENER
+Version                   TNSLSNR for Linux: Version 19.0.0.0.0 - Production
+Start Date                07-FEB-2024 19:29:02
+Uptime                    2 days 15 hr. 54 min. 30 sec
+Trace Level               off
+Security                  ON: Local OS Authentication
+SNMP                      OFF
+Listener Parameter File   /u01/app/oracle/product/19.3.0/dbhome_1/network/admin/listener.ora
+Listener Log File         /u01/app/oracle/diag/tnslsnr/pc-jpc/listener/alert/log.xml
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=pc-jpc.fi.unam)(PORT=1521)))
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1521)))
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=pc-jpc.fi.unam)(PORT=5500))(Security=(my_wallet_directory=/u01/app/oracle/admin/jpcdip03/xdb_wallet))(Presentation=HTTP)(Session=RAW))
+Services Summary...
+Service "110ac66aee04a6e9e0630100007f5d35.fi.unam" has 1 instance(s).
+  Instance "jpcdip03", status READY, has 1 handler(s) for this service...
+Service "110ac6bd6f48a6fce0630100007f0714.fi.unam" has 1 instance(s).
+  Instance "jpcdip03", status READY, has 1 handler(s) for this service...
+Service "86b637b62fdf7a65e053f706e80a27ca.fi.unam" has 1 instance(s).
+  Instance "jpcdip03", status READY, has 1 handler(s) for this service...
+Service "jpcdip03.fi.unam" has 1 instance(s).
+  Instance "jpcdip03", status READY, has 1 handler(s) for this service...
+Service "jpcdip03XDB.fi.unam" has 1 instance(s).
+  Instance "jpcdip03", status READY, has 1 handler(s) for this service...
+Service "jpcdip03_s1.fi.unam" has 1 instance(s).
+  Instance "jpcdip03", status READY, has 1 handler(s) for this service...
+Service "jpcdip03_s2.fi.unam" has 1 instance(s).
+  Instance "jpcdip03", status READY, has 1 handler(s) for this service...
+The command completed successfully
+-------------------------------------------------------------------------------------------
+
+##Conclusiones
+En este ejercicio, se realizó la creación de una CDB (Container Database) junto con dos PDBs (Pluggable Databases) 
+utilizando el Oracle Database Configuration Assistant (DBCA). Se configuraron los nombres de la CDB y las PDBs 
+según las especificaciones requeridas. Además, se realizaron ajustes adicionales, como la configuración de 
+alias de servicios en tnsnames.ora y la configuración de conexiones en SQL Developer para facilitar el acceso a la base de datos. 
+Este ejercicio demuestra el proceso de creación y configuración básica de una CDB con múltiples PDBs,lo cual es fundamental para el despliegue 
+y administración de bases de datos en entornos Oracle. En general no se presentaron dificultad alguna pues se realizó conforme el profesor lo fue realizando en la clase
+y previamente ya habia realizado una instalación similar para una asignatura referente a este tema.
